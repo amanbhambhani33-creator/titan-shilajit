@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, MessageCircle, ArrowRight, ShieldCheck, Zap, Award } from 'lucide-react';
+import { MessageCircle, ArrowRight, ShieldCheck, Zap, Award } from 'lucide-react';
 import { useStoreContent } from '../context/StoreContentContext';
 import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
 

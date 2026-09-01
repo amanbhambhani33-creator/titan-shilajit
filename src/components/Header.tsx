@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, Search, Menu, X, MessageCircle, Sparkles } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, MessageCircle, ShieldCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { BRAND_CONTACT } from '../data/content';
 import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
@@ -105,7 +105,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onOpenAdvisor }) =
                     : ''
                 }`}
               >
-                {link.highlight && <Sparkles className="w-3 h-3 text-[#B88A32]" />}
+                {link.highlight && <ShieldCheck className="w-3 h-3 text-[#B88A32]" />}
                 {link.name}
               </Link>
             ))}

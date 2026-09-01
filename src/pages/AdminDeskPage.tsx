@@ -26,9 +26,11 @@ import {
   LogOut,
   CloudCheck,
   Cloud,
-  Sparkles,
   KeyRound,
-  UserCheck
+  UserCheck,
+  ShieldAlert,
+  Ban,
+  Unlock,
 } from 'lucide-react';
 import { useStoreContent, HeroBannerConfig, LaunchBannerConfig, BrandStoryConfig } from '../context/StoreContentContext';
 import { useAuth } from '../context/AuthContext';
@@ -73,6 +75,33 @@ export const AdminDeskPage: React.FC = () => {
   // Edit Product Modal / Drawer State
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
+
+  // Master Security Passkey Clearance State (Required: titan@1234)
+  const [isMasterUnlocked, setIsMasterUnlocked] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('titan_master_unlocked_session') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
+  const [masterKeyInput, setMasterKeyInput] = useState('');
+  const [showMasterKey, setShowMasterKey] = useState(false);
+  const [masterKeyError, setMasterKeyError] = useState<string | null>(null);
+  const [masterFailedAttempts, setMasterFailedAttempts] = useState<number>(() => {
+    try {
+      const attempts = sessionStorage.getItem('titan_master_failed_attempts');
+      return attempts ? parseInt(attempts, 10) : 0;
+    } catch (e) {
+      return 0;
+    }
+  });
+  const [isBanned, setIsBanned] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('titan_master_banned') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
 
   // New Product Template
   const [newProductForm, setNewProductForm] = useState<Partial<Product>>({
@@ -227,6 +256,78 @@ export const AdminDeskPage: React.FC = () => {
     addProduct(productToAdd);
     setIsAddingNew(false);
     showToast('New product added to catalog!');
+  };
+
+  // Handle Master Key Verification (titan@1234)
+  const handleVerifyMasterKey = (e: React.FormEvent) => {
+    e.preventDefault();
+    setMasterKeyError(null);
+
+    if (isBanned) return;
+
+    if (!masterKeyInput.trim()) {
+      setMasterKeyError('Master passkey is required to access the Titan Admin Vault.');
+      return;
+    }
+
+    if (masterKeyInput.trim() === 'titan@1234') {
+      setIsMasterUnlocked(true);
+      setMasterKeyError(null);
+      setMasterFailedAttempts(0);
+      try {
+        sessionStorage.setItem('titan_master_unlocked_session', 'true');
+        sessionStorage.removeItem('titan_master_failed_attempts');
+      } catch (e) {}
+      showToast('🛡️ Master Clearance Approved: Welcome to Titan Shilajit Admin Vault');
+    } else {
+      const nextAttempts = masterFailedAttempts + 1;
+      setMasterFailedAttempts(nextAttempts);
+      try {
+        sessionStorage.setItem('titan_master_failed_attempts', nextAttempts.toString());
+      } catch (e) {}
+
+      if (nextAttempts >= 3) {
+        setIsBanned(true);
+        try {
+          sessionStorage.setItem('titan_master_banned', 'true');
+        } catch (e) {}
+      } else {
+        setMasterKeyError(
+          `INCORRECT MASTER KEY. Unauthorized public access is strictly prohibited. Warning: Attempt ${nextAttempts} of 3 before security lockdown.`
+        );
+      }
+    }
+  };
+
+  const handleLockVault = () => {
+    setIsMasterUnlocked(false);
+    setMasterKeyInput('');
+    try {
+      sessionStorage.removeItem('titan_master_unlocked_session');
+    } catch (e) {}
+    showToast('Admin Vault locked.');
+  };
+
+  const handleResetBanWithCredentials = () => {
+    setIsBanned(false);
+    setMasterFailedAttempts(0);
+    setMasterKeyError(null);
+    setMasterKeyInput('');
+    try {
+      sessionStorage.removeItem('titan_master_banned');
+      sessionStorage.removeItem('titan_master_failed_attempts');
+    } catch (e) {}
+    showToast('Security lockout reset for authorized administrator.');
+  };
+
+  const handleSignOutDesk = () => {
+    setIsMasterUnlocked(false);
+    setMasterKeyInput('');
+    try {
+      sessionStorage.removeItem('titan_master_unlocked_session');
+    } catch (e) {}
+    signOut();
+    showToast('Signed out of admin desk.');
   };
 
   // IF NOT AUTHENTICATED: SHOW ELEGANT FIREBASE AUTH LOGIN CARD
@@ -412,6 +513,188 @@ export const AdminDeskPage: React.FC = () => {
     );
   }
 
+  // =========================================================================
+  // IF BANNED: SHOW HIGH-SECURITY ACCESS BANNED SCREEN
+  // =========================================================================
+  if (isBanned) {
+    return (
+      <div id="admin-banned-screen" className="min-h-screen pt-28 pb-20 bg-[#0A0606] text-[#F7F3E8] flex items-center justify-center px-4 animate-in fade-in duration-300">
+        <div className="w-full max-w-lg bg-red-950/40 border-2 border-red-600/70 rounded-sm p-8 sm:p-10 shadow-[0_0_50px_rgba(220,38,38,0.25)] backdrop-blur-md relative overflow-hidden text-center">
+          {/* Emergency Alert Glows */}
+          <div className="absolute -top-20 -right-20 w-44 h-44 bg-red-600/20 rounded-full blur-3xl pointer-events-none animate-pulse" />
+          <div className="absolute -bottom-20 -left-20 w-44 h-44 bg-red-800/20 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Banned Icon */}
+          <div className="w-16 h-16 mx-auto bg-red-900/60 border-2 border-red-500 rounded-full flex items-center justify-center mb-5 shadow-lg animate-bounce">
+            <Ban className="w-8 h-8 text-red-400" />
+          </div>
+
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-900/50 border border-red-500/50 text-red-300 text-[11px] font-bold tracking-[0.25em] uppercase mb-3">
+            <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
+            <span>SECURITY LOCKDOWN PROTOCOL</span>
+          </div>
+
+          <h1 className="font-serif text-3xl sm:text-4xl font-black text-red-400 tracking-tight mb-3">
+            ACCESS BANNED
+          </h1>
+
+          <p className="text-xs sm:text-sm text-[#EEE8D7]/80 font-sans leading-relaxed mb-6">
+            Unauthorized intrusion attempt detected. Your session has been flagged and locked out of the <strong className="text-white">Titan Shilajit Merchant Vault</strong> for failure to enter the mandatory master security clearance key.
+          </p>
+
+          {/* Security Incident Details Box */}
+          <div className="p-4 rounded-xs bg-black/60 border border-red-600/40 text-left text-xs font-mono space-y-1.5 text-red-300/90 mb-6">
+            <div className="flex justify-between">
+              <span className="text-white/50">INCIDENT ID:</span>
+              <span className="text-red-400 font-bold">TS-BAN-CLEARANCE-FAIL</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-white/50">FLAGGED REASON:</span>
+              <span>Master Key Invalid / 3 Failed Attempts</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-white/50">PROTECTED RESOURCE:</span>
+              <span>Merchant Admin &amp; Storefront Config</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-white/50">STATUS:</span>
+              <span className="text-red-400 font-bold uppercase">Restricted / Blocked</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={handleResetBanWithCredentials}
+              className="px-5 py-3 rounded-xs bg-red-700 hover:bg-red-600 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all"
+            >
+              <KeyRound className="w-4 h-4" />
+              <span>Admin Re-Verification</span>
+            </button>
+
+            <button
+              onClick={handleSignOutDesk}
+              className="px-5 py-3 rounded-xs bg-white/10 hover:bg-white/20 text-[#EEE8D7] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // IF MASTER PASSKEY LOCKED: SHOW MASTER PASSKEY VERIFICATION GATE
+  // =========================================================================
+  if (!isMasterUnlocked) {
+    return (
+      <div id="admin-master-gate-screen" className="min-h-screen pt-28 pb-20 bg-[#10110F] text-[#F7F3E8] flex items-center justify-center px-4">
+        <div className="w-full max-w-md bg-[#183D27]/35 border border-[#B88A32]/60 rounded-sm p-8 sm:p-10 shadow-2xl backdrop-blur-md relative overflow-hidden">
+          {/* Ambient Gold Glow */}
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#B88A32]/25 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[#183D27]/50 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Logo & Header */}
+          <div className="text-center mb-6 relative z-10">
+            <div className="w-14 h-14 mx-auto bg-[#183D27] border-2 border-[#B88A32] rounded-xs flex items-center justify-center mb-4 shadow-xl">
+              <KeyRound className="w-7 h-7 text-[#D4B66A]" />
+            </div>
+
+            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#B88A32]/20 border border-[#B88A32]/40 text-[#D4B66A] text-[10px] font-bold tracking-[0.25em] uppercase mb-2">
+              <ShieldCheck className="w-3 h-3 text-[#25D366]" />
+              <span>FINAL SECURITY CLEARANCE</span>
+            </div>
+
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#F7F3E8] tracking-tight">
+              MASTER PASSKEY
+            </h1>
+            <p className="text-xs text-[#EEE8D7]/75 font-sans mt-1.5">
+              Enter the secondary security passkey to access the Titan Shilajit Store Desk.
+            </p>
+          </div>
+
+          {/* Error / Attempt Warning Alert */}
+          {masterKeyError && (
+            <div className="mb-5 p-3.5 rounded-xs bg-red-950/70 border border-red-500/50 text-red-200 text-xs flex items-start gap-2.5 animate-in fade-in">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <span>{masterKeyError}</span>
+            </div>
+          )}
+
+          {/* Attempt indicator */}
+          <div className="mb-4 flex items-center justify-between text-[11px] font-mono px-3 py-1.5 rounded-xs bg-black/40 border border-[#B88A32]/20">
+            <span className="text-[#EEE8D7]/60">Security Clearance:</span>
+            <span className={masterFailedAttempts > 0 ? 'text-amber-400 font-bold' : 'text-emerald-400 font-bold'}>
+              {3 - masterFailedAttempts} Attempt(s) Remaining
+            </span>
+          </div>
+
+          <form onSubmit={handleVerifyMasterKey} className="space-y-4 relative z-10">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#EEE8D7]/90 mb-1.5 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-[#D4B66A]" />
+                  <span>Master Passkey</span>
+                </span>
+                <span className="text-[10px] text-[#D4B66A] font-normal lowercase font-sans">
+                  titan@1234
+                </span>
+              </label>
+              <div className="relative">
+                <input
+                  type={showMasterKey ? 'text' : 'password'}
+                  required
+                  autoFocus
+                  value={masterKeyInput}
+                  onChange={(e) => setMasterKeyInput(e.target.value)}
+                  placeholder="Enter master passkey (e.g. titan@1234)"
+                  className="w-full px-4 py-3 rounded-xs bg-[#10110F] border border-[#B88A32]/50 text-[#F7F3E8] text-xs pr-10 focus:border-[#D4B66A] focus:outline-none transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowMasterKey(!showMasterKey)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#EEE8D7]/60 hover:text-[#EEE8D7]"
+                >
+                  {showMasterKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3.5 mt-2 rounded-xs bg-[#B88A32] hover:bg-[#D4B66A] text-[#10110F] font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg transition-all"
+            >
+              <Unlock className="w-4 h-4" />
+              <span>Unlock Titan Vault</span>
+            </button>
+          </form>
+
+          {/* Quick Helper and Sign out option */}
+          <div className="mt-6 pt-5 border-t border-[#B88A32]/20 flex items-center justify-between text-xs relative z-10">
+            <button
+              onClick={() => {
+                setMasterKeyInput('titan@1234');
+                setMasterKeyError(null);
+              }}
+              className="text-[11px] text-[#D4B66A] hover:text-[#FFFFFF] underline font-medium"
+            >
+              Autofill Master Key (titan@1234)
+            </button>
+
+            <button
+              onClick={handleSignOutDesk}
+              className="text-[11px] text-red-300 hover:text-red-100 flex items-center gap-1"
+            >
+              <LogOut className="w-3 h-3" />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div id="admin-desk-page" className="min-h-screen pt-24 pb-20 bg-[#F7F3E8] text-[#10110F]">
       {/* Toast Notification */}
@@ -430,6 +713,10 @@ export const AdminDeskPage: React.FC = () => {
               <span className="px-2.5 py-0.5 rounded-full bg-[#183D27] text-[#D4B66A] text-[10px] font-bold tracking-widest uppercase border border-[#B88A32]/40 flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-[#25D366]" />
                 <span>FIREBASE SECURE ADMIN DESK</span>
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full bg-[#B88A32]/20 text-[#D4B66A] text-[10px] font-bold tracking-widest uppercase border border-[#B88A32]/40 flex items-center gap-1.5">
+                <KeyRound className="w-3 h-3 text-[#D4B66A]" />
+                <span>MASTER CLEARANCE: VERIFIED</span>
               </span>
               {isFirebaseSynced ? (
                 <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 text-[10px] font-bold tracking-wider uppercase border border-emerald-500/30 flex items-center gap-1">
@@ -462,6 +749,15 @@ export const AdminDeskPage: React.FC = () => {
             </button>
 
             <button
+              onClick={handleLockVault}
+              className="px-3.5 py-2.5 rounded-xs bg-amber-950/70 hover:bg-amber-900/90 text-amber-200 border border-amber-500/40 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all"
+              title="Lock Admin Vault"
+            >
+              <Lock className="w-3.5 h-3.5 text-[#D4B66A]" />
+              <span>Lock Vault</span>
+            </button>
+
+            <button
               onClick={() => {
                 triggerSplash();
                 showToast('Triggered opening green screen bottle drop intro!');
@@ -483,10 +779,7 @@ export const AdminDeskPage: React.FC = () => {
             </a>
 
             <button
-              onClick={() => {
-                signOut();
-                showToast('Signed out of admin desk.');
-              }}
+              onClick={handleSignOutDesk}
               className="px-3 py-2.5 rounded-xs bg-red-950/60 hover:bg-red-900/80 text-red-200 border border-red-500/30 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all"
               title="Sign Out"
             >

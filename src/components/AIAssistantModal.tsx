@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, MessageCircle, User, ShieldAlert, Mountain, Sparkles } from 'lucide-react';
+import { X, Send, MessageCircle, User, ShieldAlert, Mountain } from 'lucide-react';
 import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
 
 interface AIAssistantModalProps {

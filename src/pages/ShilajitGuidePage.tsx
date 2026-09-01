@@ -5,7 +5,7 @@ import {
   HelpCircle,
   ChevronDown,
   ChevronUp,
-  Sparkles,
+  Zap,
   Droplet,
   Coffee,
   ShieldAlert,
@@ -89,7 +89,7 @@ export const ShilajitGuidePage: React.FC = () => {
 
             <div className="bg-[#10110F] text-[#F7F3E8] p-6 rounded-xs border border-[#B88A32]/30 flex flex-col gap-4">
               <div className="flex items-center gap-3">
-                <Sparkles className="w-5 h-5 text-[#D4B66A]" />
+                <Zap className="w-5 h-5 text-[#D4B66A]" />
                 <h4 className="font-serif font-bold text-base text-[#F7F3E8]">Cellular Nutrient Matrix</h4>
               </div>
               <ul className="space-y-2 text-xs text-[#EEE8D7]/80">

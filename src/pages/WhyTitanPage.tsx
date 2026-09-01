@@ -5,7 +5,6 @@ import {
   Sun,
   ShieldCheck,
   Award,
-  Sparkles,
   Droplet,
   Check,
   X,
@@ -31,7 +30,7 @@ export const WhyTitanPage: React.FC = () => {
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 flex flex-col items-center gap-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#183D27] text-[#D4B66A] text-xs font-bold tracking-[0.2em] uppercase border border-[#B88A32]/30">
-            <Sparkles className="w-3.5 h-3.5" />
+            <Award className="w-3.5 h-3.5" />
             <span>THE GOLD STANDARD OF SHILAJIT</span>
           </div>
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Sparkles, Activity, Zap, Brain, Heart, RefreshCw, Sun } from 'lucide-react';
+import { Shield, Flame, Activity, Zap, Brain, Heart, RefreshCw, Sun } from 'lucide-react';
 import { SHILAJIT_BENEFITS } from '../data/content';
 
 export const BenefitsSection: React.FC = () => {
@@ -11,7 +11,7 @@ export const BenefitsSection: React.FC = () => {
     wellness: <Heart className="w-5 h-5 text-[#B88A32]" />,
     stress: <Sun className="w-5 h-5 text-[#B88A32]" />,
     recovery: <RefreshCw className="w-5 h-5 text-[#B88A32]" />,
-    vitality: <Sparkles className="w-5 h-5 text-[#B88A32]" />,
+    vitality: <Flame className="w-5 h-5 text-[#B88A32]" />,
   };
 
   return (
@@ -45,7 +45,7 @@ export const BenefitsSection: React.FC = () => {
             >
               <div>
                 <div className="w-10 h-10 rounded-sm bg-[#10110F] border border-[#B88A32]/30 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                  {iconMap[benefit.id] || <Sparkles className="w-5 h-5 text-[#B88A32]" />}
+                  {iconMap[benefit.id] || <Flame className="w-5 h-5 text-[#B88A32]" />}
                 </div>
 
                 <span className="text-[9px] tracking-[0.25em] uppercase font-bold text-[#D4B66A]">

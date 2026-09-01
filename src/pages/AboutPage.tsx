@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Mountain, ShieldCheck, Heart, Sparkles, MapPin, Phone, Mail, MessageCircle, ArrowRight } from 'lucide-react';
+import { Mountain, ShieldCheck, Heart, MapPin, Phone, Mail, MessageCircle, ArrowRight } from 'lucide-react';
 import { BRAND_CONTACT } from '../data/content';
 import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
 

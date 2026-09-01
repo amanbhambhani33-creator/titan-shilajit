@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Sparkles,
   ShieldCheck,
   AlertTriangle,
   CheckCircle2,
@@ -13,6 +12,7 @@ import {
   Zap,
   Coffee,
   RotateCcw,
+  Award,
 } from 'lucide-react';
 import { AssessmentFormData, AssessmentResultData } from '../types';
 import { getAssessmentRoutineWhatsAppUrl } from '../utils/whatsapp';
@@ -132,7 +132,7 @@ export const WellnessAssessmentPage: React.FC = () => {
       {/* Header Banner */}
       <div className="max-w-3xl mx-auto px-4 text-center mb-10">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#183D27]/10 text-[#183D27] text-xs font-bold tracking-[0.2em] uppercase mb-2">
-          <Sparkles className="w-3.5 h-3.5 text-[#B88A32]" />
+          <Award className="w-3.5 h-3.5 text-[#B88A32]" />
           <span>PERSONALIZED HIMALAYAN ROUTINE</span>
         </div>
 
@@ -436,7 +436,7 @@ export const WellnessAssessmentPage: React.FC = () => {
                       ) : (
                         <>
                           <span>GENERATE MY TITAN PROTOCOL</span>
-                          <Sparkles className="w-4 h-4" />
+                          <ArrowRight className="w-4 h-4" />
                         </>
                       )}
                     </button>
