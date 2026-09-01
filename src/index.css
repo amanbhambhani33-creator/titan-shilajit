@@ -62,6 +62,15 @@
   background: #8F6922;
 }
 
+/* Hide scrollbars for mobile carousels & tabs */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Glass & editorial borders */
 .border-gold-subtle {
   border-color: rgba(184, 138, 50, 0.25);

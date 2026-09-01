@@ -89,27 +89,27 @@ export const SplashIntro: React.FC = () => {
         </header>
 
         {/* Centerpiece: Cinematic Title & The Dropping Shilajit Glass Bottle */}
-        <main className="relative flex-1 flex flex-col items-center justify-center w-full px-4 text-center z-10">
+        <main className="relative flex-1 flex flex-col items-center justify-center w-full px-4 py-4 text-center z-10">
           {/* Main Typography Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="mb-6 sm:mb-8"
+            className="mb-4 sm:mb-8"
           >
-            <span className="text-[#D4B66A] text-xs sm:text-sm font-semibold tracking-[0.4em] uppercase block mb-2">
+            <span className="text-[#D4B66A] text-[10px] sm:text-sm font-semibold tracking-[0.35em] uppercase block mb-1 sm:mb-2">
               ESTD. HIMALAYAS
             </span>
-            <h1 className="font-serif text-5xl sm:text-7xl md:text-8xl font-bold tracking-tight text-[#F7F3E8] leading-none drop-shadow-2xl">
+            <h1 className="font-serif text-4xl sm:text-7xl md:text-8xl font-bold tracking-tight text-[#F7F3E8] leading-none drop-shadow-2xl">
               TITAN SHILAJIT
             </h1>
-            <p className="text-xs sm:text-sm text-[#EEE8D7]/80 tracking-[0.25em] uppercase font-sans mt-3 font-light">
+            <p className="text-[10px] sm:text-sm text-[#EEE8D7]/80 tracking-[0.2em] sm:tracking-[0.25em] uppercase font-sans mt-2 sm:mt-3 font-light">
               Pure Power of the Himalayas
             </p>
           </motion.div>
 
           {/* Bottle Stage with Drop Animation & Shockwave Ripple */}
-          <div className="relative w-64 h-64 sm:w-72 sm:h-72 flex items-center justify-center my-2">
+          <div className="relative w-52 h-52 sm:w-72 sm:h-72 flex items-center justify-center my-1 sm:my-2">
             {/* Impact Shockwaves / Pedestal Ripple Glow */}
             {showRipples && (
               <>
@@ -117,21 +117,21 @@ export const SplashIntro: React.FC = () => {
                   initial={{ scale: 0.2, opacity: 0.9 }}
                   animate={{ scale: 2.2, opacity: 0 }}
                   transition={{ duration: 1.6, ease: 'easeOut' }}
-                  className="absolute bottom-10 w-32 h-12 rounded-full border-2 border-[#D4B66A] pointer-events-none"
+                  className="absolute bottom-8 sm:bottom-10 w-28 sm:w-32 h-10 sm:h-12 rounded-full border-2 border-[#D4B66A] pointer-events-none"
                   style={{ boxShadow: '0 0 35px #B88A32' }}
                 />
                 <motion.div
                   initial={{ scale: 0.2, opacity: 0.7 }}
                   animate={{ scale: 1.8, opacity: 0 }}
                   transition={{ duration: 1.4, delay: 0.2, ease: 'easeOut' }}
-                  className="absolute bottom-10 w-32 h-12 rounded-full border border-[#B88A32] pointer-events-none"
+                  className="absolute bottom-8 sm:bottom-10 w-28 sm:w-32 h-10 sm:h-12 rounded-full border border-[#B88A32] pointer-events-none"
                 />
               </>
             )}
 
             {/* Glowing Golden Pedestal Base */}
-            <div className="absolute bottom-10 w-36 h-6 rounded-full bg-gradient-to-r from-transparent via-[#D4B66A]/40 to-transparent blur-md" />
-            <div className="absolute bottom-10 w-28 h-2 rounded-full bg-[#B88A32]/60 blur-xs" />
+            <div className="absolute bottom-8 sm:bottom-10 w-32 sm:w-36 h-5 sm:h-6 rounded-full bg-gradient-to-r from-transparent via-[#D4B66A]/40 to-transparent blur-md" />
+            <div className="absolute bottom-8 sm:bottom-10 w-24 sm:w-28 h-2 rounded-full bg-[#B88A32]/60 blur-xs" />
 
             {/* The Shilajit Amber Glass Jar / Bottle Dropping From Above */}
             <motion.div
@@ -156,7 +156,7 @@ export const SplashIntro: React.FC = () => {
               className="relative z-20 flex flex-col items-center filter drop-shadow-[0_25px_35px_rgba(0,0,0,0.8)]"
             >
               {/* Luxury Amber Glass Shilajit Jar Graphic */}
-              <div className="relative w-36 sm:w-40 h-44 sm:h-48 bg-gradient-to-b from-[#2d1b0d] via-[#1a0f07] to-[#0d0703] rounded-2xl border-2 border-[#B88A32]/60 overflow-hidden shadow-2xl flex flex-col items-center justify-between p-2">
+              <div className="relative w-32 sm:w-40 h-40 sm:h-48 bg-gradient-to-b from-[#2d1b0d] via-[#1a0f07] to-[#0d0703] rounded-2xl border-2 border-[#B88A32]/60 overflow-hidden shadow-2xl flex flex-col items-center justify-between p-2">
                 {/* Gold Metallic Airtight Lid */}
                 <div className="w-full h-8 bg-gradient-to-r from-[#9A7426] via-[#F4DE9C] to-[#8C641D] rounded-t-xl border-b border-[#3b2713] flex items-center justify-center shadow-inner">
                   <div className="w-4/5 h-1 border-t border-b border-black/20" />

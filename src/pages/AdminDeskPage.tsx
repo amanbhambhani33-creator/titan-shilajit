@@ -707,50 +707,50 @@ export const AdminDeskPage: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Top Header with Firebase Auth & Cloud Sync status */}
-        <div className="bg-[#10110F] text-[#F7F3E8] rounded-sm p-6 sm:p-8 border border-[#B88A32]/30 shadow-xl mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="bg-[#10110F] text-[#F7F3E8] rounded-sm p-4 sm:p-6 md:p-8 border border-[#B88A32]/30 shadow-xl mb-6 sm:mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 sm:gap-6">
           <div>
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-[#183D27] text-[#D4B66A] text-[10px] font-bold tracking-widest uppercase border border-[#B88A32]/40 flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#183D27] text-[#D4B66A] text-[9px] sm:text-[10px] font-bold tracking-widest uppercase border border-[#B88A32]/40 flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-[#25D366]" />
-                <span>FIREBASE SECURE ADMIN DESK</span>
+                <span>FIREBASE ADMIN DESK</span>
               </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-[#B88A32]/20 text-[#D4B66A] text-[10px] font-bold tracking-widest uppercase border border-[#B88A32]/40 flex items-center gap-1.5">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#B88A32]/20 text-[#D4B66A] text-[9px] sm:text-[10px] font-bold tracking-widest uppercase border border-[#B88A32]/40 flex items-center gap-1.5">
                 <KeyRound className="w-3 h-3 text-[#D4B66A]" />
-                <span>MASTER CLEARANCE: VERIFIED</span>
+                <span>CLEARANCE VERIFIED</span>
               </span>
               {isFirebaseSynced ? (
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 text-[10px] font-bold tracking-wider uppercase border border-emerald-500/30 flex items-center gap-1">
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 text-[9px] sm:text-[10px] font-bold tracking-wider uppercase border border-emerald-500/30 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   <span>Firestore Synced</span>
                 </span>
               ) : (
-                <span className="px-2.5 py-0.5 rounded-full bg-amber-950/80 text-amber-300 text-[10px] font-bold tracking-wider uppercase border border-amber-500/30">
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-950/80 text-amber-300 text-[9px] sm:text-[10px] font-bold tracking-wider uppercase border border-amber-500/30">
                   Local Ready
                 </span>
               )}
             </div>
-            <h1 className="font-serif text-2xl sm:text-4xl font-bold tracking-tight text-[#F7F3E8]">
+            <h1 className="font-serif text-xl sm:text-3xl md:text-4xl font-bold tracking-tight text-[#F7F3E8]">
               TITAN STORE MANAGER
             </h1>
-            <p className="text-xs text-[#EEE8D7]/75 font-sans mt-1">
+            <p className="text-[11px] sm:text-xs text-[#EEE8D7]/75 font-sans mt-1">
               Logged in as <strong className="text-[#D4B66A]">{user?.email || 'admin@titanshilajit.com'}</strong> • Live catalog, launch banners, and copy control.
             </p>
           </div>
 
           {/* Quick Actions */}
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full md:w-auto">
             <button
               onClick={handleCloudSync}
               disabled={isCloudSyncing}
-              className="px-4 py-2.5 rounded-xs bg-[#B88A32] hover:bg-[#D4B66A] text-[#10110F] text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-md transition-all disabled:opacity-50"
+              className="px-3.5 sm:px-4 py-2.5 rounded-xs bg-[#B88A32] hover:bg-[#D4B66A] text-[#10110F] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md transition-all disabled:opacity-50 min-h-[38px]"
             >
               <Cloud className="w-3.5 h-3.5" />
-              <span>{isCloudSyncing ? 'Syncing...' : 'Sync to Cloud'}</span>
+              <span>{isCloudSyncing ? 'Syncing...' : 'Sync Cloud'}</span>
             </button>
 
             <button
               onClick={handleLockVault}
-              className="px-3.5 py-2.5 rounded-xs bg-amber-950/70 hover:bg-amber-900/90 text-amber-200 border border-amber-500/40 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all"
+              className="px-3 sm:px-3.5 py-2.5 rounded-xs bg-amber-950/70 hover:bg-amber-900/90 text-amber-200 border border-amber-500/40 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all min-h-[38px]"
               title="Lock Admin Vault"
             >
               <Lock className="w-3.5 h-3.5 text-[#D4B66A]" />
@@ -762,17 +762,17 @@ export const AdminDeskPage: React.FC = () => {
                 triggerSplash();
                 showToast('Triggered opening green screen bottle drop intro!');
               }}
-              className="px-4 py-2.5 rounded-xs bg-[#183D27] hover:bg-[#1f4e32] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center gap-2 border border-[#B88A32]/30 transition-all"
+              className="px-3 sm:px-4 py-2.5 rounded-xs bg-[#183D27] hover:bg-[#1f4e32] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-[#B88A32]/30 transition-all min-h-[38px]"
             >
               <Play className="w-3.5 h-3.5 text-[#D4B66A]" />
-              <span>Preview Intro Screen</span>
+              <span>Preview Intro</span>
             </button>
 
             <a
               href="/"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 py-2.5 rounded-xs bg-white/10 hover:bg-white/20 text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all"
+              className="px-3 sm:px-4 py-2.5 rounded-xs bg-white/10 hover:bg-white/20 text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all min-h-[38px]"
             >
               <span>Live Store</span>
               <ExternalLink className="w-3.5 h-3.5" />
@@ -780,7 +780,7 @@ export const AdminDeskPage: React.FC = () => {
 
             <button
               onClick={handleSignOutDesk}
-              className="px-3 py-2.5 rounded-xs bg-red-950/60 hover:bg-red-900/80 text-red-200 border border-red-500/30 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all"
+              className="px-3 py-2.5 rounded-xs bg-red-950/60 hover:bg-red-900/80 text-red-200 border border-red-500/30 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all min-h-[38px]"
               title="Sign Out"
             >
               <LogOut className="w-3.5 h-3.5" />
@@ -790,11 +790,11 @@ export const AdminDeskPage: React.FC = () => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex flex-wrap gap-2 border-b border-[#10110F]/10 pb-4 mb-8">
+        <div className="flex overflow-x-auto no-scrollbar gap-2 border-b border-[#10110F]/10 pb-4 mb-6 sm:mb-8 whitespace-nowrap">
           {[
-            { id: 'products', label: 'Product Inventory & Pricing', icon: Package },
-            { id: 'banners', label: 'Banners & New Launch Banner', icon: ImageIcon },
-            { id: 'developer', label: 'Developer Option: Page Text Editor', icon: FileText },
+            { id: 'products', label: 'Products & Pricing', icon: Package },
+            { id: 'banners', label: 'Banners & Launches', icon: ImageIcon },
+            { id: 'developer', label: 'Developer Text Editor', icon: FileText },
             { id: 'settings', label: 'Store Defaults & Backup', icon: Sliders },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -803,7 +803,7 @@ export const AdminDeskPage: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-5 py-3 rounded-xs text-xs font-bold tracking-wider uppercase flex items-center gap-2 transition-all ${
+                className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-xs text-xs font-bold tracking-wider uppercase flex items-center gap-2 transition-all shrink-0 min-h-[40px] ${
                   isActive
                     ? 'bg-[#183D27] text-[#F7F3E8] shadow-md border-b-2 border-[#B88A32]'
                     : 'bg-white/80 text-[#10110F] hover:bg-[#10110F] hover:text-[#F7F3E8] border border-[#10110F]/10'

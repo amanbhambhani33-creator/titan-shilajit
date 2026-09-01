@@ -21,8 +21,8 @@ export const LaunchProductBanner: React.FC = () => {
         <div className="absolute -bottom-20 -right-20 w-96 h-96 rounded-full bg-[#B88A32] blur-[120px]" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-10 relative z-10">
-        <div className="bg-gradient-to-br from-[#183D27]/80 via-[#10110F] to-[#183D27]/40 border border-[#B88A32]/40 rounded-sm p-6 sm:p-10 lg:p-12 shadow-2xl">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 relative z-10">
+        <div className="bg-gradient-to-br from-[#183D27]/80 via-[#10110F] to-[#183D27]/40 border border-[#B88A32]/40 rounded-sm p-5 sm:p-10 lg:p-12 shadow-2xl">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* Left Content (7 cols) */}
             <div className="lg:col-span-7 flex flex-col items-start">
@@ -38,10 +38,10 @@ export const LaunchProductBanner: React.FC = () => {
               </div>
 
               {/* Title & Subtitle */}
-              <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-[#F7F3E8] leading-tight mb-3">
+              <h2 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold text-[#F7F3E8] leading-tight mb-3">
                 {banner.title}
               </h2>
-              <h3 className="text-base sm:text-lg text-[#EEE8D7]/85 font-medium mb-4 italic font-serif">
+              <h3 className="text-sm sm:text-lg text-[#EEE8D7]/85 font-medium mb-4 italic font-serif">
                 {banner.subtitle}
               </h3>
 
@@ -65,33 +65,33 @@ export const LaunchProductBanner: React.FC = () => {
               )}
 
               {/* Pricing & CTA Buttons */}
-              <div className="flex flex-wrap items-center gap-6 pt-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pt-2 w-full">
                 <div className="flex items-baseline gap-2">
-                  <span className="font-serif text-3xl sm:text-4xl font-bold text-[#D4B66A]">
+                  <span className="font-serif text-2xl sm:text-4xl font-bold text-[#D4B66A]">
                     {banner.priceText}
                   </span>
                   {banner.mrpText && (
-                    <span className="text-sm line-through text-[#EEE8D7]/50 font-sans">
+                    <span className="text-xs sm:text-sm line-through text-[#EEE8D7]/50 font-sans">
                       {banner.mrpText}
                     </span>
                   )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                   <a
                     id="launch-banner-whatsapp-cta"
                     href={getGeneralConciergeWhatsAppUrl()}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-6 sm:px-8 py-3.5 rounded-sm bg-[#25D366] hover:bg-[#1EBE5D] text-[#10110F] font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-lg transition-all"
+                    className="px-6 sm:px-8 py-3.5 rounded-sm bg-[#25D366] hover:bg-[#1EBE5D] text-[#10110F] font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg transition-all min-h-[44px]"
                   >
-                    <MessageCircle className="w-4 h-4" />
+                    <MessageCircle className="w-4 h-4 shrink-0" />
                     <span>{banner.buttonText || 'Order via WhatsApp'}</span>
                   </a>
 
                   <Link
                     to="/shop"
-                    className="px-6 py-3.5 rounded-sm border border-[#F7F3E8]/30 hover:bg-white/10 text-[#F7F3E8] font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all"
+                    className="px-6 py-3.5 rounded-sm border border-[#F7F3E8]/30 hover:bg-white/10 text-[#F7F3E8] font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all min-h-[44px]"
                   >
                     <span>View Shop</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -101,8 +101,8 @@ export const LaunchProductBanner: React.FC = () => {
             </div>
 
             {/* Right Showcase Image (5 cols) */}
-            <div className="lg:col-span-5 relative flex items-center justify-center">
-              <div className="relative w-full max-w-[340px] sm:max-w-[400px] aspect-4/5 rounded-sm overflow-hidden border-2 border-[#B88A32]/50 shadow-2xl group">
+            <div className="lg:col-span-5 relative flex items-center justify-center mt-4 lg:mt-0">
+              <div className="relative w-full max-w-[280px] sm:max-w-[400px] aspect-4/5 rounded-sm overflow-hidden border-2 border-[#B88A32]/50 shadow-2xl group">
                 <img
                   src={banner.imageUrl}
                   alt={banner.title}
@@ -111,16 +111,16 @@ export const LaunchProductBanner: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#10110F] via-transparent to-transparent opacity-60" />
 
                 {/* Floating Banner Label */}
-                <div className="absolute bottom-4 left-4 right-4 bg-[#10110F]/90 backdrop-blur-sm border border-[#B88A32]/40 p-3 rounded-xs flex items-center justify-between">
+                <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 bg-[#10110F]/90 backdrop-blur-sm border border-[#B88A32]/40 p-2.5 sm:p-3 rounded-xs flex items-center justify-between">
                   <div>
-                    <span className="text-[9px] uppercase tracking-widest text-[#D4B66A] font-bold block">
+                    <span className="text-[8px] sm:text-[9px] uppercase tracking-widest text-[#D4B66A] font-bold block">
                       LIMITED BATCH HARVEST
                     </span>
                     <span className="font-serif text-xs font-bold text-[#F7F3E8]">
                       Certified Authentic Himalayan
                     </span>
                   </div>
-                  <ShieldCheck className="w-5 h-5 text-[#25D366]" />
+                  <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#25D366] shrink-0" />
                 </div>
               </div>
             </div>

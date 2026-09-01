@@ -115,19 +115,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <Link
-              to={`/product/${product.slug}`}
-              className="py-2.5 px-2 rounded-xs border border-[#10110F]/15 text-[#10110F] text-[10px] font-bold tracking-wider uppercase text-center hover:bg-[#10110F] hover:text-[#F7F3E8] transition-all"
+            <button
+              onClick={() => addToCart(product, 1)}
+              aria-label={`Add ${product.name} to Cart`}
+              className="py-2.5 px-2 rounded-xs border border-[#10110F]/20 text-[#10110F] text-[10px] font-bold tracking-wider uppercase text-center hover:bg-[#10110F] hover:text-[#F7F3E8] transition-all flex items-center justify-center gap-1.5 min-h-[40px]"
             >
-              DETAILS
-            </Link>
+              <ShoppingBag className="w-3.5 h-3.5 text-[#B88A32]" />
+              <span>ADD TO CART</span>
+            </button>
 
             <a
               id={`buy-whatsapp-${product.slug}`}
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="py-2.5 px-2 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] text-[10px] font-bold tracking-wider uppercase flex items-center justify-center gap-1.5 shadow-xs transition-all"
+              aria-label={`Order ${product.name} on WhatsApp`}
+              className="py-2.5 px-2 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] text-[10px] font-bold tracking-wider uppercase flex items-center justify-center gap-1.5 shadow-xs transition-all min-h-[40px]"
             >
               <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
               <span>WHATSAPP</span>
