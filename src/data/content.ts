@@ -1,6 +1,6 @@
 export const BRAND_CONTACT = {
   name: 'Titan Shilajit',
-  tagline: 'Pure Power of the Himalayas',
+  tagline: 'Raw Geological Gold of the High Himalayas',
   phone: '+91 99584 74229',
   phoneRaw: '919958474229',
   phoneDisplay: '99584 74229',
@@ -14,137 +14,137 @@ export const BRAND_CONTACT = {
 
 export const TRUST_STRIP_ITEMS = [
   {
-    title: 'HIMALAYAN SOURCED',
-    subtitle: 'Harvested at 16,000+ ft altitude from pristine Kashmir & Ladakh rock faces'
+    title: '16,000+ FT HIGH HARVEST',
+    subtitle: 'Wild-gathered from sheer granite fissures in Kashmir & Ladakh peaks'
   },
   {
-    title: 'LAB TESTED',
-    subtitle: 'Third-party tested for 84+ ionic trace minerals and strict heavy metal limits'
+    title: 'SURYA TAPI SUN-PURIFIED',
+    subtitle: 'Slow-filtered through glacial spring water and sun-cured over 40 days'
   },
   {
-    title: 'NO ADDITIVES',
-    subtitle: '100% pure raw resin with zero binders, fillers, preservatives, or artificial sugar'
+    title: '> 75% NATURAL FULVIC DENSITY',
+    subtitle: 'Certified rich in 84+ bio-ionic trace elements and humic compounds'
   },
   {
-    title: 'PREMIUM QUALITY',
-    subtitle: 'Purified with natural spring water using traditional Ayurvedic Shodhana'
+    title: 'NABL CERTIFIED ZERO HEAVY METALS',
+    subtitle: 'Batch-tested and certified free from lead, arsenic, mercury, or fillers'
   }
 ];
 
 export const SHILAJIT_BENEFITS = [
   {
     id: 'energy',
-    title: 'Cellular Energy',
-    tagline: 'Mitochondrial Support',
-    description: 'Fulvic acid helps transport ionic minerals directly into cells, aiding natural ATP production without the crash of caffeine.'
+    title: 'Cellular ATP Surge',
+    tagline: 'Mitochondrial Awakening',
+    description: 'Fulvic molecules act as biological conduits, carrying ionic micro-minerals straight to your cells to ignite natural, calm energy that never crashes.'
   },
   {
     id: 'stamina',
-    title: 'Stamina & Endurance',
-    tagline: 'Sustained Output',
-    description: 'Traditionally valued for assisting active bodies in maintaining sustained physical endurance during daily exertion.'
+    title: 'Unbreakable Stamina',
+    tagline: 'Mountain Resilience',
+    description: 'Revered for three thousand years by Himalayan yogis and warriors to maintain relentless physical endurance and sustained lung capacity.'
   },
   {
     id: 'strength',
-    title: 'Physical Strength',
-    tagline: 'Athletic Resilience',
-    description: 'Provides over 84+ trace bio-minerals that support muscular integrity and physical vigor when combined with regular exercise.'
+    title: 'Deep Muscular Vigor',
+    tagline: 'Dense Bio-Minerals',
+    description: 'Supplies 84+ elemental trace minerals that nourish deep skeletal tissues, accelerate workout recovery, and maintain core physical power.'
   },
   {
     id: 'focus',
-    title: 'Focus & Mental Clarity',
-    tagline: 'Cognitive Calm',
-    description: 'Bioactive dibenzopyrones and fulvic molecules support daily cognitive balance and calm concentration under demanding schedules.'
+    title: 'Razor-Sharp Cognitive Calm',
+    tagline: 'Lucid Mind',
+    description: 'Active dibenzo-alpha-pyrones soothe everyday neurological fatigue, fostering deep flow states and crystal-clear decision making.'
   },
   {
     id: 'wellness',
-    title: 'Overall Wellness',
-    tagline: 'Nutrient Assimilation',
-    description: 'Acts as a natural bio-enhancer, assisting the body in absorbing and assimilating essential nutrients from your daily diet.'
+    title: 'Peak Nutrient Assimilation',
+    tagline: 'Ayurvedic Yogavahi',
+    description: 'Classical Ayurvedic texts praise Shilajit as the ultimate "Yogavahi"—a potent catalyst that amplifies the absorption of every meal and nutrient.'
   },
   {
     id: 'stress',
-    title: 'Stress Adaptation',
-    tagline: 'Daily Balance',
-    description: 'A celebrated natural adaptogen in traditional Ayurvedic texts, revered for helping the system adapt to physical and mental strain.'
+    title: 'Adaptogenic Hormonal Balance',
+    tagline: 'Stress Shield',
+    description: 'A sovereign Rasayana that recalibrates your cortisol response, shielding the nervous system from modern sensory overload and burnout.'
   },
   {
     id: 'recovery',
-    title: 'Post-Activity Recovery',
-    tagline: 'Restorative Care',
-    description: 'Replenishes lost micro-nutrients and electrolytes post-workout, assisting in standard tissue rejuvenation.'
+    title: 'Rapid Tissue Restoration',
+    tagline: 'Post-Exertion Care',
+    description: 'Instantly replenishes depleted ionic electrolytes and trace minerals, reducing morning stiffness and revitalizing exhausted muscle fibers.'
   },
   {
     id: 'vitality',
-    title: 'Men’s & Vital Balance',
-    tagline: 'Peak Drive',
-    description: 'Centuries of traditional use for supporting holistic male vitality, drive, and foundational metabolic vigor.'
+    title: 'Raw Prana & Prime Drive',
+    tagline: 'Foundational Vitality',
+    description: 'Awakens natural reproductive and metabolic fire, restoring peak morning vigor, confidence, and enduring primal vitality.'
   }
 ];
 
 export const SOURCING_STEPS = [
   {
     step: '01',
-    title: '16,000+ Ft Himalayan Harvest',
+    title: '16,000+ Ft Alpine Rock Harvest',
     tag: 'Extreme Altitude',
-    description: 'Crude Shilajit rocks are gently hand-gathered in high Ladakh and Kashmir ranges where intense summer sun naturally warms rock fissures.'
+    description: 'During peak summer heat, our native harvesters ascend the sheer granite cliffs of Ladakh where golden rock resin seeps naturally from geological fractures.'
   },
   {
     step: '02',
-    title: 'Glacial Spring Dissolution',
+    title: 'Glacial Spring Shodhana',
     tag: 'Natural Extraction',
-    description: 'Raw exudate is dissolved in pure mountain spring water, allowing natural separation of non-soluble minerals and rock fragments.'
+    description: 'Crude resin rocks are dissolved in pristine mountain spring water, allowing natural gravitational separation of sediments without harsh chemicals.'
   },
   {
     step: '03',
-    title: 'Sun-Cured Surya Tapi Purification',
-    tag: 'Ayurvedic Shodhana',
-    description: 'Slow evaporated under direct Himalayan sunlight for several weeks, preserving enzymatic bio-compounds without industrial boiling.'
+    title: 'Traditional Surya Tapi Curing',
+    tag: 'Sun-Infused Potency',
+    description: 'Filtered through organic cotton filters and slowly cured beneath direct Himalayan sunlight for 40+ days to preserve delicate live enzymes.'
   },
   {
     step: '04',
-    title: 'NABL Lab Standardization',
-    tag: 'Certified Purity',
-    description: 'Independently tested for heavy metals (Lead, Arsenic, Mercury, Cadmium) and certified for >75% active Fulvic Acid density.'
+    title: 'NABL Certified Standardization',
+    tag: 'Pure & Uncut',
+    description: 'Every harvest batch undergoes rigorous NABL lab assays, verifying >75% active Fulvic Acid and complete freedom from heavy metals.'
   }
 ];
 
 export const SOURCING_JOURNEY = [
   {
     step: '01',
-    title: 'The High Himalayas',
-    subtitle: '16,000+ Feet Altitude',
-    description: 'Our collectors ascend to extreme high-altitude rocky peaks in the Himalayan ranges where untouched mineral exudates seep from rock fissures under intense summer sun.'
+    title: 'The Great Himalayan Massif',
+    subtitle: '16,000 to 18,000 Feet Altitude',
+    description: 'Our traditional collectors scale vertical rock faces where extreme solar radiation melts millions of years of compressed botanical bio-matter into thick golden-black resin.'
   },
   {
     step: '02',
-    title: 'Ethical Wild Harvesting',
-    subtitle: 'Pristine Hand Collection',
-    description: 'Raw crude Shilajit rocks are gently hand-gathered without heavy machinery or environmental degradation, preserving the delicate alpine ecosystem.'
+    title: 'Sustainably Hand-Chiseled',
+    subtitle: 'Reverent Wild Foraging',
+    description: 'Harvested in micro-batches with manual chisels, preserving delicate high-alpine ecosystems without industrial quarrying.'
   },
   {
     step: '03',
-    title: 'Traditional Spring Purification',
-    subtitle: 'Ayurvedic Shodhana Process',
-    description: 'Crude material is dissolved in pure mountain spring water, filtered through multiple natural sediment layers, and slow sun-cured over several weeks.'
+    title: 'Classical Spring Shodhana',
+    subtitle: 'Purification in Mountain Water',
+    description: 'Dissolved exclusively in wild glacial spring water and repeatedly decanted to eliminate all inert sand and rock silt naturally.'
   },
   {
     step: '04',
-    title: 'NABL Accredited Testing',
-    subtitle: 'Heavy Metal & Mineral Assay',
-    description: 'Every batch is tested in accredited laboratories for heavy metal thresholds (Lead, Arsenic, Mercury, Cadmium) and verified fulvic acid concentration (>75%).'
+    title: '40-Day Surya Tapi Sun Curing',
+    subtitle: 'Zero Heat Damage',
+    description: 'Unlike commercial Shilajit boiled in industrial vats, Titan is thickened under the open sun, keeping heat-sensitive fulvic complexes alive.'
   },
   {
     step: '05',
-    title: 'Dark Amber Sealing',
-    subtitle: 'UV Protection & Freshness',
-    description: 'Resin is vacuum-sealed in UV-impervious amber glass jars, while honey sticks are nitrogen-flushed in single-serve food-grade sachets.'
+    title: 'Obsidian Amber Glass Vault',
+    subtitle: 'UV Light Shielding',
+    description: 'Packaged directly into heavy UV-impervious amber glass jars to protect its raw molecular integrity from oxidation until you break the gold seal.'
   },
   {
     step: '06',
-    title: 'Your Daily Ritual',
-    subtitle: 'Sustained Modern Vitality',
-    description: 'Delivered directly to your doorstep with our dedicated WhatsApp concierge guidance for seamless integration into your morning routine.'
+    title: 'The Morning Titan Ritual',
+    subtitle: 'Pure Daily Awakening',
+    description: 'Dispatched fresh to your hands with our precision stainless measuring spoon and dedicated WhatsApp concierge guidance.'
   }
 ];
 

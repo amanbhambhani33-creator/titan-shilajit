@@ -1,0 +1,40 @@
+{
+  "entities": {
+    "StoreContent": {
+      "collection": "store_content",
+      "fields": {
+        "hero": { "type": "map" },
+        "trustStrip": { "type": "array" },
+        "brandStory": { "type": "map" },
+        "launchProduct": { "type": "map" },
+        "footer": { "type": "map" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "Product": {
+      "collection": "products",
+      "fields": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "slug": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "price": { "type": "number" },
+        "originalPrice": { "type": "number" },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "number" },
+        "category": { "type": "string" },
+        "badge": { "type": "string" },
+        "harvestAltitude": { "type": "string" },
+        "fulvicContent": { "type": "string" },
+        "size": { "type": "string" },
+        "inStock": { "type": "boolean" },
+        "image": { "type": "string" },
+        "images": { "type": "array" },
+        "description": { "type": "string" },
+        "benefits": { "type": "array" },
+        "usage": { "type": "string" },
+        "ingredients": { "type": "string" }
+      }
+    }
+  }
+}

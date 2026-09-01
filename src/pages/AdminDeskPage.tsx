@@ -16,18 +16,31 @@ import {
   ExternalLink,
   ShieldCheck,
   Eye,
+  EyeOff,
   AlertCircle,
   HelpCircle,
   Tag,
-  DollarSign
+  DollarSign,
+  Lock,
+  Mail,
+  LogOut,
+  CloudCheck,
+  Cloud,
+  Sparkles,
+  KeyRound,
+  UserCheck
 } from 'lucide-react';
 import { useStoreContent, HeroBannerConfig, LaunchBannerConfig, BrandStoryConfig } from '../context/StoreContentContext';
+import { useAuth } from '../context/AuthContext';
 import { Product } from '../types';
 
 export const AdminDeskPage: React.FC = () => {
+  const { user, isAdmin, loading: authLoading, signIn, signUp, signOut, resetPassword } = useAuth();
+
   const {
     products,
     content,
+    isFirebaseSynced,
     addProduct,
     updateProduct,
     deleteProduct,
@@ -38,12 +51,24 @@ export const AdminDeskPage: React.FC = () => {
     updateBrandStory,
     updateTrustStripItem,
     updatePageContent,
+    saveAllToFirebase,
     resetAllContent,
     triggerSplash,
   } = useStoreContent();
 
   const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'developer' | 'settings'>('products');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+
+  // Authentication Form State
+  const [authMode, setAuthMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
+  const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authSuccess, setAuthSuccess] = useState<string | null>(null);
+  const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
 
   // Edit Product Modal / Drawer State
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -86,6 +111,62 @@ export const AdminDeskPage: React.FC = () => {
     setTimeout(() => {
       setSuccessMessage(null);
     }, 3500);
+  };
+
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthSuccess(null);
+    setIsAuthSubmitting(true);
+
+    try {
+      if (authMode === 'signin') {
+        if (!emailInput.trim() || !passwordInput) {
+          throw new Error('Please enter both your email address and password.');
+        }
+        await signIn(emailInput.trim(), passwordInput);
+        showToast(`Welcome back, ${emailInput.trim()}`);
+      } else if (authMode === 'signup') {
+        if (!emailInput.trim() || !passwordInput) {
+          throw new Error('Please fill in all email and password fields.');
+        }
+        if (passwordInput !== confirmPasswordInput) {
+          throw new Error('Passwords do not match. Please re-enter.');
+        }
+        if (passwordInput.length < 6) {
+          throw new Error('Password must be at least 6 characters long.');
+        }
+        await signUp(emailInput.trim(), passwordInput);
+        showToast('Admin account created successfully.');
+      } else if (authMode === 'forgot') {
+        if (!emailInput.trim()) {
+          throw new Error('Please enter your admin email address.');
+        }
+        await resetPassword(emailInput.trim());
+        setAuthSuccess('Password reset link dispatched to your email.');
+      }
+    } catch (err: any) {
+      setAuthError(err.message || 'Authentication failed. Please check credentials.');
+    } finally {
+      setIsAuthSubmitting(false);
+    }
+  };
+
+  const fillDefaultAdminCredentials = () => {
+    setEmailInput('admin@titanshilajit.com');
+    setPasswordInput('TitanAdmin2026!');
+    setAuthError(null);
+  };
+
+  const handleCloudSync = async () => {
+    setIsCloudSyncing(true);
+    const success = await saveAllToFirebase();
+    setIsCloudSyncing(false);
+    if (success) {
+      showToast('All changes & catalog successfully synced to Firestore!');
+    } else {
+      showToast('Saved locally. (Cloud sync available with active Firebase connection)');
+    }
   };
 
   // Handle saving product edits
@@ -148,6 +229,189 @@ export const AdminDeskPage: React.FC = () => {
     showToast('New product added to catalog!');
   };
 
+  // IF NOT AUTHENTICATED: SHOW ELEGANT FIREBASE AUTH LOGIN CARD
+  if (!isAdmin && !authLoading) {
+    return (
+      <div id="admin-login-screen" className="min-h-screen pt-28 pb-20 bg-[#10110F] text-[#F7F3E8] flex items-center justify-center px-4">
+        <div className="w-full max-w-md bg-[#183D27]/30 border border-[#B88A32]/40 rounded-sm p-8 sm:p-10 shadow-2xl backdrop-blur-md relative overflow-hidden">
+          {/* Ambient Glow */}
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#B88A32]/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[#183D27]/40 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Logo & Header */}
+          <div className="text-center mb-8 relative z-10">
+            <div className="w-12 h-12 mx-auto bg-[#183D27] border border-[#B88A32] rounded-xs flex items-center justify-center mb-4 shadow-lg">
+              <Lock className="w-6 h-6 text-[#D4B66A]" />
+            </div>
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4B66A] font-bold block mb-1">
+              FIREBASE AUTHENTICATED PORTAL
+            </span>
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#F7F3E8] tracking-tight">
+              TITAN ADMIN DESK
+            </h1>
+            <p className="text-xs text-[#EEE8D7]/70 font-sans mt-1">
+              Secure merchant access for product catalogs, launch banners, and page copy.
+            </p>
+          </div>
+
+          {/* Auth Mode Toggle Tabs */}
+          <div className="flex border-b border-[#B88A32]/20 mb-6 relative z-10">
+            <button
+              onClick={() => {
+                setAuthMode('signin');
+                setAuthError(null);
+                setAuthSuccess(null);
+              }}
+              className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
+                authMode === 'signin'
+                  ? 'border-[#D4B66A] text-[#D4B66A]'
+                  : 'border-transparent text-[#EEE8D7]/50 hover:text-[#EEE8D7]'
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => {
+                setAuthMode('signup');
+                setAuthError(null);
+                setAuthSuccess(null);
+              }}
+              className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
+                authMode === 'signup'
+                  ? 'border-[#D4B66A] text-[#D4B66A]'
+                  : 'border-transparent text-[#EEE8D7]/50 hover:text-[#EEE8D7]'
+              }`}
+            >
+              Create Account
+            </button>
+          </div>
+
+          {/* Alerts */}
+          {authError && (
+            <div className="mb-5 p-3.5 rounded-xs bg-red-950/60 border border-red-500/40 text-red-200 text-xs flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <span>{authError}</span>
+            </div>
+          )}
+
+          {authSuccess && (
+            <div className="mb-5 p-3.5 rounded-xs bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 text-xs flex items-start gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <span>{authSuccess}</span>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleAuthSubmit} className="space-y-4 relative z-10">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#EEE8D7]/90 mb-1.5 flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-[#D4B66A]" />
+                <span>Admin Email</span>
+              </label>
+              <input
+                type="email"
+                required
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                placeholder="admin@titanshilajit.com"
+                className="w-full px-4 py-3 rounded-xs bg-[#10110F] border border-[#B88A32]/30 text-[#F7F3E8] text-xs focus:border-[#D4B66A] focus:outline-none transition-colors"
+              />
+            </div>
+
+            {authMode !== 'forgot' && (
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#EEE8D7]/90 flex items-center gap-1.5">
+                    <KeyRound className="w-3.5 h-3.5 text-[#D4B66A]" />
+                    <span>Password</span>
+                  </label>
+                  {authMode === 'signin' && (
+                    <button
+                      type="button"
+                      onClick={() => setAuthMode('forgot')}
+                      className="text-[10px] text-[#D4B66A] hover:underline"
+                    >
+                      Forgot?
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    placeholder="••••••••••••"
+                    className="w-full px-4 py-3 rounded-xs bg-[#10110F] border border-[#B88A32]/30 text-[#F7F3E8] text-xs pr-10 focus:border-[#D4B66A] focus:outline-none transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#EEE8D7]/60 hover:text-[#EEE8D7]"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {authMode === 'signup' && (
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#EEE8D7]/90 mb-1.5 flex items-center gap-1.5">
+                  <KeyRound className="w-3.5 h-3.5 text-[#D4B66A]" />
+                  <span>Confirm Password</span>
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={confirmPasswordInput}
+                  onChange={(e) => setConfirmPasswordInput(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="w-full px-4 py-3 rounded-xs bg-[#10110F] border border-[#B88A32]/30 text-[#F7F3E8] text-xs focus:border-[#D4B66A] focus:outline-none transition-colors"
+                />
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isAuthSubmitting}
+              className="w-full py-3.5 mt-2 rounded-xs bg-[#B88A32] hover:bg-[#D4B66A] text-[#10110F] font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg transition-all disabled:opacity-50"
+            >
+              {isAuthSubmitting ? (
+                <span>Authenticating with Firebase...</span>
+              ) : authMode === 'signin' ? (
+                <>
+                  <UserCheck className="w-4 h-4" />
+                  <span>Enter Titan Admin Desk</span>
+                </>
+              ) : authMode === 'signup' ? (
+                <>
+                  <Plus className="w-4 h-4" />
+                  <span>Create Admin Credentials</span>
+                </>
+              ) : (
+                <span>Send Password Reset Link</span>
+              )}
+            </button>
+          </form>
+
+          {/* Quick Demo Helper */}
+          <div className="mt-6 pt-5 border-t border-[#B88A32]/20 text-center relative z-10">
+            <button
+              onClick={fillDefaultAdminCredentials}
+              className="text-[11px] text-[#D4B66A] hover:text-[#FFFFFF] underline font-medium"
+            >
+              Autofill Default Admin Credentials
+            </button>
+            <div className="text-[10px] text-[#EEE8D7]/50 mt-1">
+              (or create your own custom email/password above)
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div id="admin-desk-page" className="min-h-screen pt-24 pb-20 bg-[#F7F3E8] text-[#10110F]">
       {/* Toast Notification */}
@@ -159,25 +423,44 @@ export const AdminDeskPage: React.FC = () => {
       )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Top Header */}
+        {/* Top Header with Firebase Auth & Cloud Sync status */}
         <div className="bg-[#10110F] text-[#F7F3E8] rounded-sm p-6 sm:p-8 border border-[#B88A32]/30 shadow-xl mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-[#183D27] text-[#D4B66A] text-[10px] font-bold tracking-widest uppercase border border-[#B88A32]/40">
-                ADMIN DESK & DEVELOPER OPTIONS
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#183D27] text-[#D4B66A] text-[10px] font-bold tracking-widest uppercase border border-[#B88A32]/40 flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#25D366]" />
+                <span>FIREBASE SECURE ADMIN DESK</span>
               </span>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              {isFirebaseSynced ? (
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 text-[10px] font-bold tracking-wider uppercase border border-emerald-500/30 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Firestore Synced</span>
+                </span>
+              ) : (
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-950/80 text-amber-300 text-[10px] font-bold tracking-wider uppercase border border-amber-500/30">
+                  Local Ready
+                </span>
+              )}
             </div>
             <h1 className="font-serif text-2xl sm:text-4xl font-bold tracking-tight text-[#F7F3E8]">
               TITAN STORE MANAGER
             </h1>
             <p className="text-xs text-[#EEE8D7]/75 font-sans mt-1">
-              Customize products, update prices, change banner images, edit page texts, and configure launch highlights.
+              Logged in as <strong className="text-[#D4B66A]">{user?.email || 'admin@titanshilajit.com'}</strong> • Live catalog, launch banners, and copy control.
             </p>
           </div>
 
           {/* Quick Actions */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              onClick={handleCloudSync}
+              disabled={isCloudSyncing}
+              className="px-4 py-2.5 rounded-xs bg-[#B88A32] hover:bg-[#D4B66A] text-[#10110F] text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-md transition-all disabled:opacity-50"
+            >
+              <Cloud className="w-3.5 h-3.5" />
+              <span>{isCloudSyncing ? 'Syncing...' : 'Sync to Cloud'}</span>
+            </button>
+
             <button
               onClick={() => {
                 triggerSplash();
@@ -195,9 +478,21 @@ export const AdminDeskPage: React.FC = () => {
               rel="noopener noreferrer"
               className="px-4 py-2.5 rounded-xs bg-white/10 hover:bg-white/20 text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all"
             >
-              <span>View Live Store</span>
+              <span>Live Store</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
+
+            <button
+              onClick={() => {
+                signOut();
+                showToast('Signed out of admin desk.');
+              }}
+              className="px-3 py-2.5 rounded-xs bg-red-950/60 hover:bg-red-900/80 text-red-200 border border-red-500/30 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all"
+              title="Sign Out"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </button>
           </div>
         </div>
 

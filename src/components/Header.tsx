@@ -49,23 +49,44 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onOpenAdvisor }) =
         id="main-header"
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled || !isHome
-            ? 'h-20 bg-[#F7F3E8]/95 backdrop-blur-md shadow-xs border-b border-[#10110F]/5 text-[#10110F]'
-            : 'h-20 bg-[#F7F3E8] border-b border-[#10110F]/5 text-[#10110F]'
+            ? 'bg-[#F7F3E8]/95 backdrop-blur-md shadow-xs border-b border-[#10110F]/5 text-[#10110F]'
+            : 'bg-[#F7F3E8] border-b border-[#10110F]/5 text-[#10110F]'
         }`}
       >
-        <div className="h-full max-w-7xl mx-auto px-6 lg:px-10 flex items-center justify-between">
-          {/* Logo */}
+        {/* Top Gold & White Mixed Headline Announcement Strip */}
+        <div className="bg-[#10110F] text-[#F7F3E8] border-b border-[#B88A32]/30 py-1.5 px-4 text-center text-[10px] sm:text-xs tracking-widest uppercase flex items-center justify-center gap-2 overflow-hidden shadow-inner">
+          <span className="text-[#F7F3E8] font-bold">100% PURE HIMALAYAN RESIN</span>
+          <span className="text-[#D4B66A] font-semibold hidden sm:inline">• 16,000+ FT HIGH HARVEST •</span>
+          <span className="text-[#F7F3E8] font-light hidden md:inline">FREE EXPRESS PAN-INDIA DELIVERY</span>
+          <a
+            href={getGeneralConciergeWhatsAppUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-1 text-[#D4B66A] hover:text-[#FFFFFF] underline font-bold tracking-wider transition-colors inline-flex items-center gap-1"
+          >
+            <span>ORDER DIRECT</span>
+          </a>
+        </div>
+
+        <div className="h-16 sm:h-20 max-w-7xl mx-auto px-6 lg:px-10 flex items-center justify-between">
+          {/* Logo with Gold & White Mixed Headline Typography */}
           <Link
             to="/"
             id="brand-logo-link"
             className="flex items-center gap-2.5 group focus:outline-none"
           >
-            <div className="w-8 h-8 bg-[#183D27] flex items-center justify-center rounded-sm shadow-xs transition-transform group-hover:scale-105">
-              <span className="text-[#B88A32] font-serif text-lg font-bold">T</span>
+            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-[#183D27] border border-[#B88A32]/40 flex items-center justify-center rounded-sm shadow-xs transition-transform group-hover:scale-105">
+              <span className="text-[#D4B66A] font-serif text-lg sm:text-xl font-bold">T</span>
             </div>
-            <span className="font-serif text-xl font-bold tracking-tight uppercase text-[#10110F]">
-              Titan Shilajit
-            </span>
+            <div className="flex flex-col">
+              <span className="font-serif text-lg sm:text-xl font-bold tracking-tight uppercase leading-none">
+                <span className="text-[#10110F] group-hover:text-[#183D27] transition-colors">TITAN </span>
+                <span className="text-[#B88A32] drop-shadow-xs">SHILAJIT</span>
+              </span>
+              <span className="text-[9px] uppercase tracking-[0.25em] text-[#183D27] font-semibold mt-0.5 opacity-80 hidden sm:block">
+                Himalayan Apothecary
+              </span>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}

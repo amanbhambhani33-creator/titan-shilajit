@@ -41,10 +41,14 @@ export const HeroSection: React.FC = () => {
               {hero.kicker}
             </span>
 
-            <h1 className="text-[#F7F3E8] font-serif text-5xl sm:text-6xl xl:text-7xl font-bold leading-[0.92] mb-6 tracking-tight">
-              {hero.headlineLine1}<br />
-              {hero.headlineLine2}<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F7F3E8] via-[#D4B66A] to-[#66704B]">
+            <h1 className="font-serif text-5xl sm:text-6xl xl:text-7xl font-bold leading-[0.94] mb-6 tracking-tight">
+              <span className="text-[#F7F3E8] block drop-shadow-md">
+                {hero.headlineLine1}
+              </span>
+              <span className="text-[#D4B66A] block drop-shadow-[0_3px_15px_rgba(212,182,106,0.35)]">
+                {hero.headlineLine2}
+              </span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFFFFF] via-[#E8CA7D] to-[#D4B66A] block">
                 {hero.headlineLine3}
               </span>
             </h1>
