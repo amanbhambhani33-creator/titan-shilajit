@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-serif: 'Cormorant Garamond', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-display: 'Cinzel', 'Cormorant Garamond', Georgia, serif;
+
+    --color-charcoal: #10110F;
+    --color-forest: #183D27;
+    --color-deep-green: #285A35;
+    --color-olive: #66704B;
+    --color-ivory: #F7F3E8;
+    --color-cream: #EEE8D7;
+    --color-gold: #B88A32;
+    --color-champagne: #D4B66A;
+    --color-earth: #4A3322;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-ivory);
+    color: var(--color-charcoal);
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, .font-serif {
+    font-family: var(--font-serif);
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+  }
+}
+
+/* Subtle luxury grain */
+.bg-grain {
+  background-image: radial-gradient(rgba(16, 17, 15, 0.04) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.bg-grain-dark {
+  background-image: radial-gradient(rgba(247, 243, 232, 0.04) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #EEE8D7;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #B88A32;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8F6922;
+}
+
+/* Glass & editorial borders */
+.border-gold-subtle {
+  border-color: rgba(184, 138, 50, 0.25);
+}
+
+.border-ivory-subtle {
+  border-color: rgba(247, 243, 232, 0.15);
+}
+
+/* Text glow & luxury accents */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #D4B66A 0%, #B88A32 50%, #E8CD82 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
