@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { X, Trash2, Plus, Minus, MessageCircle, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { getCartCheckoutWhatsAppUrl } from '../utils/whatsapp';
+import { AnnouncementBar } from './AnnouncementBar';
 
 export const CartDrawer: React.FC = () => {
   const { items, isOpen, closeCart, updateQuantity, removeFromCart, totalItems, totalPrice } = useCart();
@@ -62,73 +63,91 @@ export const CartDrawer: React.FC = () => {
             </div>
           ) : (
             <div className="py-4 divide-y divide-[#10110F]/10 flex flex-col gap-4">
-              {items.map((item) => (
-                <div key={item.product.id} className="pt-4 first:pt-0 flex gap-4 items-center">
-                  <img
-                    src={item.product.images[0]}
-                    alt={item.product.name}
-                    className="w-18 h-18 object-cover rounded-sm border border-[#10110F]/10 shrink-0 bg-[#10110F]"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-serif text-sm font-semibold text-[#10110F] truncate">
-                      {item.product.name}
-                    </h4>
-                    <p className="text-xs text-[#66704B] font-sans">{item.product.size}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="font-semibold text-sm text-[#10110F]">
-                        ₹{item.product.price}
-                      </span>
-                      {item.product.mrp && (
-                        <span className="text-xs text-gray-500 line-through">
-                          ₹{item.product.mrp}
-                        </span>
-                      )}
-                    </div>
+              {items.map((item) => {
+                const itemKey = item.id || (item.selectedPack ? `${item.product.id}-${item.selectedPack.id}` : item.product.id);
+                const displayImage = item.selectedPack ? item.selectedPack.image : item.product.images[0];
+                const unitPrice = item.selectedPack ? item.selectedPack.price : item.product.price;
+                const unitMrp = item.selectedPack ? item.selectedPack.mrp : item.product.mrp;
+                const displaySize = item.selectedPack ? item.selectedPack.quantityText : item.product.size;
 
-                    {/* Quantity Stepper */}
-                    <div className="flex items-center gap-3 mt-2">
-                      <div className="flex items-center border border-[#10110F]/20 rounded-sm bg-white">
-                        <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                          aria-label="Decrease quantity"
-                          className="px-2 py-1 text-xs hover:bg-[#EEE8D7] text-[#10110F]"
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <span className="px-2 text-xs font-semibold">{item.quantity}</span>
-                        <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                          aria-label="Increase quantity"
-                          className="px-2 py-1 text-xs hover:bg-[#EEE8D7] text-[#10110F]"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
+                return (
+                  <div key={itemKey} className="pt-4 first:pt-0 flex gap-4 items-center">
+                    <img
+                      src={displayImage}
+                      alt={item.product.name}
+                      className="w-18 h-18 object-cover rounded-sm border border-[#10110F]/10 shrink-0 bg-[#10110F]"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h4 className="font-serif text-sm font-semibold text-[#10110F] truncate">
+                          {item.product.name}
+                        </h4>
+                        {item.selectedPack && (
+                          <span className="text-[9px] font-bold uppercase tracking-wider bg-[#183D27] text-[#D4B66A] px-1.5 py-0.2 rounded-xs">
+                            {item.selectedPack.name}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-[#66704B] font-sans mt-0.5">{displaySize}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="font-semibold text-sm text-[#10110F]">
+                          ₹{unitPrice}
+                        </span>
+                        {unitMrp && (
+                          <span className="text-xs text-gray-500 line-through">
+                            ₹{unitMrp}
+                          </span>
+                        )}
                       </div>
 
-                      <button
-                        onClick={() => removeFromCart(item.product.id)}
-                        aria-label="Remove item"
-                        className="text-red-700/70 hover:text-red-700 p-1"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {/* Quantity Stepper */}
+                      <div className="flex items-center gap-3 mt-2">
+                        <div className="flex items-center border border-[#10110F]/20 rounded-sm bg-white">
+                          <button
+                            onClick={() => updateQuantity(itemKey, item.quantity - 1)}
+                            aria-label="Decrease quantity"
+                            className="px-2 py-1 text-xs hover:bg-[#EEE8D7] text-[#10110F]"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="px-2 text-xs font-semibold">{item.quantity}</span>
+                          <button
+                            onClick={() => updateQuantity(itemKey, item.quantity + 1)}
+                            aria-label="Increase quantity"
+                            className="px-2 py-1 text-xs hover:bg-[#EEE8D7] text-[#10110F]"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+
+                        <button
+                          onClick={() => removeFromCart(itemKey)}
+                          aria-label="Remove item"
+                          className="text-red-700/70 hover:text-red-700 p-1"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
 
         {/* Footer actions */}
         {items.length > 0 && (
-          <div className="pt-6 border-t border-[#10110F]/10 flex flex-col gap-4">
-            <div className="flex items-center justify-between text-sm">
+          <div className="pt-4 border-t border-[#10110F]/10 flex flex-col gap-3">
+            {/* Prepaid & First Order Discount Notice */}
+            <AnnouncementBar variant="checkout" />
+
+            <div className="flex items-center justify-between text-sm pt-1">
               <span className="text-[#66704B] font-medium">Subtotal</span>
-              <span className="font-display text-lg font-bold text-[#10110F]">₹{totalPrice}</span>
+              <span className="font-display text-xl font-bold text-[#10110F]">₹{totalPrice}</span>
             </div>
 
-            <div className="flex items-center gap-2 p-2.5 rounded-sm bg-[#183D27]/10 border border-[#183D27]/20 text-xs text-[#183D27]">
+            <div className="flex items-center gap-2 p-2 rounded-sm bg-[#183D27]/10 border border-[#183D27]/20 text-[11px] text-[#183D27]">
               <ShieldCheck className="w-4 h-4 text-[#183D27] shrink-0" />
               <span>Complimentary Express Shipping across India included</span>
             </div>
@@ -145,7 +164,7 @@ export const CartDrawer: React.FC = () => {
               <ArrowRight className="w-4 h-4" />
             </a>
 
-            <p className="text-[11px] text-center text-[#66704B]">
+            <p className="text-[10px] text-center text-[#66704B]">
               Direct ordering via WhatsApp ensures priority Delhi dispatch, batch authenticity certificates, and personalized routine advice.
             </p>
           </div>

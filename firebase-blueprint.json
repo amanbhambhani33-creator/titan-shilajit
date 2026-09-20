@@ -35,6 +35,37 @@
         "usage": { "type": "string" },
         "ingredients": { "type": "string" }
       }
+    },
+    "AdminUser": {
+      "collection": "admin_users",
+      "fields": {
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "status": { "type": "string" },
+        "isPermanent": { "type": "boolean" },
+        "assignedPassword": { "type": "string" },
+        "permissions": { "type": "map" },
+        "createdAt": { "type": "string" },
+        "approvedBy": { "type": "string" },
+        "approvedAt": { "type": "string" }
+      }
+    },
+    "AccessRequest": {
+      "collection": "access_requests",
+      "fields": {
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "requestedRole": { "type": "string" },
+        "reason": { "type": "string" },
+        "status": { "type": "string" },
+        "assignedPassword": { "type": "string" },
+        "assignedRole": { "type": "string" },
+        "permissions": { "type": "map" },
+        "requestedAt": { "type": "string" },
+        "reviewedAt": { "type": "string" },
+        "reviewedBy": { "type": "string" }
+      }
     }
   }
 }

@@ -13,10 +13,10 @@ export const HomePage: React.FC = () => {
   return (
     <div id="home-page" className="min-h-screen flex flex-col">
       <HeroSection />
+      <ProductShowcaseSection />
       <TrustStrip />
       <BrandStorySection />
       <LaunchProductBanner />
-      <ProductShowcaseSection />
       <BenefitsSection />
       <ReviewSection />
       <InstagramSection />

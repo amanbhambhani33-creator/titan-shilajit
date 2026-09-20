@@ -1,3 +1,19 @@
+export type PackType = 'trial' | 'popular' | 'supersaver';
+
+export interface ProductPack {
+  id: PackType;
+  name: string;
+  label: string;
+  quantityText: string;
+  price: number;
+  mrp: number;
+  discount: string;
+  image: string;
+  badge?: string;
+  savings?: string;
+  isPopular?: boolean;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -13,6 +29,7 @@ export interface Product {
   reviewCount: number;
   inStock: boolean;
   images: string[];
+  packs?: ProductPack[];
   shortDescription: string;
   description: string;
   origin: string;
@@ -53,9 +70,11 @@ export interface Review {
 }
 
 export interface CartItem {
+  id?: string;
   product: Product;
   quantity: number;
   selectedSize?: string;
+  selectedPack?: ProductPack;
 }
 
 export interface AssessmentFormData {
@@ -97,4 +116,46 @@ export interface AssessmentResultData {
   whatYouMayNotice: string;
   safetyAdvisory: string;
   isSafetyRestricted: boolean;
+}
+
+export type AdminRole = 'super_admin' | 'store_manager' | 'content_editor' | 'inventory_associate' | 'viewer';
+
+export interface AdminPermissions {
+  canEditProducts: boolean;
+  canEditBanners: boolean;
+  canEditContent: boolean;
+  canManageUsers: boolean;
+  canSyncCloud: boolean;
+  canExportData: boolean;
+}
+
+export interface AdminUserRecord {
+  id: string;
+  email: string;
+  name: string;
+  role: AdminRole;
+  isPermanent: boolean;
+  status: 'active' | 'pending' | 'revoked';
+  assignedPassword?: string;
+  permissions: AdminPermissions;
+  createdAt: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  lastLogin?: string;
+}
+
+export interface AccessRequestRecord {
+  id: string;
+  email: string;
+  name: string;
+  requestedRole: AdminRole;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  assignedPassword?: string;
+  assignedRole?: AdminRole;
+  permissions?: AdminPermissions;
+  requestedAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  reviewNotes?: string;
 }

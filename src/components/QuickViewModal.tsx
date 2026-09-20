@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { X, MessageCircle, ShoppingBag, ShieldCheck, Check, Star, ArrowRight } from 'lucide-react';
-import { Product } from '../types';
+import { Product, ProductPack } from '../types';
 import { getProductWhatsAppUrl } from '../utils/whatsapp';
 import { useCart } from '../context/CartContext';
+import { getProductPacks } from '../utils/productPacks';
 
 interface QuickViewModalProps {
   product: Product | null;
@@ -11,17 +12,30 @@ interface QuickViewModalProps {
 }
 
 export const QuickViewModal: React.FC<QuickViewModalProps> = ({ product, onClose }) => {
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [quantity, setQuantity] = useState(1);
   const { addToCart } = useCart();
 
   if (!product) return null;
 
-  const whatsappUrl = getProductWhatsAppUrl(product, quantity);
+  const packs = getProductPacks(product);
+  const [selectedPackIndex, setSelectedPackIndex] = useState(1);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+
+  const currentPack: ProductPack = packs[selectedPackIndex] || packs[0];
+
+  const displayImage = currentPack.image || product.images[selectedImageIndex] || product.images[0];
+  const displayPrice = currentPack.price;
+  const displayMrp = currentPack.mrp;
+
+  const whatsappUrl = getProductWhatsAppUrl(product, quantity, currentPack);
 
   const handleAddToCart = () => {
-    addToCart(product, quantity);
+    addToCart(product, quantity, currentPack);
     onClose();
+  };
+
+  const handleSelectPack = (idx: number) => {
+    setSelectedPackIndex(idx);
   };
 
   return (
@@ -49,9 +63,10 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({ product, onClose
           <div className="bg-[#10110F] p-6 flex flex-col justify-between">
             <div className="aspect-square w-full rounded-xs overflow-hidden bg-black/40 border border-white/10 mb-4">
               <img
-                src={product.images[selectedImageIndex] || product.images[0]}
-                alt={product.name}
-                className="w-full h-full object-cover"
+                key={displayImage}
+                src={displayImage}
+                alt={`${product.name} - ${currentPack.name}`}
+                className="w-full h-full object-cover animate-in fade-in duration-300"
               />
             </div>
 
@@ -74,12 +89,12 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({ product, onClose
           </div>
 
           {/* Details */}
-          <div className="p-6 md:p-8 flex flex-col justify-between gap-6 max-h-[80vh] overflow-y-auto">
+          <div className="p-6 md:p-8 flex flex-col justify-between gap-5 max-h-[80vh] overflow-y-auto">
             <div>
               {/* Badge & Rating */}
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] uppercase font-bold tracking-widest text-[#183D27] bg-[#183D27]/10 px-2.5 py-1 rounded-xs">
-                  {product.category.toUpperCase()} • {product.size}
+                  {product.category.toUpperCase()} • {currentPack.quantityText}
                 </span>
                 <div className="flex items-center gap-1 text-[#B88A32] text-xs">
                   <Star className="w-3.5 h-3.5 fill-[#B88A32]" />
@@ -92,29 +107,66 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({ product, onClose
                 {product.name}
               </h3>
 
-              <p className="text-xs text-[#66704B] font-sans leading-relaxed mb-4">
+              <p className="text-xs text-[#66704B] font-sans leading-relaxed mb-3">
                 {product.shortDescription}
               </p>
 
+              {/* THREE PACK BUTTONS */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between text-[11px] mb-1.5">
+                  <span className="font-bold text-[#10110F] uppercase tracking-wider text-[10px]">
+                    SELECT PACK:
+                  </span>
+                  <span className="text-[#183D27] font-semibold text-[10px] bg-[#183D27]/10 px-2 py-0.5 rounded-xs">
+                    {currentPack.name} ({currentPack.quantityText})
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {packs.map((pack, idx) => {
+                    const isSelected = selectedPackIndex === idx;
+                    return (
+                      <button
+                        key={pack.id}
+                        type="button"
+                        onClick={() => handleSelectPack(idx)}
+                        className={`p-2 rounded-xs border text-center transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-[#183D27] text-[#F7F3E8] border-[#B88A32] ring-1 ring-[#B88A32]'
+                            : 'bg-white hover:bg-[#EEE8D7] text-[#10110F] border-[#10110F]/15'
+                        }`}
+                      >
+                        <div className={`text-[10px] font-bold uppercase ${isSelected ? 'text-[#D4B66A]' : 'text-[#10110F]'}`}>
+                          {pack.name}
+                        </div>
+                        <div className="text-[9px] opacity-75 my-0.5">{pack.quantityText}</div>
+                        <div className={`text-xs font-black ${isSelected ? 'text-[#F7F3E8]' : 'text-[#10110F]'}`}>
+                          ₹{pack.price}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Price block */}
-              <div className="flex items-baseline gap-3 mb-4 pb-4 border-b border-[#10110F]/10">
+              <div className="flex items-baseline gap-3 mb-4 pb-3 border-b border-[#10110F]/10">
                 <span className="font-display text-2xl font-bold text-[#10110F]">
-                  ₹{product.price}
+                  ₹{displayPrice * quantity}
                 </span>
-                {product.mrp && (
+                {displayMrp && (
                   <span className="text-sm text-gray-500 line-through">
-                    ₹{product.mrp}
+                    ₹{displayMrp * quantity}
                   </span>
                 )}
-                {product.discount && (
+                {currentPack.savings && (
                   <span className="text-xs font-bold text-[#183D27] bg-[#183D27]/15 px-2 py-0.5 rounded-xs">
-                    Save {product.discount}
+                    {currentPack.savings}
                   </span>
                 )}
               </div>
 
               {/* Highlights */}
-              <div className="flex flex-col gap-2 mb-6 text-xs text-[#10110F]/80">
+              <div className="flex flex-col gap-1.5 mb-4 text-xs text-[#10110F]/80">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-[#B88A32]" />
                   <span>Harvested at {product.elevation}</span>
@@ -123,14 +175,10 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({ product, onClose
                   <Check className="w-4 h-4 text-[#183D27]" />
                   <span>{product.fulvicAcidContent}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-[#183D27]" />
-                  <span>Traditional spring water purification (Shodhana)</span>
-                </div>
               </div>
 
               {/* Quantity */}
-              <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center gap-4 mb-4">
                 <span className="text-xs font-semibold text-[#10110F]">Quantity:</span>
                 <div className="flex items-center border border-[#10110F]/20 rounded-xs bg-white">
                   <button
@@ -151,16 +199,16 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({ product, onClose
             </div>
 
             {/* CTAs */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2.5">
               <a
                 id="modal-buy-whatsapp-btn"
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-3.5 rounded-xs bg-[#25D366] hover:bg-[#1EBE5D] text-[#10110F] text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2 shadow-md transition-all"
+                className="w-full py-3 rounded-xs bg-[#25D366] hover:bg-[#1EBE5D] text-[#10110F] text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2 shadow-md transition-all"
               >
                 <MessageCircle className="w-4 h-4 text-[#10110F]" />
-                <span>ORDER ON WHATSAPP (₹{product.price * quantity})</span>
+                <span>ORDER ON WHATSAPP (₹{displayPrice * quantity})</span>
               </a>
 
               <div className="grid grid-cols-2 gap-2">
@@ -168,17 +216,17 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({ product, onClose
                   onClick={handleAddToCart}
                   className="py-2.5 rounded-xs bg-[#10110F] text-[#F7F3E8] text-xs font-semibold tracking-wider uppercase flex items-center justify-center gap-1.5 hover:bg-[#183D27] transition-colors"
                 >
-                  <ShoppingBag className="w-3.5 h-3.5 text-[#D4B66A]" />
-                  <span>Add to Bag</span>
+                  <ShoppingBag className="w-4 h-4 text-[#D4B66A]" />
+                  <span>ADD TO CART</span>
                 </button>
 
                 <Link
                   to={`/product/${product.slug}`}
                   onClick={onClose}
-                  className="py-2.5 rounded-xs border border-[#10110F]/30 text-[#10110F] text-xs font-semibold tracking-wider uppercase flex items-center justify-center gap-1 hover:bg-[#10110F] hover:text-[#F7F3E8] transition-colors"
+                  className="py-2.5 rounded-xs border border-[#10110F]/30 text-[#10110F] text-xs font-semibold tracking-wider uppercase flex items-center justify-center gap-1.5 hover:bg-[#EEE8D7] transition-colors text-center"
                 >
-                  <span>Full Story</span>
-                  <ArrowRight className="w-3 h-3" />
+                  <span>FULL DETAILS</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </div>

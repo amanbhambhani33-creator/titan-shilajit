@@ -188,7 +188,7 @@ export const Footer: React.FC = () => {
               </li>
               <li className="pt-2">
                 <Link
-                  to="/admin"
+                  to="/admin-desk"
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xs bg-white/5 hover:bg-[#183D27] text-[#D4B66A] text-[10px] uppercase tracking-wider font-semibold border border-white/10 transition-colors"
                 >
                   <Settings className="w-3 h-3" />

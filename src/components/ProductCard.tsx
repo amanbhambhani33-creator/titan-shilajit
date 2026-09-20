@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle, Eye, Star, ShoppingBag } from 'lucide-react';
-import { Product } from '../types';
+import { MessageCircle, Eye, Star, ShoppingBag, Check, Plus, Minus, Zap, Sparkles } from 'lucide-react';
+import { Product, ProductPack } from '../types';
 import { getProductWhatsAppUrl } from '../utils/whatsapp';
 import { useCart } from '../context/CartContext';
+import { getProductPacks } from '../utils/productPacks';
 
 interface ProductCardProps {
   product: Product;
@@ -12,64 +13,94 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
   const { addToCart } = useCart();
-  const whatsappUrl = getProductWhatsAppUrl(product, 1);
+  const packs = getProductPacks(product);
+
+  // Default to Most Popular pack (index 1) or first available
+  const [selectedPackIndex, setSelectedPackIndex] = useState(1);
+  const [quantity, setQuantity] = useState(1);
+  const [isAddedToast, setIsAddedToast] = useState(false);
+
+  const currentPack: ProductPack = packs[selectedPackIndex] || packs[0];
+
+  // Dynamic image, price, mrp, and quantity based on active pack
+  const displayImage = currentPack.image || product.images[0];
+  const displayPrice = currentPack.price;
+  const displayMrp = currentPack.mrp;
+  const displayQuantityText = currentPack.quantityText;
+
+  const handleSelectPack = (idx: number) => {
+    setSelectedPackIndex(idx);
+  };
+
+  const handleAddToCart = () => {
+    addToCart(product, quantity, currentPack);
+    setIsAddedToast(true);
+    setTimeout(() => setIsAddedToast(false), 2000);
+  };
+
+  const whatsappUrl = getProductWhatsAppUrl(product, quantity, currentPack);
 
   return (
     <div
       id={`product-card-${product.slug}`}
-      className="group flex flex-col justify-between bg-white hover:bg-white rounded-sm border border-[#10110F]/5 hover:border-[#B88A32]/40 p-4 transition-all duration-300 shadow-xs hover:shadow-md"
+      className="group flex flex-col justify-between bg-white rounded-sm border border-[#10110F]/10 hover:border-[#B88A32]/60 p-4 sm:p-5 transition-all duration-300 shadow-xs hover:shadow-xl relative"
     >
-      {/* Image container */}
-      <div className="relative aspect-4/3 sm:aspect-square overflow-hidden bg-[#10110F] rounded-xs cursor-pointer mb-4">
-        <Link to={`/product/${product.slug}`}>
-          <img
-            src={product.images[0]}
-            alt={product.name}
-            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-95 group-hover:opacity-100"
-            loading="lazy"
-          />
-        </Link>
+      {/* Upper Section: Image Container */}
+      <div>
+        <div className="relative aspect-4/3 sm:aspect-square overflow-hidden bg-[#10110F] rounded-xs cursor-pointer mb-4">
+          <Link to={`/product/${product.slug}`} className="block w-full h-full">
+            <img
+              key={displayImage}
+              src={displayImage}
+              alt={`${product.name} - ${currentPack.name}`}
+              className="w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-500 opacity-95 group-hover:opacity-100"
+              loading="lazy"
+            />
+          </Link>
 
-        {/* Badges */}
-        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 z-10 pointer-events-none">
-          {product.discount && (
-            <span className="px-2 py-0.5 rounded-xs bg-[#183D27] text-[#D4B66A] text-[9px] font-sans font-bold tracking-widest uppercase border border-[#B88A32]/30">
-              {product.discount}
+          {/* Badges & Pack indicator */}
+          <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5 z-10 pointer-events-none">
+            {currentPack.savings && (
+              <span className="px-2.5 py-0.5 rounded-xs bg-[#183D27] text-[#D4B66A] text-[9px] font-sans font-bold tracking-widest uppercase border border-[#B88A32]/40 shadow-xs">
+                {currentPack.savings}
+              </span>
+            )}
+            <span className="px-2.5 py-0.5 rounded-xs bg-[#10110F]/90 backdrop-blur-xs text-[#F7F3E8] text-[9px] font-sans font-semibold tracking-wider uppercase border border-white/10">
+              {displayQuantityText}
             </span>
-          )}
-          <span className="px-2 py-0.5 rounded-xs bg-[#10110F]/80 backdrop-blur-xs text-[#F7F3E8] text-[9px] font-sans font-medium tracking-wider uppercase">
-            {product.size}
-          </span>
+          </div>
+
+          {/* Quick View and Direct Add overlay */}
+          <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2.5 p-4 pointer-events-none group-hover:pointer-events-auto">
+            <button
+              onClick={() => onQuickView(product)}
+              aria-label="Quick View product details"
+              className="px-3 py-2 rounded-xs bg-[#F7F3E8] text-[#10110F] text-[10px] font-bold tracking-wider uppercase flex items-center gap-1.5 shadow-md hover:bg-[#D4B66A] transition-colors"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Quick View</span>
+            </button>
+            <button
+              onClick={handleAddToCart}
+              aria-label="Add selected pack to cart"
+              className="px-3 py-2 rounded-xs bg-[#B88A32] text-[#10110F] text-[10px] font-bold tracking-wider uppercase flex items-center gap-1.5 shadow-md hover:bg-[#D4B66A] transition-colors"
+              title="Add Pack to Cart"
+            >
+              <ShoppingBag className="w-3.5 h-3.5" />
+              <span>Add Pack</span>
+            </button>
+          </div>
         </div>
 
-        {/* Hover Quick Actions */}
-        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 p-4 pointer-events-none group-hover:pointer-events-auto">
-          <button
-            onClick={() => onQuickView(product)}
-            aria-label="Quick View product details"
-            className="px-3 py-1.5 rounded-xs bg-[#F7F3E8] text-[#10110F] text-[10px] font-bold tracking-wider uppercase flex items-center gap-1.5 shadow-md hover:bg-[#D4B66A] transition-colors"
-          >
-            <Eye className="w-3.5 h-3.5" />
-            <span>Quick View</span>
-          </button>
-          <button
-            onClick={() => addToCart(product, 1)}
-            aria-label="Add to bag"
-            className="p-1.5 rounded-xs bg-[#10110F] text-[#F7F3E8] hover:bg-[#183D27] transition-colors shadow-md"
-            title="Add to Cart"
-          >
-            <ShoppingBag className="w-4 h-4 text-[#D4B66A]" />
-          </button>
-        </div>
-      </div>
-
-      {/* Details Container */}
-      <div className="flex flex-col flex-1 justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          {/* Category kicker & Rating */}
+        {/* Product Info */}
+        <div className="flex flex-col gap-1.5 mb-3">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] text-[#183D27] font-bold uppercase tracking-wider">
-              {product.category === 'resin' ? 'PURE RESIN' : product.category === 'honey-sticks' ? 'HONEY STICK' : 'RITUAL BUNDLE'}
+            <span className="text-[9px] text-[#183D27] font-bold uppercase tracking-wider bg-[#183D27]/10 px-2 py-0.5 rounded-xs">
+              {product.category === 'resin'
+                ? 'PURE RESIN'
+                : product.category === 'honey-sticks'
+                ? 'HONEY STICK'
+                : 'RITUAL BUNDLE'}
             </span>
             <div className="flex items-center gap-1 text-[#B88A32] text-xs">
               <Star className="w-3 h-3 fill-[#B88A32] text-[#B88A32]" />
@@ -82,60 +113,157 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
             </div>
           </div>
 
-          {/* Title */}
           <Link
             to={`/product/${product.slug}`}
-            className="font-serif text-base font-bold text-[#10110F] hover:text-[#183D27] transition-colors leading-snug line-clamp-2"
+            className="font-serif text-base sm:text-lg font-bold text-[#10110F] hover:text-[#183D27] transition-colors leading-snug line-clamp-2"
           >
             {product.name}
           </Link>
 
-          {/* Short Description */}
           <p className="text-xs text-[#66704B] font-sans line-clamp-2 leading-relaxed font-light">
             {product.shortDescription}
           </p>
         </div>
+      </div>
 
-        {/* Price & Primary Action Buttons */}
-        <div className="pt-3 border-t border-[#10110F]/5 flex flex-col gap-2.5">
-          <div className="flex items-baseline justify-between">
-            <div className="flex items-baseline gap-2">
-              <span className="font-serif font-bold text-lg text-[#10110F]">
-                ₹{product.price}
+      {/* THREE PACK BUTTONS SECTION (After Info) */}
+      <div className="mt-2 pt-3 border-t border-[#10110F]/10 flex flex-col gap-2">
+        <div className="flex items-center justify-between text-[11px]">
+          <span className="font-bold text-[#10110F] uppercase tracking-wider text-[10px]">
+            SELECT PACK SIZE:
+          </span>
+          <span className="text-[#183D27] font-semibold text-[10px] bg-[#183D27]/10 px-1.5 py-0.5 rounded-xs">
+            {currentPack.name}
+          </span>
+        </div>
+
+        {/* 3 Pack Selection Buttons */}
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+          {packs.map((pack, idx) => {
+            const isSelected = selectedPackIndex === idx;
+            return (
+              <button
+                key={pack.id}
+                type="button"
+                onClick={() => handleSelectPack(idx)}
+                className={`relative flex flex-col items-center justify-between p-2 rounded-xs border text-center transition-all cursor-pointer min-h-[64px] ${
+                  isSelected
+                    ? 'bg-[#183D27] text-[#F7F3E8] border-[#B88A32] shadow-sm ring-1 ring-[#B88A32]/60'
+                    : 'bg-[#F7F3E8]/60 hover:bg-[#EEE8D7] text-[#10110F] border-[#10110F]/15'
+                }`}
+              >
+                {/* Popular / Supersaver tiny ribbon */}
+                {pack.badge && (
+                  <span
+                    className={`absolute -top-2 text-[8px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-xs border ${
+                      isSelected
+                        ? 'bg-[#B88A32] text-[#10110F] border-[#B88A32]'
+                        : 'bg-[#10110F] text-[#D4B66A] border-white/20'
+                    }`}
+                  >
+                    {pack.badge}
+                  </span>
+                )}
+
+                <span
+                  className={`text-[10px] sm:text-[11px] font-bold tracking-tight uppercase leading-tight ${
+                    isSelected ? 'text-[#D4B66A]' : 'text-[#10110F]'
+                  }`}
+                >
+                  {pack.name}
+                </span>
+
+                <span
+                  className={`text-[9px] font-medium leading-none my-0.5 ${
+                    isSelected ? 'text-[#EEE8D7]/80' : 'text-[#66704B]'
+                  }`}
+                >
+                  {pack.quantityText}
+                </span>
+
+                <span
+                  className={`text-xs sm:text-xs font-black font-sans leading-none ${
+                    isSelected ? 'text-[#F7F3E8]' : 'text-[#10110F]'
+                  }`}
+                >
+                  ₹{pack.price}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Dynamic Price Display & Quantity Stepper */}
+        <div className="pt-2 mt-1 flex items-center justify-between">
+          <div className="flex flex-col">
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-serif font-bold text-lg sm:text-xl text-[#10110F]">
+                ₹{displayPrice * quantity}
               </span>
-              {product.mrp && (
+              {displayMrp && (
                 <span className="text-xs text-gray-400 line-through font-light">
-                  ₹{product.mrp}
+                  ₹{displayMrp * quantity}
                 </span>
               )}
             </div>
-            <span className="text-[9px] uppercase tracking-wider text-[#183D27] font-semibold bg-[#183D27]/10 px-2 py-0.5 rounded-xs">
-              {product.servings}
-            </span>
+            {currentPack.savings && (
+              <span className="text-[10px] text-[#183D27] font-semibold">
+                Instant Savings: {currentPack.savings}
+              </span>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
+          {/* Quantity Stepper */}
+          <div className="flex items-center border border-[#10110F]/20 rounded-xs bg-[#F7F3E8]">
             <button
-              onClick={() => addToCart(product, 1)}
-              aria-label={`Add ${product.name} to Cart`}
-              className="py-2.5 px-2 rounded-xs border border-[#10110F]/20 text-[#10110F] text-[10px] font-bold tracking-wider uppercase text-center hover:bg-[#10110F] hover:text-[#F7F3E8] transition-all flex items-center justify-center gap-1.5 min-h-[40px]"
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              aria-label="Decrease pack quantity"
+              className="p-1.5 text-[#10110F] hover:bg-[#10110F]/10 transition-colors"
             >
-              <ShoppingBag className="w-3.5 h-3.5 text-[#B88A32]" />
-              <span>ADD TO CART</span>
+              <Minus className="w-3 h-3" />
             </button>
-
-            <a
-              id={`buy-whatsapp-${product.slug}`}
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Order ${product.name} on WhatsApp`}
-              className="py-2.5 px-2 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] text-[10px] font-bold tracking-wider uppercase flex items-center justify-center gap-1.5 shadow-xs transition-all min-h-[40px]"
+            <span className="px-2 text-xs font-bold text-[#10110F]">{quantity}</span>
+            <button
+              onClick={() => setQuantity(quantity + 1)}
+              aria-label="Increase pack quantity"
+              className="p-1.5 text-[#10110F] hover:bg-[#10110F]/10 transition-colors"
             >
-              <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
-              <span>WHATSAPP</span>
-            </a>
+              <Plus className="w-3 h-3" />
+            </button>
           </div>
+        </div>
+
+        {/* Primary Action Buttons */}
+        <div className="grid grid-cols-2 gap-2 mt-1">
+          <button
+            onClick={handleAddToCart}
+            aria-label={`Add ${product.name} ${currentPack.name} to Cart`}
+            className="py-2.5 px-2 rounded-xs bg-[#10110F] text-[#F7F3E8] hover:bg-[#183D27] text-[10px] sm:text-[11px] font-bold tracking-wider uppercase text-center transition-all flex items-center justify-center gap-1.5 min-h-[42px] cursor-pointer shadow-sm"
+          >
+            {isAddedToast ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-[#D4B66A]" />
+                <span className="text-[#D4B66A]">ADDED!</span>
+              </>
+            ) : (
+              <>
+                <ShoppingBag className="w-3.5 h-3.5 text-[#B88A32]" />
+                <span>ADD TO CART</span>
+              </>
+            )}
+          </button>
+
+          <a
+            id={`buy-whatsapp-${product.slug}-${currentPack.id}`}
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Order ${product.name} on WhatsApp`}
+            className="py-2.5 px-2 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] text-[10px] sm:text-[11px] font-bold tracking-wider uppercase flex items-center justify-center gap-1.5 shadow-xs transition-all min-h-[42px]"
+          >
+            <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
+            <span>WHATSAPP</span>
+          </a>
         </div>
       </div>
     </div>

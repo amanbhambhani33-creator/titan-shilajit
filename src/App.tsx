@@ -32,7 +32,7 @@ export const App: React.FC = () => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  const isAdmin = location.pathname.startsWith('/admin');
+  const isAdmin = location.pathname.startsWith('/admin-desk') || location.pathname.startsWith('/admin');
 
   return (
     <AuthProvider>
@@ -42,7 +42,7 @@ export const App: React.FC = () => {
           <SplashIntro />
 
           <div className="min-h-screen bg-[#F7F3E8] text-[#10110F] flex flex-col font-sans selection:bg-[#183D27] selection:text-[#D4B66A]">
-            {/* Sticky Header (Hidden on dedicated admin desk for maximum workspace) */}
+            {/* Sticky Header (Hidden on dedicated admin desk for maximum workspace & visual separation) */}
             {!isAdmin && (
               <Header
                 onOpenSearch={() => setIsSearchOpen(true)}
@@ -65,6 +65,7 @@ export const App: React.FC = () => {
                 <Route path="/privacy-policy" element={<PolicyPage />} />
                 <Route path="/terms-and-conditions" element={<PolicyPage />} />
                 <Route path="/disclaimer" element={<PolicyPage />} />
+                <Route path="/admin-desk" element={<AdminDeskPage />} />
                 <Route path="/admin" element={<AdminDeskPage />} />
                 <Route path="*" element={<HomePage />} />
               </Routes>
@@ -76,7 +77,7 @@ export const App: React.FC = () => {
             {/* Slide-over Cart Drawer */}
             <CartDrawer />
 
-            {/* Global Floating WhatsApp Concierge Pill & Back-to-top */}
+            {/* Global Floating WhatsApp Concierge Pill & Back-to-top (Hidden on admin desk) */}
             {!isAdmin && <FloatingWhatsApp />}
 
             {/* Global Search Modal */}

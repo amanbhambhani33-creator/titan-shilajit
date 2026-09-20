@@ -4,6 +4,7 @@ import { ShoppingBag, Search, Menu, X, MessageCircle, ShieldCheck } from 'lucide
 import { useCart } from '../context/CartContext';
 import { BRAND_CONTACT } from '../data/content';
 import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
+import { AnnouncementBar } from './AnnouncementBar';
 
 interface HeaderProps {
   onOpenSearch: () => void;
@@ -172,6 +173,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onOpenAdvisor }) =
             </button>
           </div>
         </div>
+
+        {/* Continuous Moving Announcement Strip (EXTRA Rs.50 OFF ON PREPAID & FIRST ORDERS) */}
+        <AnnouncementBar />
       </header>
 
       {/* Mobile Navigation Drawer */}

@@ -1,19 +1,27 @@
 import { BRAND_CONTACT } from '../data/content';
-import { CartItem, Product } from '../types';
+import { CartItem, Product, ProductPack } from '../types';
 
 /**
  * Generates the official WhatsApp link for a single product purchase.
  */
-export function getProductWhatsAppUrl(product: Product, quantity: number = 1): string {
+export function getProductWhatsAppUrl(
+  product: Product,
+  quantity: number = 1,
+  selectedPack?: ProductPack
+): string {
+  const packTitle = selectedPack ? ` [${selectedPack.name} - ${selectedPack.quantityText}]` : ` (Size: ${product.size})`;
+  const unitPrice = selectedPack ? selectedPack.price : product.price;
+  const totalPrice = unitPrice * quantity;
+
   const message = `Hello Titan Shilajit Team,
 
 I am interested in purchasing:
 
-Product: ${product.name}
-Quantity: ${quantity} (Size: ${product.size})
-Price: ₹${product.price * quantity}
+Product: ${product.name}${packTitle}
+Quantity: ${quantity}
+Price: ₹${totalPrice}
 
-Please share the details and ordering process.`;
+Please share the details and priority dispatch process.`;
 
   const encoded = encodeURIComponent(message);
   return `https://wa.me/${BRAND_CONTACT.phoneRaw}?text=${encoded}`;
@@ -43,10 +51,17 @@ export function getCartCheckoutWhatsAppUrl(items: CartItem[]): string {
   }
 
   const itemsList = items
-    .map((item, index) => `${index + 1}. ${item.product.name} x ${item.quantity} (₹${item.product.price * item.quantity})`)
+    .map((item, index) => {
+      const packName = item.selectedPack ? ` (${item.selectedPack.name} - ${item.selectedPack.quantityText})` : ` (${item.product.size})`;
+      const price = item.selectedPack ? item.selectedPack.price : item.product.price;
+      return `${index + 1}. ${item.product.name}${packName} x ${item.quantity} = ₹${price * item.quantity}`;
+    })
     .join('\n');
 
-  const totalAmount = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const totalAmount = items.reduce((sum, item) => {
+    const price = item.selectedPack ? item.selectedPack.price : item.product.price;
+    return sum + price * item.quantity;
+  }, 0);
 
   const message = `Hello Titan Shilajit Team,
 
@@ -55,8 +70,9 @@ I would like to place an order for the following items:
 ${itemsList}
 
 Total Estimated Value: ₹${totalAmount}
+Special Offers: EXTRA Rs.50 OFF ON PREPAID / FIRST ORDER applied
 
-Please confirm availability and share the payment and shipping steps.`;
+Please confirm order details and share payment and shipping steps.`;
 
   return `https://wa.me/${BRAND_CONTACT.phoneRaw}?text=${encodeURIComponent(message)}`;
 }

@@ -19,7 +19,8 @@ import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
 import { getProductWhatsAppUrl } from '../utils/whatsapp';
 import { useCart } from '../context/CartContext';
-import { Product } from '../types';
+import { Product, ProductPack } from '../types';
+import { getProductPacks } from '../utils/productPacks';
 
 export const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -28,7 +29,9 @@ export const ProductDetailPage: React.FC = () => {
   const { products } = useStoreContent();
 
   const product = products.find((p) => p.slug === slug || p.id === slug);
+  const packs = product ? getProductPacks(product) : [];
 
+  const [selectedPackIndex, setSelectedPackIndex] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'overview' | 'how-to-use' | 'lab-testing' | 'reviews'>('overview');
@@ -37,6 +40,7 @@ export const ProductDetailPage: React.FC = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     setSelectedImageIndex(0);
+    setSelectedPackIndex(1);
     setQuantity(1);
   }, [slug]);
 
@@ -55,9 +59,22 @@ export const ProductDetailPage: React.FC = () => {
     );
   }
 
-  const whatsappUrl = getProductWhatsAppUrl(product, quantity);
+  const currentPack: ProductPack = packs[selectedPackIndex] || packs[0];
+  const displayImage = currentPack?.image || product.images[selectedImageIndex] || product.images[0];
+  const displayPrice = currentPack ? currentPack.price : product.price;
+  const displayMrp = currentPack ? currentPack.mrp : product.mrp;
+
+  const whatsappUrl = getProductWhatsAppUrl(product, quantity, currentPack);
   const relatedProducts = products.filter((p) => p.id !== product.id).slice(0, 3);
   const productReviews = REVIEWS.filter((r) => r.productId === product.id);
+
+  const handleSelectPack = (idx: number) => {
+    setSelectedPackIndex(idx);
+  };
+
+  const handleAddToCart = () => {
+    addToCart(product, quantity, currentPack);
+  };
 
   return (
     <div id="product-detail-page" className="min-h-screen pt-28 pb-24 bg-[#F7F3E8] text-[#10110F]">
@@ -77,15 +94,20 @@ export const ProductDetailPage: React.FC = () => {
           <div className="lg:col-span-6 flex flex-col gap-3 sm:gap-4">
             <div className="relative aspect-square w-full rounded-sm overflow-hidden bg-[#10110F] border border-[#10110F]/10 shadow-lg">
               <img
-                src={product.images[selectedImageIndex] || product.images[0]}
-                alt={product.name}
-                className="w-full h-full object-cover"
+                key={displayImage}
+                src={displayImage}
+                alt={`${product.name} - ${currentPack?.name}`}
+                className="w-full h-full object-cover animate-in fade-in duration-300"
               />
-              {product.discount && (
+              {currentPack?.savings ? (
+                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-[#183D27] text-[#D4B66A] text-[10px] sm:text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-xs border border-[#B88A32]/40 shadow-sm">
+                  {currentPack.savings}
+                </div>
+              ) : product.discount ? (
                 <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-[#183D27] text-[#D4B66A] text-[10px] sm:text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-xs border border-[#B88A32]/40 shadow-sm">
                   {product.discount}
                 </div>
-              )}
+              ) : null}
             </div>
 
             {/* Thumbnail Strip */}
@@ -112,7 +134,7 @@ export const ProductDetailPage: React.FC = () => {
               {/* Category & Rating */}
               <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <span className="text-[10px] sm:text-xs uppercase font-bold tracking-[0.2em] text-[#183D27] bg-[#183D27]/10 px-2.5 py-1 rounded-xs">
-                  {product.category.toUpperCase()} • {product.size}
+                  {product.category.toUpperCase()} • {currentPack?.quantityText || product.size}
                 </span>
 
                 <div className="flex items-center gap-1.5 text-xs text-[#B88A32]">
@@ -135,27 +157,82 @@ export const ProductDetailPage: React.FC = () => {
                 {product.name}
               </h1>
 
-              <p className="font-sans text-xs sm:text-sm text-[#66704B] leading-relaxed mb-5">
+              <p className="font-sans text-xs sm:text-sm text-[#66704B] leading-relaxed mb-4">
                 {product.shortDescription}
               </p>
+
+              {/* THREE PACK SELECTION BUTTONS */}
+              <div className="mb-5 p-3.5 rounded-sm bg-white border border-[#10110F]/10 shadow-xs">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-bold text-[#10110F] uppercase tracking-wider">
+                    CHOOSE PACK CONFIGURATION:
+                  </span>
+                  <span className="text-[11px] font-bold text-[#183D27] bg-[#183D27]/10 px-2 py-0.5 rounded-xs">
+                    {currentPack?.name} ({currentPack?.quantityText})
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {packs.map((pack, idx) => {
+                    const isSelected = selectedPackIndex === idx;
+                    return (
+                      <button
+                        key={pack.id}
+                        type="button"
+                        onClick={() => handleSelectPack(idx)}
+                        className={`relative p-2.5 rounded-xs border text-center transition-all cursor-pointer flex flex-col items-center justify-between ${
+                          isSelected
+                            ? 'bg-[#183D27] text-[#F7F3E8] border-[#B88A32] shadow-sm ring-1 ring-[#B88A32]'
+                            : 'bg-[#F7F3E8] hover:bg-[#EEE8D7] text-[#10110F] border-[#10110F]/15'
+                        }`}
+                      >
+                        {pack.badge && (
+                          <span
+                            className={`text-[8px] font-black uppercase px-1.5 py-0.2 rounded-xs border mb-1 ${
+                              isSelected
+                                ? 'bg-[#B88A32] text-[#10110F] border-[#B88A32]'
+                                : 'bg-[#10110F] text-[#D4B66A] border-white/20'
+                            }`}
+                          >
+                            {pack.badge}
+                          </span>
+                        )}
+                        <span className={`text-[11px] font-bold uppercase ${isSelected ? 'text-[#D4B66A]' : 'text-[#10110F]'}`}>
+                          {pack.name}
+                        </span>
+                        <span className={`text-[9px] opacity-80 my-0.5 ${isSelected ? 'text-[#EEE8D7]' : 'text-[#66704B]'}`}>
+                          {pack.quantityText}
+                        </span>
+                        <span className={`text-xs font-black ${isSelected ? 'text-[#F7F3E8]' : 'text-[#10110F]'}`}>
+                          ₹{pack.price}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
               {/* Price Banner */}
               <div className="p-3.5 sm:p-4 rounded-xs bg-[#EEE8D7]/80 border border-[#10110F]/10 flex items-baseline justify-between mb-5">
                 <div className="flex items-baseline gap-2 sm:gap-3">
                   <span className="font-display text-2xl sm:text-3xl font-bold text-[#10110F]">
-                    ₹{product.price}
+                    ₹{displayPrice * quantity}
                   </span>
-                  {product.mrp && (
+                  {displayMrp && (
                     <span className="text-xs sm:text-sm text-gray-500 line-through">
-                      MRP ₹{product.mrp}
+                      MRP ₹{displayMrp * quantity}
                     </span>
                   )}
-                  <span className="text-[10px] sm:text-xs font-bold text-[#183D27] bg-[#183D27]/10 px-2 py-0.5 rounded-xs">
+                  {currentPack?.savings && (
+                    <span className="text-[10px] sm:text-xs font-bold text-[#183D27] bg-[#183D27]/10 px-2 py-0.5 rounded-xs">
+                      {currentPack.savings}
+                    </span>
+                  )}
+                  <span className="text-[10px] sm:text-xs font-bold text-[#66704B] bg-white/70 px-2 py-0.5 rounded-xs">
                     Taxes Included
                   </span>
                 </div>
                 <span className="text-[10px] sm:text-xs text-[#66704B] font-semibold uppercase">
-                  {product.servings}
+                  {currentPack?.quantityText || product.servings}
                 </span>
               </div>
 
@@ -202,7 +279,7 @@ export const ProductDetailPage: React.FC = () => {
                   </button>
                 </div>
                 <span className="text-xs text-[#66704B]">
-                  Total: <strong className="text-[#10110F]">₹{product.price * quantity}</strong>
+                  Total: <strong className="text-[#10110F]">₹{displayPrice * quantity}</strong>
                 </span>
               </div>
             </div>
@@ -218,12 +295,12 @@ export const ProductDetailPage: React.FC = () => {
                 className="w-full py-4 rounded-xs bg-[#25D366] hover:bg-[#1EBE5D] text-[#10110F] font-bold text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg transition-all min-h-[48px]"
               >
                 <MessageCircle className="w-5 h-5 text-[#10110F]" />
-                <span>ORDER ON WHATSAPP (₹{product.price * quantity})</span>
+                <span>ORDER ON WHATSAPP (₹{displayPrice * quantity})</span>
               </a>
 
               <div className="grid grid-cols-2 gap-3">
                 <button
-                  onClick={() => addToCart(product, quantity)}
+                  onClick={handleAddToCart}
                   className="py-3.5 rounded-xs bg-[#10110F] hover:bg-[#183D27] text-[#F7F3E8] font-semibold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors min-h-[44px]"
                 >
                   <ShoppingBag className="w-4 h-4 text-[#D4B66A]" />
