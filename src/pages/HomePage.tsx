@@ -6,7 +6,7 @@ import { LaunchProductBanner } from '../components/LaunchProductBanner';
 import { ProductShowcaseSection } from '../components/ProductShowcaseSection';
 import { BenefitsSection } from '../components/BenefitsSection';
 import { ReviewSection } from '../components/ReviewSection';
-import { InstagramSection } from '../components/InstagramSection';
+import { QualityTrustSection } from '../components/QualityTrustSection';
 import { CTASection } from '../components/CTASection';
 
 export const HomePage: React.FC = () => {
@@ -19,7 +19,7 @@ export const HomePage: React.FC = () => {
       <LaunchProductBanner />
       <BenefitsSection />
       <ReviewSection />
-      <InstagramSection />
+      <QualityTrustSection />
       <CTASection />
     </div>
   );

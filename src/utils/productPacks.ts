@@ -58,7 +58,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 699,
         mrp: 999,
         discount: '30% OFF',
-        image: product.images[0] || 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=1200&q=85',
+        image: product.images[0] || 'https://images.unsplash.com/photo-1587049352851-8d4e89133924?auto=format&fit=crop&w=1200&q=85',
         badge: 'STARTER PACK',
         savings: 'Save ₹300',
       },
@@ -154,7 +154,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 1399,
         mrp: 1999,
         discount: '30% OFF',
-        image: product.images[1] || 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=1200&q=85',
+        image: product.images[1] || 'https://images.unsplash.com/photo-1587049352851-8d4e89133924?auto=format&fit=crop&w=1200&q=85',
         badge: 'MOST POPULAR',
         savings: 'Save ₹600',
         isPopular: true,
@@ -196,7 +196,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 2199,
         mrp: 2999,
         discount: '27% OFF',
-        image: product.images[1] || 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=1200&q=85',
+        image: product.images[1] || 'https://images.unsplash.com/photo-1587049352851-8d4e89133924?auto=format&fit=crop&w=1200&q=85',
         badge: 'MOST POPULAR • SIGNATURE',
         savings: 'Save ₹800',
         isPopular: true,
@@ -307,3 +307,49 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
     },
   ];
 }
+
+/**
+ * Clean short label for pack button headers (e.g., STARTER, POPULAR, BEST VALUE)
+ * Guaranteed to fit inside narrow 3-column buttons without wrapping or colliding.
+ */
+export function getPackShortBadge(badge?: string, idx: number = 0): string {
+  if (!badge) {
+    if (idx === 0) return 'STARTER';
+    if (idx === 1) return 'POPULAR';
+    return 'BEST VALUE';
+  }
+  // Take first section before bullet if present
+  const firstPart = badge.split('•')[0].trim();
+  if (firstPart.includes('POPULAR')) return 'POPULAR';
+  if (firstPart.includes('TRIAL') || firstPart.includes('STARTER') || firstPart.includes('SAMPLER')) return 'STARTER';
+  if (firstPart.includes('SUPERSAVER') || firstPart.includes('SAVINGS') || firstPart.includes('VALUE')) return 'BEST VALUE';
+  return firstPart.length > 12 ? firstPart.slice(0, 11) : firstPart;
+}
+
+/**
+ * Clean title for pack button (e.g. Trial Pack, Popular Pack, Value Pack)
+ */
+export function getPackShortName(pack: ProductPack, idx: number = 0): string {
+  if (pack.id === 'trial' || idx === 0) return 'Trial Pack';
+  if (pack.id === 'popular' || idx === 1) return 'Popular Pack';
+  if (pack.id === 'supersaver' || idx === 2) return 'Value Pack';
+  return pack.name.replace(/ Pack$/i, '') + ' Pack';
+}
+
+/**
+ * Clean compact weight/portion text for pack button (e.g. 20g Jar, 50g + Spoon, 100g Vault)
+ */
+export function getPackShortQuantity(quantityText: string): string {
+  if (!quantityText) return '';
+  if (quantityText.includes('20g')) return '20g Jar';
+  if (quantityText.includes('50g')) return '50g + Spoon';
+  if (quantityText.includes('100g')) return '100g Vault';
+  if (quantityText.includes('15 Sticks')) return '15 Sticks';
+  if (quantityText.includes('30 Sticks')) return '30 Sticks';
+  if (quantityText.includes('60 Sticks')) return '60 Sticks';
+  if (quantityText.includes('2x') || quantityText.includes('Dual')) return 'Dual Pack';
+  // Strip parentheses and return short first segment
+  const base = quantityText.split('(')[0].trim();
+  return base.length > 16 ? base.slice(0, 15) : base;
+}
+

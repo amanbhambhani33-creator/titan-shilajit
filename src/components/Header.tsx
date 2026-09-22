@@ -8,10 +8,9 @@ import { AnnouncementBar } from './AnnouncementBar';
 
 interface HeaderProps {
   onOpenSearch: () => void;
-  onOpenAdvisor: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onOpenAdvisor }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenSearch }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { totalItems, openCart } = useCart();
@@ -114,17 +113,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onOpenAdvisor }) =
 
           {/* Right Action Icons */}
           <div className="flex items-center gap-2.5 sm:gap-5">
-            {/* Wellness Advisor Button */}
-            <button
-              id="header-advisor-btn"
-              onClick={onOpenAdvisor}
-              aria-label="Ask Titan Himalayan Wellness Advisor"
-              className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-sm text-[10px] font-bold tracking-widest uppercase bg-[#183D27]/10 text-[#183D27] border border-[#183D27]/20 hover:bg-[#183D27] hover:text-[#F7F3E8] transition-all min-h-[36px]"
-            >
-              <MessageCircle className="w-3 h-3 text-[#B88A32]" />
-              <span>Wellness Advisor</span>
-            </button>
-
             {/* Search Icon */}
             <button
               id="header-search-btn"
@@ -217,17 +205,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onOpenAdvisor }) =
           </div>
 
           <div className="flex flex-col gap-3 pt-6 mt-6 border-t border-white/15">
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenAdvisor();
-              }}
-              className="w-full py-3.5 rounded-sm bg-[#183D27] text-[#F7F3E8] font-sans text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2 border border-[#B88A32]/30 min-h-[44px]"
-            >
-              <MessageCircle className="w-4 h-4 text-[#D4B66A]" />
-              <span>Ask Himalayan Advisor</span>
-            </button>
-
             <a
               href={getGeneralConciergeWhatsAppUrl()}
               target="_blank"

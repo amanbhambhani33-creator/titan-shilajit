@@ -20,7 +20,7 @@ import { QuickViewModal } from '../components/QuickViewModal';
 import { getProductWhatsAppUrl } from '../utils/whatsapp';
 import { useCart } from '../context/CartContext';
 import { Product, ProductPack } from '../types';
-import { getProductPacks } from '../utils/productPacks';
+import { getProductPacks, getPackShortBadge, getPackShortName, getPackShortQuantity } from '../utils/productPacks';
 
 export const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -167,47 +167,62 @@ export const ProductDetailPage: React.FC = () => {
                   <span className="text-[11px] font-bold text-[#10110F] uppercase tracking-wider">
                     CHOOSE PACK CONFIGURATION:
                   </span>
-                  <span className="text-[11px] font-bold text-[#183D27] bg-[#183D27]/10 px-2 py-0.5 rounded-xs">
-                    {currentPack?.name} ({currentPack?.quantityText})
+                  <span className="text-[11px] font-bold text-[#183D27] bg-[#183D27]/10 px-2 py-0.5 rounded-xs border border-[#183D27]/15">
+                    {currentPack?.name}
                   </span>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   {packs.map((pack, idx) => {
                     const isSelected = selectedPackIndex === idx;
+                    const shortBadge = getPackShortBadge(pack.badge, idx);
+                    const shortName = getPackShortName(pack, idx);
+                    const shortQuantity = getPackShortQuantity(pack.quantityText);
+
                     return (
                       <button
                         key={pack.id}
                         type="button"
                         onClick={() => handleSelectPack(idx)}
-                        className={`relative p-2.5 rounded-xs border text-center transition-all cursor-pointer flex flex-col items-center justify-between ${
+                        className={`p-2 sm:p-2.5 rounded-xs border text-center transition-all cursor-pointer flex flex-col items-center justify-between min-h-[82px] ${
                           isSelected
                             ? 'bg-[#183D27] text-[#F7F3E8] border-[#B88A32] shadow-sm ring-1 ring-[#B88A32]'
                             : 'bg-[#F7F3E8] hover:bg-[#EEE8D7] text-[#10110F] border-[#10110F]/15'
                         }`}
                       >
-                        {pack.badge && (
-                          <span
-                            className={`text-[8px] font-black uppercase px-1.5 py-0.2 rounded-xs border mb-1 ${
-                              isSelected
-                                ? 'bg-[#B88A32] text-[#10110F] border-[#B88A32]'
-                                : 'bg-[#10110F] text-[#D4B66A] border-white/20'
-                            }`}
-                          >
-                            {pack.badge}
-                          </span>
-                        )}
-                        <span className={`text-[11px] font-bold uppercase ${isSelected ? 'text-[#D4B66A]' : 'text-[#10110F]'}`}>
-                          {pack.name}
+                        <div
+                          className={`w-full text-[7.5px] sm:text-[8px] font-black uppercase tracking-wider px-1 py-0.5 rounded-xs text-center truncate mb-1 ${
+                            isSelected
+                              ? 'bg-[#B88A32] text-[#10110F]'
+                              : 'bg-[#10110F]/10 text-[#66704B]'
+                          }`}
+                        >
+                          {shortBadge}
+                        </div>
+                        <span className={`text-[11px] font-bold uppercase tracking-tight truncate w-full ${isSelected ? 'text-[#D4B66A]' : 'text-[#10110F]'}`}>
+                          {shortName}
                         </span>
-                        <span className={`text-[9px] opacity-80 my-0.5 ${isSelected ? 'text-[#EEE8D7]' : 'text-[#66704B]'}`}>
-                          {pack.quantityText}
+                        <span className={`text-[9.5px] truncate w-full my-0.5 ${isSelected ? 'text-[#EEE8D7]/85' : 'text-[#66704B]'}`}>
+                          {shortQuantity}
                         </span>
-                        <span className={`text-xs font-black ${isSelected ? 'text-[#F7F3E8]' : 'text-[#10110F]'}`}>
+                        <span className={`text-xs sm:text-[13px] font-black mt-0.5 ${isSelected ? 'text-[#F7F3E8]' : 'text-[#10110F]'}`}>
                           ₹{pack.price}
                         </span>
                       </button>
                     );
                   })}
+                </div>
+
+                {/* Selected Pack Full Details Banner */}
+                <div className="mt-2.5 py-1.5 px-2.5 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <span className="font-bold text-[#183D27] shrink-0">{currentPack?.name}:</span>
+                    <span className="text-[#66704B] text-[11px] truncate">{currentPack?.quantityText}</span>
+                  </div>
+                  {currentPack?.savings && (
+                    <span className="text-[10px] font-bold text-[#183D27] bg-[#183D27]/10 px-2 py-0.5 rounded-xs shrink-0 ml-1.5 whitespace-nowrap">
+                      {currentPack.savings}
+                    </span>
+                  )}
                 </div>
               </div>
 

@@ -4,7 +4,7 @@ import { X, MessageCircle, ShoppingBag, ShieldCheck, Check, Star, ArrowRight } f
 import { Product, ProductPack } from '../types';
 import { getProductWhatsAppUrl } from '../utils/whatsapp';
 import { useCart } from '../context/CartContext';
-import { getProductPacks } from '../utils/productPacks';
+import { getProductPacks, getPackShortBadge, getPackShortName, getPackShortQuantity } from '../utils/productPacks';
 
 interface QuickViewModalProps {
   product: Product | null;
@@ -113,38 +113,65 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({ product, onClose
 
               {/* THREE PACK BUTTONS */}
               <div className="mb-4">
-                <div className="flex items-center justify-between text-[11px] mb-1.5">
+                <div className="flex items-center justify-between text-[11px] mb-2">
                   <span className="font-bold text-[#10110F] uppercase tracking-wider text-[10px]">
                     SELECT PACK:
                   </span>
-                  <span className="text-[#183D27] font-semibold text-[10px] bg-[#183D27]/10 px-2 py-0.5 rounded-xs">
-                    {currentPack.name} ({currentPack.quantityText})
+                  <span className="text-[#183D27] font-semibold text-[10px] bg-[#183D27]/10 px-2 py-0.5 rounded-xs border border-[#183D27]/15">
+                    {currentPack.name}
                   </span>
                 </div>
                 <div className="grid grid-cols-3 gap-1.5">
                   {packs.map((pack, idx) => {
                     const isSelected = selectedPackIndex === idx;
+                    const shortBadge = getPackShortBadge(pack.badge, idx);
+                    const shortName = getPackShortName(pack, idx);
+                    const shortQuantity = getPackShortQuantity(pack.quantityText);
+
                     return (
                       <button
                         key={pack.id}
                         type="button"
                         onClick={() => handleSelectPack(idx)}
-                        className={`p-2 rounded-xs border text-center transition-all cursor-pointer ${
+                        className={`p-2 rounded-xs border text-center transition-all cursor-pointer flex flex-col items-center justify-between min-h-[76px] ${
                           isSelected
                             ? 'bg-[#183D27] text-[#F7F3E8] border-[#B88A32] ring-1 ring-[#B88A32]'
                             : 'bg-white hover:bg-[#EEE8D7] text-[#10110F] border-[#10110F]/15'
                         }`}
                       >
-                        <div className={`text-[10px] font-bold uppercase ${isSelected ? 'text-[#D4B66A]' : 'text-[#10110F]'}`}>
-                          {pack.name}
+                        <div
+                          className={`w-full text-[7.5px] font-black uppercase tracking-wider px-1 py-0.5 rounded-xs text-center truncate mb-1 ${
+                            isSelected
+                              ? 'bg-[#B88A32] text-[#10110F]'
+                              : 'bg-[#10110F]/10 text-[#66704B]'
+                          }`}
+                        >
+                          {shortBadge}
                         </div>
-                        <div className="text-[9px] opacity-75 my-0.5">{pack.quantityText}</div>
-                        <div className={`text-xs font-black ${isSelected ? 'text-[#F7F3E8]' : 'text-[#10110F]'}`}>
+                        <span className={`text-[10.5px] font-bold uppercase tracking-tight truncate w-full ${isSelected ? 'text-[#D4B66A]' : 'text-[#10110F]'}`}>
+                          {shortName}
+                        </span>
+                        <span className={`text-[9px] truncate w-full my-0.5 ${isSelected ? 'text-[#EEE8D7]/85' : 'text-[#66704B]'}`}>
+                          {shortQuantity}
+                        </span>
+                        <span className={`text-xs font-black mt-0.5 ${isSelected ? 'text-[#F7F3E8]' : 'text-[#10110F]'}`}>
                           ₹{pack.price}
-                        </div>
+                        </span>
                       </button>
                     );
                   })}
+                </div>
+
+                {/* Selected Pack Full Details Banner */}
+                <div className="mt-2 py-1 px-2 rounded-xs bg-[#EEE8D7]/60 border border-[#10110F]/10 flex items-center justify-between text-[10px]">
+                  <span className="text-[#66704B] font-medium truncate">
+                    {currentPack.quantityText}
+                  </span>
+                  {currentPack.savings && (
+                    <span className="text-[#183D27] font-bold shrink-0 ml-1.5 whitespace-nowrap">
+                      {currentPack.savings}
+                    </span>
+                  )}
                 </div>
               </div>
 

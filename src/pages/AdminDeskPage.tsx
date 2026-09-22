@@ -33,13 +33,14 @@ import {
   Unlock,
   Users,
   Crown,
-  Sparkles,
 } from 'lucide-react';
 import { useStoreContent, HeroBannerConfig, LaunchBannerConfig, BrandStoryConfig } from '../context/StoreContentContext';
 import { useAuth } from '../context/AuthContext';
 import { Product } from '../types';
 import { AdminLoginGate } from '../components/AdminLoginGate';
 import { AdminRBACSection } from '../components/AdminRBACSection';
+import { AdminQualityTrustSection } from '../components/AdminQualityTrustSection';
+import { AdminPictureTransitionSection } from '../components/AdminPictureTransitionSection';
 
 export const AdminDeskPage: React.FC = () => {
   const {
@@ -67,12 +68,20 @@ export const AdminDeskPage: React.FC = () => {
     updateBrandStory,
     updateTrustStripItem,
     updatePageContent,
+    updateQualityTrust,
+    updateQualityTrustCard,
+    addQualityTrustCard,
+    deleteQualityTrustCard,
+    resetQualityTrustToDefault,
+    updateProductBenefits,
+    updateProductBenefitCard,
+    resetProductBenefitsToDefault,
     saveAllToFirebase,
     resetAllContent,
     triggerSplash,
   } = useStoreContent();
 
-  const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'developer' | 'rbac' | 'settings'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'quality' | 'developer' | 'rbac' | 'settings'>('products');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
 
@@ -585,6 +594,7 @@ export const AdminDeskPage: React.FC = () => {
           {[
             { id: 'products', label: 'Products & Pricing', icon: Package },
             { id: 'banners', label: 'Banners & Launches', icon: ImageIcon },
+            { id: 'quality', label: 'Quality & Trust & Benefits', icon: ShieldCheck },
             { id: 'developer', label: 'Developer Text Editor', icon: FileText },
             {
               id: 'rbac',
@@ -947,145 +957,33 @@ export const AdminDeskPage: React.FC = () => {
               </div>
             </div>
 
-            {/* HERO BANNER & FRONT PAGE HERO IMAGE */}
-            <div className="bg-white p-6 sm:p-8 rounded-xs border border-[#10110F]/10 shadow-xs space-y-6">
-              <div className="border-b border-[#10110F]/10 pb-4">
-                <h3 className="font-serif text-2xl font-bold text-[#10110F]">
-                  Front Page Hero Section Banner
-                </h3>
-                <p className="text-xs text-[#66704B]">
-                  Change the main background image, hero titles, description, and product showcase image.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-[#10110F] mb-1">
-                      Hero Kicker Tagline
-                    </label>
-                    <input
-                      type="text"
-                      value={content.hero.kicker}
-                      onChange={(e) => updateHeroBanner({ kicker: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-[#10110F] mb-1">
-                        Line 1
-                      </label>
-                      <input
-                        type="text"
-                        value={content.hero.headlineLine1}
-                        onChange={(e) => updateHeroBanner({ headlineLine1: e.target.value })}
-                        className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-[#10110F] mb-1">
-                        Line 2
-                      </label>
-                      <input
-                        type="text"
-                        value={content.hero.headlineLine2}
-                        onChange={(e) => updateHeroBanner({ headlineLine2: e.target.value })}
-                        className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-[#10110F] mb-1">
-                        Line 3 (Gold)
-                      </label>
-                      <input
-                        type="text"
-                        value={content.hero.headlineLine3}
-                        onChange={(e) => updateHeroBanner({ headlineLine3: e.target.value })}
-                        className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-[#10110F] mb-1">
-                      Hero Subtitle / Description
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={content.hero.description}
-                      onChange={(e) => updateHeroBanner({ description: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-[#10110F] mb-1">
-                      Hero Background Image URL
-                    </label>
-                    <input
-                      type="text"
-                      value={content.hero.bgImageUrl}
-                      onChange={(e) => updateHeroBanner({ bgImageUrl: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-[#10110F] mb-1">
-                      Hero Product Card Image URL
-                    </label>
-                    <input
-                      type="text"
-                      value={content.hero.productCardImageUrl}
-                      onChange={(e) => updateHeroBanner({ productCardImageUrl: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-[#10110F] mb-1">
-                        Purity Highlight
-                      </label>
-                      <input
-                        type="text"
-                        value={content.hero.purityPercent}
-                        onChange={(e) => updateHeroBanner({ purityPercent: e.target.value })}
-                        placeholder="98.2% Purity"
-                        className="w-full px-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-[#10110F] mb-1">
-                        Grade Badge
-                      </label>
-                      <input
-                        type="text"
-                        value={content.hero.gradeBadge}
-                        onChange={(e) => updateHeroBanner({ gradeBadge: e.target.value })}
-                        placeholder="GRADE-A RESIN"
-                        className="w-full px-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-[#10110F]/10 flex justify-end">
-                <button
-                  onClick={() => showToast('Hero banner settings saved!')}
-                  className="px-6 py-2.5 rounded-xs bg-[#183D27] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-[#10110F] transition-colors"
-                >
-                  <Save className="w-4 h-4 text-[#D4B66A]" />
-                  <span>Save Hero Banner</span>
-                </button>
-              </div>
-            </div>
+            {/* HERO PICTURE TRANSITION SLIDER */}
+            <AdminPictureTransitionSection
+              hero={content.hero}
+              updateHeroBanner={updateHeroBanner}
+              showToast={showToast}
+            />
           </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB: QUALITY & TRUST & PRODUCT BENEFITS */}
+        {/* ========================================================================= */}
+        {activeTab === 'quality' && (
+          <AdminQualityTrustSection
+            qualityTrust={content.qualityTrust}
+            productBenefits={content.productBenefits}
+            updateQualityTrust={updateQualityTrust}
+            updateQualityTrustCard={updateQualityTrustCard}
+            addQualityTrustCard={addQualityTrustCard}
+            deleteQualityTrustCard={deleteQualityTrustCard}
+            resetQualityTrustToDefault={resetQualityTrustToDefault}
+            updateProductBenefits={updateProductBenefits}
+            updateProductBenefitCard={updateProductBenefitCard}
+            resetProductBenefitsToDefault={resetProductBenefitsToDefault}
+            saveAllToFirebase={saveAllToFirebase}
+            showToast={showToast}
+          />
         )}
 
         {/* ========================================================================= */}

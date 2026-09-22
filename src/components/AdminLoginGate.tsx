@@ -15,7 +15,6 @@ import {
   Crown,
   Clock,
   ArrowRight,
-  Sparkles,
 } from 'lucide-react';
 import { useAuth, ADMIN_REQUIRED_PASSWORD, PERMANENT_SUPER_ADMIN_EMAILS } from '../context/AuthContext';
 import { AdminRole, AccessRequestRecord } from '../types';

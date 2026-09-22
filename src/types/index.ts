@@ -69,6 +69,40 @@ export interface Review {
   date: string;
 }
 
+export interface BenefitCard {
+  id: string;
+  title: string;
+  subtitle?: string;
+  description: string;
+  imageUrl: string;
+  tag?: string;
+}
+
+export interface QualityTrustCard {
+  id: string;
+  title: string;
+  subtitle?: string;
+  description: string;
+  imageUrl: string;
+  tag?: string;
+  badge?: string;
+}
+
+export interface QualityTrustConfig {
+  kicker: string;
+  title: string;
+  description: string;
+  cards: QualityTrustCard[];
+}
+
+export interface HeroSlideImage {
+  id: string;
+  imageUrl: string;
+  title?: string;
+  linkUrl?: string;
+  altText?: string;
+}
+
 export interface CartItem {
   id?: string;
   product: Product;

@@ -17,7 +17,6 @@ import {
   Crown,
   Lock,
   RefreshCw,
-  Sparkles,
   Sliders,
   Mail,
   Clock,
@@ -716,7 +715,7 @@ export const AdminRBACSection: React.FC<AdminRBACSectionProps> = ({ onToast }) =
                     onClick={() => setNewAdminPassword(generateRandomPassword())}
                     className="text-[10px] text-[#183D27] font-bold hover:underline flex items-center gap-1"
                   >
-                    <Sparkles className="w-3 h-3 text-[#B88A32]" />
+                    <RefreshCw className="w-3 h-3 text-[#B88A32]" />
                     <span>Auto-Generate</span>
                   </button>
                 </div>
@@ -833,7 +832,7 @@ export const AdminRBACSection: React.FC<AdminRBACSectionProps> = ({ onToast }) =
                     onClick={() => setApprovalPassword(generateRandomPassword())}
                     className="text-[10px] text-[#183D27] font-bold hover:underline flex items-center gap-1"
                   >
-                    <Sparkles className="w-3 h-3 text-[#B88A32]" />
+                    <RefreshCw className="w-3 h-3 text-[#B88A32]" />
                     <span>Generate New</span>
                   </button>
                 </div>

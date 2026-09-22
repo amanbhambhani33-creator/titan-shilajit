@@ -86,7 +86,7 @@ export const PRODUCTS: Product[] = [
     reviewCount: 215,
     inStock: true,
     images: [
-      'https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=1200&q=85',
+      'https://images.unsplash.com/photo-1587049352851-8d4e89133924?auto=format&fit=crop&w=1200&q=85',
       'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=85',
       'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=85'
     ],
@@ -210,7 +210,7 @@ export const PRODUCTS: Product[] = [
     inStock: true,
     images: [
       'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=1200&q=85',
+      'https://images.unsplash.com/photo-1587049352851-8d4e89133924?auto=format&fit=crop&w=1200&q=85',
       'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=85'
     ],
     shortDescription: 'Refreshing, tart Himalayan wild strawberry notes fused with sweet wildflower honey and pure Shilajit resin. A bright daily vitality boost.',
@@ -270,7 +270,7 @@ export const PRODUCTS: Product[] = [
     inStock: true,
     images: [
       'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=1200&q=85',
+      'https://images.unsplash.com/photo-1587049352851-8d4e89133924?auto=format&fit=crop&w=1200&q=85',
       'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=85'
     ],
     shortDescription: 'Our flagship ritual kit featuring the 20g Pure Resin Jar, custom engraved matte-black stainless measuring spoon, and a 10-stick pack of Classic Honey Sticks for travel.',

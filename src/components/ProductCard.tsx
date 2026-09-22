@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle, Eye, Star, ShoppingBag, Check, Plus, Minus, Zap, Sparkles } from 'lucide-react';
+import { MessageCircle, Eye, Star, ShoppingBag, Check, Plus, Minus, Zap } from 'lucide-react';
 import { Product, ProductPack } from '../types';
 import { getProductWhatsAppUrl } from '../utils/whatsapp';
 import { useCart } from '../context/CartContext';
-import { getProductPacks } from '../utils/productPacks';
+import { getProductPacks, getPackShortBadge, getPackShortName, getPackShortQuantity } from '../utils/productPacks';
 
 interface ProductCardProps {
   product: Product;
@@ -132,7 +132,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
           <span className="font-bold text-[#10110F] uppercase tracking-wider text-[10px]">
             SELECT PACK SIZE:
           </span>
-          <span className="text-[#183D27] font-semibold text-[10px] bg-[#183D27]/10 px-1.5 py-0.5 rounded-xs">
+          <span className="text-[#183D27] font-semibold text-[10px] bg-[#183D27]/10 px-2 py-0.5 rounded-xs border border-[#183D27]/15">
             {currentPack.name}
           </span>
         </div>
@@ -141,48 +141,53 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
         <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
           {packs.map((pack, idx) => {
             const isSelected = selectedPackIndex === idx;
+            const shortBadge = getPackShortBadge(pack.badge, idx);
+            const shortName = getPackShortName(pack, idx);
+            const shortQuantity = getPackShortQuantity(pack.quantityText);
+
             return (
               <button
                 key={pack.id}
                 type="button"
                 onClick={() => handleSelectPack(idx)}
-                className={`relative flex flex-col items-center justify-between p-2 rounded-xs border text-center transition-all cursor-pointer min-h-[64px] ${
+                className={`flex flex-col items-center justify-between p-1.5 sm:p-2 rounded-xs border text-center transition-all cursor-pointer min-h-[76px] ${
                   isSelected
                     ? 'bg-[#183D27] text-[#F7F3E8] border-[#B88A32] shadow-sm ring-1 ring-[#B88A32]/60'
                     : 'bg-[#F7F3E8]/60 hover:bg-[#EEE8D7] text-[#10110F] border-[#10110F]/15'
                 }`}
               >
-                {/* Popular / Supersaver tiny ribbon */}
-                {pack.badge && (
-                  <span
-                    className={`absolute -top-2 text-[8px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-xs border ${
-                      isSelected
-                        ? 'bg-[#B88A32] text-[#10110F] border-[#B88A32]'
-                        : 'bg-[#10110F] text-[#D4B66A] border-white/20'
-                    }`}
-                  >
-                    {pack.badge}
-                  </span>
-                )}
+                {/* In-Flow Badge header: No absolute positioning, zero overlap */}
+                <div
+                  className={`w-full py-0.5 px-1 text-[7.5px] sm:text-[8px] font-black uppercase tracking-wider text-center truncate rounded-xs mb-1 ${
+                    isSelected
+                      ? 'bg-[#B88A32] text-[#10110F]'
+                      : 'bg-[#10110F]/10 text-[#66704B]'
+                  }`}
+                >
+                  {shortBadge}
+                </div>
 
+                {/* Pack Name */}
                 <span
-                  className={`text-[10px] sm:text-[11px] font-bold tracking-tight uppercase leading-tight ${
+                  className={`text-[10px] sm:text-[11px] font-bold tracking-tight uppercase leading-tight truncate w-full ${
                     isSelected ? 'text-[#D4B66A]' : 'text-[#10110F]'
                   }`}
                 >
-                  {pack.name}
+                  {shortName}
                 </span>
 
+                {/* Short Quantity / Weight */}
                 <span
-                  className={`text-[9px] font-medium leading-none my-0.5 ${
+                  className={`text-[9px] font-medium leading-none truncate w-full my-0.5 ${
                     isSelected ? 'text-[#EEE8D7]/80' : 'text-[#66704B]'
                   }`}
                 >
-                  {pack.quantityText}
+                  {shortQuantity}
                 </span>
 
+                {/* Price */}
                 <span
-                  className={`text-xs sm:text-xs font-black font-sans leading-none ${
+                  className={`text-xs sm:text-[13px] font-black font-sans leading-none mt-0.5 ${
                     isSelected ? 'text-[#F7F3E8]' : 'text-[#10110F]'
                   }`}
                 >
@@ -191,6 +196,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
               </button>
             );
           })}
+        </div>
+
+        {/* Selected Pack Full Details Banner */}
+        <div className="py-1 px-2 rounded-xs bg-[#EEE8D7]/60 border border-[#10110F]/10 flex items-center justify-between text-[10px]">
+          <span className="text-[#66704B] font-medium truncate">
+            {currentPack.quantityText}
+          </span>
+          {currentPack.savings && (
+            <span className="text-[#183D27] font-bold shrink-0 ml-1.5 whitespace-nowrap">
+              {currentPack.savings}
+            </span>
+          )}
         </div>
 
         {/* Dynamic Price Display & Quantity Stepper */}

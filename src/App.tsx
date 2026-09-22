@@ -8,7 +8,6 @@ import { Footer } from './components/Footer';
 import { CartDrawer } from './components/CartDrawer';
 import { FloatingWhatsApp } from './components/FloatingWhatsApp';
 import { SearchModal } from './components/SearchModal';
-import { AIAssistantModal } from './components/AIAssistantModal';
 import { SplashIntro } from './components/SplashIntro';
 
 // Pages
@@ -24,7 +23,6 @@ import { AdminDeskPage } from './pages/AdminDeskPage';
 
 export const App: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isAdvisorOpen, setIsAdvisorOpen] = useState(false);
   const location = useLocation();
 
   // Scroll to top on route change
@@ -46,7 +44,6 @@ export const App: React.FC = () => {
             {!isAdmin && (
               <Header
                 onOpenSearch={() => setIsSearchOpen(true)}
-                onOpenAdvisor={() => setIsAdvisorOpen(true)}
               />
             )}
 
@@ -84,12 +81,6 @@ export const App: React.FC = () => {
             <SearchModal
               isOpen={isSearchOpen}
               onClose={() => setIsSearchOpen(false)}
-            />
-
-            {/* Wellness Advisor Dialog */}
-            <AIAssistantModal
-              isOpen={isAdvisorOpen}
-              onClose={() => setIsAdvisorOpen(false)}
             />
           </div>
         </CartProvider>

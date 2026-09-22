@@ -97,7 +97,7 @@ export const PolicyPage: React.FC = () => {
               </div>
               <h3 className="font-serif font-bold text-lg text-[#10110F]">1. Educational Purpose</h3>
               <p>
-                The information provided on this website, in our AI Wellness Assessment, and through our WhatsApp communications is intended solely for educational, dietary, and historical reference. It is not a substitute for professional medical diagnosis, advice, or treatment.
+                The information provided on this website, in our Himalayan Wellness Assessment, and through our WhatsApp communications is intended solely for educational, dietary, and historical reference. It is not a substitute for professional medical diagnosis, advice, or treatment.
               </p>
               <h3 className="font-serif font-bold text-lg text-[#10110F]">2. No Therapeutic Claims</h3>
               <p>

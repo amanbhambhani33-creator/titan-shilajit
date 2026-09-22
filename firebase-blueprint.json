@@ -7,6 +7,8 @@
         "trustStrip": { "type": "array" },
         "brandStory": { "type": "map" },
         "launchProduct": { "type": "map" },
+        "productBenefits": { "type": "array" },
+        "qualityTrust": { "type": "map" },
         "footer": { "type": "map" },
         "updatedAt": { "type": "string" }
       }
