@@ -95,6 +95,22 @@ export const HeroSection: React.FC = () => {
   // Words overlay toggle (defaults to false = NO words, only picture transition)
   const showWords = Boolean(hero.showWords);
 
+  // Helper to resolve product specific target URL
+  const getProductTargetUrl = (slide: HeroSlideImage, index: number): string => {
+    if (slide.linkUrl && slide.linkUrl.startsWith('/product/')) {
+      return slide.linkUrl;
+    }
+    const defaultProductLinks = [
+      '/product/titan-shilajit-resin',
+      '/product/titan-honey-sticks-classic',
+      '/product/titan-honey-sticks-dark-chocolate',
+      '/product/titan-honey-sticks-strawberry',
+      '/product/titan-vitality-ritual-box',
+      '/product/titan-honey-sticks-trio',
+    ];
+    return defaultProductLinks[index % defaultProductLinks.length];
+  };
+
   return (
     <section
       id="hero-picture-transition-section"
@@ -110,6 +126,7 @@ export const HeroSection: React.FC = () => {
           const isActive = index === currentSlide;
           const isNext = (index === (currentSlide + 1) % slides.length);
           const isPrev = (index === (currentSlide - 1 + slides.length) % slides.length);
+          const targetUrl = getProductTargetUrl(slide, index);
 
           const ImageElement = (
             <img
@@ -138,24 +155,40 @@ export const HeroSection: React.FC = () => {
                   : 'opacity-0 z-0 pointer-events-none'
               }`}
             >
-              {slide.linkUrl ? (
-                <Link
-                  to={slide.linkUrl}
-                  className="block w-full h-full cursor-pointer"
-                  tabIndex={isActive ? 0 : -1}
-                  aria-label={slide.title || 'Explore Titan Shilajit Product'}
-                >
-                  {ImageElement}
-                </Link>
-              ) : (
-                <div className="w-full h-full">
-                  {ImageElement}
-                </div>
-              )}
+              <Link
+                to={targetUrl}
+                className="block w-full h-full cursor-pointer"
+                tabIndex={isActive ? 0 : -1}
+                aria-label={slide.title || 'Explore Titan Shilajit Product'}
+              >
+                {ImageElement}
+              </Link>
 
               {/* Subtle Cinematic Vignette Framing (no text, pure aesthetic atmosphere) */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#10110F]/60 via-transparent to-[#10110F]/30 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#10110F]/70 via-transparent to-[#10110F]/30 pointer-events-none" />
               <div className="absolute inset-0 bg-gradient-to-r from-[#10110F]/40 via-transparent to-[#10110F]/40 pointer-events-none" />
+
+              {/* Product Direct Buying Option Badge on each slide */}
+              <div className="absolute bottom-16 sm:bottom-20 left-4 sm:left-8 z-20 pointer-events-auto">
+                <Link
+                  to={targetUrl}
+                  tabIndex={isActive ? 0 : -1}
+                  className="inline-flex items-center gap-3 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xs bg-[#10110F]/85 hover:bg-[#183D27] text-[#F7F3E8] border border-[#B88A32]/60 shadow-2xl backdrop-blur-md transition-all group/badge"
+                >
+                  <div className="flex flex-col text-left">
+                    <span className="text-[9px] uppercase tracking-widest text-[#D4B66A] font-bold">
+                      PRODUCT SPECIAL
+                    </span>
+                    <span className="text-xs sm:text-sm font-serif font-bold text-[#F7F3E8] group-hover/badge:text-[#D4B66A] transition-colors truncate max-w-[190px] sm:max-w-xs">
+                      {slide.title || 'Titan Pure Himalayan Shilajit'}
+                    </span>
+                  </div>
+                  <span className="ml-1 px-2.5 py-1 rounded-xs bg-[#B88A32] text-[#10110F] text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider shrink-0 flex items-center gap-1 group-hover/badge:bg-[#E8CD82] transition-colors shadow-xs">
+                    <span>BUY PRODUCT</span>
+                    <span>&rarr;</span>
+                  </span>
+                </Link>
+              </div>
             </div>
           );
         })}

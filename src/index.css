@@ -101,11 +101,11 @@
   display: flex;
   width: max-content;
   will-change: transform;
-  animation: marquee-left 15s linear infinite;
+  animation: marquee-left 45s linear infinite;
 }
 
 .animate-marquee-left:hover {
-  /* Keeps moving smoothly without pausing or freezing */
-  animation-play-state: running;
+  /* Allow pausing on hover for comfortable reading */
+  animation-play-state: paused;
 }
 

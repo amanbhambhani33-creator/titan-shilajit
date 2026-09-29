@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage } from '../types';
+import { Product, BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage, OrderRecord } from '../types';
 import { PRODUCTS as DEFAULT_PRODUCTS } from '../data/products';
 import { TRUST_STRIP_ITEMS, BRAND_CONTACT } from '../data/content';
-import { db, doc, getDoc, setDoc, onSnapshot } from '../lib/firebase';
+import { db, doc, getDoc, setDoc, onSnapshot, collection, getDocs, query, where } from '../lib/firebase';
 
 export type { BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage };
 
@@ -157,37 +157,44 @@ export const DEFAULT_HERO_PICTURES: HeroSlideImage[] = [
   {
     id: 'pic-1',
     imageUrl: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1920&q=85',
-    title: 'Pure Himalayan Shilajit Obsidian Jar',
-    linkUrl: '/shop',
-    altText: 'Pure Himalayan Shilajit Obsidian Jar',
+    title: 'Titan Pure Himalayan Shilajit Resin (20g Jar)',
+    linkUrl: '/product/titan-shilajit-resin',
+    altText: 'Titan Pure Himalayan Shilajit Resin Jar',
   },
   {
     id: 'pic-2',
     imageUrl: 'https://images.unsplash.com/photo-1587049352851-8d4e89133924?auto=format&fit=crop&w=1920&q=85',
-    title: 'Titan Shilajit Portable Raw Forest Honey Sticks',
-    linkUrl: '/shop',
-    altText: 'Titan Shilajit Portable Raw Forest Honey Sticks',
+    title: 'Titan Shilajit Honey Sticks — Classic Raw Honey',
+    linkUrl: '/product/titan-honey-sticks-classic',
+    altText: 'Titan Shilajit Classic Raw Honey Sticks',
   },
   {
     id: 'pic-3',
-    imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=85',
-    title: '16,000+ FT High Himalayan Glacial Rock Crests',
-    linkUrl: '/why-titan',
-    altText: '16,000+ FT High Himalayan Glacial Rock Crests',
+    imageUrl: 'https://images.unsplash.com/photo-1511381939415-e44015466834?auto=format&fit=crop&w=1920&q=85',
+    title: 'Titan Shilajit Honey Sticks — 70% Dark Cacao',
+    linkUrl: '/product/titan-honey-sticks-dark-chocolate',
+    altText: 'Titan Shilajit Dark Chocolate Honey Sticks',
   },
   {
     id: 'pic-4',
-    imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1920&q=85',
-    title: 'Surya Tapi 40-Day Solar Spring Water Purification',
-    linkUrl: '/shilajit-guide',
-    altText: 'Surya Tapi 40-Day Solar Spring Water Purification',
+    imageUrl: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=1920&q=85',
+    title: 'Titan Shilajit Honey Sticks — Wild Strawberry',
+    linkUrl: '/product/titan-honey-sticks-strawberry',
+    altText: 'Titan Shilajit Wild Strawberry Honey Sticks',
   },
   {
     id: 'pic-5',
     imageUrl: 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1920&q=85',
-    title: 'Titan Apothecary Master Ritual Chest & Brass Wand',
-    linkUrl: '/shop',
-    altText: 'Titan Apothecary Master Ritual Chest & Brass Wand',
+    title: 'The Titan Vitality Ritual Box (Resin + Spoon + Sticks)',
+    linkUrl: '/product/titan-vitality-ritual-box',
+    altText: 'The Titan Vitality Ritual Box with Measuring Wand',
+  },
+  {
+    id: 'pic-6',
+    imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1920&q=85',
+    title: 'Titan Honey Sticks Discovery Trio (30-Stick Variety Pack)',
+    linkUrl: '/product/titan-honey-sticks-trio',
+    altText: 'Titan Honey Sticks Discovery Trio Pack',
   },
 ];
 
@@ -291,10 +298,19 @@ interface StoreContentContextType {
   triggerSplash: () => void;
   closeSplash: () => void;
   // Product actions
-  addProduct: (product: Product) => void;
-  updateProduct: (id: string, updates: Partial<Product>) => void;
-  deleteProduct: (id: string) => void;
+  addProduct: (product: Product) => Promise<boolean>;
+  updateProduct: (id: string, updates: Partial<Product>) => Promise<boolean>;
+  updateProductStock: (id: string, qty: number) => Promise<boolean>;
+  toggleProductInStock: (id: string) => Promise<boolean>;
+  deleteProduct: (id: string) => Promise<boolean>;
   resetProductsToDefault: () => void;
+  // Inventory alerts
+  lowStockProducts: Product[];
+  lowStockCount: number;
+  // Orders & Customer First-Order validation
+  orders: OrderRecord[];
+  recordOrder: (order: Omit<OrderRecord, 'id' | 'createdAt'>) => Promise<string>;
+  checkCustomerFirstOrder: (mobileOrEmail: string) => Promise<{ isFirstOrder: boolean; previousOrderCount: number; message?: string }>;
   // Banner and content actions
   updateHeroBanner: (updates: Partial<HeroBannerConfig>) => void;
   updateLaunchBanner: (updates: Partial<LaunchBannerConfig>) => void;
@@ -404,10 +420,21 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   });
 
+  // Orders State (synced with Firestore)
+  const [orders, setOrders] = useState<OrderRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem('titan_store_orders_v1');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
   // Firestore Realtime Synchronization
   useEffect(() => {
     let unsubscribeContent: (() => void) | null = null;
     let unsubscribeProducts: (() => void) | null = null;
+    let unsubscribeOrders: (() => void) | null = null;
 
     try {
       const contentDocRef = doc(db, 'store_content', 'main');
@@ -470,6 +497,25 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
           console.warn('Firestore products sync notice (using local cache):', error.message);
         }
       );
+
+      // Orders realtime snapshot
+      const ordersColRef = collection(db, 'orders');
+      unsubscribeOrders = onSnapshot(
+        ordersColRef,
+        (snap) => {
+          const fetchedOrders: OrderRecord[] = [];
+          snap.forEach((docSnap) => {
+            fetchedOrders.push({ id: docSnap.id, ...(docSnap.data() as any) });
+          });
+          if (fetchedOrders.length > 0) {
+            setOrders(fetchedOrders);
+            try { localStorage.setItem('titan_store_orders_v1', JSON.stringify(fetchedOrders)); } catch {}
+          }
+        },
+        (error) => {
+          console.warn('Firestore orders sync notice:', error.message);
+        }
+      );
     } catch (err) {
       console.warn('Firebase sync initialization notice:', err);
     }
@@ -477,6 +523,7 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
     return () => {
       if (unsubscribeContent) unsubscribeContent();
       if (unsubscribeProducts) unsubscribeProducts();
+      if (unsubscribeOrders) unsubscribeOrders();
     };
   }, []);
 
@@ -576,32 +623,164 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
     } catch (e) {}
   };
 
+  // Inventory Stock & Low Stock Calculation (< 20 pcs)
+  const lowStockProducts = products.filter(
+    (p) => (p.stockQty !== undefined && p.stockQty < 20) || !p.inStock
+  );
+  const lowStockCount = lowStockProducts.length;
+
   // Product mutations
-  const addProduct = (newProduct: Product) => {
-    const updated = [newProduct, ...products];
+  const addProduct = async (newProduct: Product): Promise<boolean> => {
+    // If stockQty <= 0, automatically mark out of stock
+    const sanitizedProduct: Product = {
+      ...newProduct,
+      inStock: (newProduct.stockQty ?? 50) > 0 ? Boolean(newProduct.inStock) : false,
+      stockQty: newProduct.stockQty ?? 50,
+    };
+    const updated = [sanitizedProduct, ...products];
     setProducts(updated);
     try {
       const productsDocRef = doc(db, 'store_content', 'products');
-      setDoc(productsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
-    } catch (e) {}
+      await setDoc(productsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: true });
+      return true;
+    } catch (e) {
+      console.warn('Firestore addProduct error:', e);
+      return false;
+    }
   };
 
-  const updateProduct = (id: string, updates: Partial<Product>) => {
-    const updated = products.map((item) => (item.id === id ? { ...item, ...updates } : item));
+  const updateProduct = async (id: string, updates: Partial<Product>): Promise<boolean> => {
+    const updated = products.map((item) => {
+      if (item.id !== id) return item;
+      const nextStock = updates.stockQty !== undefined ? updates.stockQty : item.stockQty;
+      const nextInStock = updates.inStock !== undefined 
+        ? updates.inStock 
+        : (nextStock !== undefined ? nextStock > 0 : item.inStock);
+
+      return {
+        ...item,
+        ...updates,
+        stockQty: nextStock,
+        inStock: (nextStock !== undefined && nextStock <= 0) ? false : nextInStock,
+      };
+    });
     setProducts(updated);
     try {
       const productsDocRef = doc(db, 'store_content', 'products');
-      setDoc(productsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
-    } catch (e) {}
+      await setDoc(productsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: true });
+      setIsFirebaseSynced(true);
+      return true;
+    } catch (e) {
+      console.warn('Firestore updateProduct error:', e);
+      return false;
+    }
   };
 
-  const deleteProduct = (id: string) => {
+  const updateProductStock = async (id: string, qty: number): Promise<boolean> => {
+    return await updateProduct(id, { stockQty: Math.max(0, qty), inStock: qty > 0 });
+  };
+
+  const toggleProductInStock = async (id: string): Promise<boolean> => {
+    const target = products.find((p) => p.id === id);
+    if (!target) return false;
+    const nextInStock = !target.inStock;
+    return await updateProduct(id, { inStock: nextInStock });
+  };
+
+  const deleteProduct = async (id: string): Promise<boolean> => {
     const updated = products.filter((item) => item.id !== id);
     setProducts(updated);
     try {
       const productsDocRef = doc(db, 'store_content', 'products');
-      setDoc(productsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
-    } catch (e) {}
+      await setDoc(productsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: true });
+      return true;
+    } catch (e) {
+      console.warn('Firestore deleteProduct error:', e);
+      return false;
+    }
+  };
+
+  // Check if phone or email has placed an order previously
+  const checkCustomerFirstOrder = async (
+    mobileOrEmail: string
+  ): Promise<{ isFirstOrder: boolean; previousOrderCount: number; message?: string }> => {
+    const cleanQuery = mobileOrEmail.trim().toLowerCase().replace(/[^a-z0-9@.]/g, '');
+    if (!cleanQuery) {
+      return { isFirstOrder: true, previousOrderCount: 0 };
+    }
+
+    // 1. Check in local cache first
+    const localMatches = orders.filter((o) => {
+      const oPhone = (o.customerPhone || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const oEmail = (o.customerEmail || '').toLowerCase().trim();
+      return (oPhone && cleanQuery.includes(oPhone)) || (oEmail && oEmail === cleanQuery);
+    });
+
+    if (localMatches.length > 0) {
+      return {
+        isFirstOrder: false,
+        previousOrderCount: localMatches.length,
+        message: 'A prior order was found with this phone number or email.',
+      };
+    }
+
+    // 2. Query Firestore orders collection
+    try {
+      const ordersCol = collection(db, 'orders');
+      const snap = await getDocs(ordersCol);
+      let matchCount = 0;
+      snap.forEach((docSnap) => {
+        const data = docSnap.data();
+        const oPhone = (data.customerPhone || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+        const oEmail = (data.customerEmail || '').toString().toLowerCase().trim();
+        if ((oPhone && (cleanQuery.includes(oPhone) || oPhone.includes(cleanQuery))) || (oEmail && oEmail === cleanQuery)) {
+          matchCount++;
+        }
+      });
+
+      if (matchCount > 0) {
+        return {
+          isFirstOrder: false,
+          previousOrderCount: matchCount,
+          message: 'Previous order found in Titan records with this mobile number or email ID.',
+        };
+      }
+    } catch (err) {
+      console.warn('Order lookup in Firestore fallback to clean:', err);
+    }
+
+    return { isFirstOrder: true, previousOrderCount: 0 };
+  };
+
+  // Record an order to Firestore and local state
+  const recordOrder = async (
+    orderInput: Omit<OrderRecord, 'id' | 'createdAt'>
+  ): Promise<string> => {
+    const newId = `order_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const fullOrder: OrderRecord = {
+      ...orderInput,
+      id: newId,
+      createdAt: new Date().toISOString(),
+    };
+
+    setOrders((prev) => [fullOrder, ...prev]);
+
+    try {
+      const orderDocRef = doc(db, 'orders', newId);
+      await setDoc(orderDocRef, fullOrder);
+      // Reduce product stock quantities accordingly in Firestore
+      for (const item of orderInput.items) {
+        const prod = products.find((p) => p.id === item.productId);
+        if (prod && prod.stockQty !== undefined) {
+          const nextStock = Math.max(0, prod.stockQty - item.quantity);
+          updateProductStock(prod.id, nextStock);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to write order to Firestore, cached locally:', err);
+    }
+
+    return newId;
   };
 
   const resetProductsToDefault = () => {
@@ -727,8 +906,15 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
         closeSplash,
         addProduct,
         updateProduct,
+        updateProductStock,
+        toggleProductInStock,
         deleteProduct,
         resetProductsToDefault,
+        lowStockProducts,
+        lowStockCount,
+        orders,
+        recordOrder,
+        checkCustomerFirstOrder,
         updateHeroBanner,
         updateLaunchBanner,
         updateAnnouncementBar,

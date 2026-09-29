@@ -28,6 +28,7 @@ export interface Product {
   rating: number;
   reviewCount: number;
   inStock: boolean;
+  stockQty?: number;
   images: string[];
   packs?: ProductPack[];
   shortDescription: string;
@@ -193,3 +194,27 @@ export interface AccessRequestRecord {
   reviewedBy?: string;
   reviewNotes?: string;
 }
+
+export interface OrderRecord {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  shippingAddress?: string;
+  items: {
+    productId: string;
+    productName: string;
+    packName?: string;
+    quantity: number;
+    price: number;
+  }[];
+  subtotal: number;
+  discount: number;
+  couponCode?: string;
+  total: number;
+  status: 'pending' | 'confirmed' | 'dispatched' | 'delivered' | 'cancelled';
+  paymentMethod: 'whatsapp_prepaid' | 'cash_on_delivery' | 'online';
+  createdAt: string;
+}
+

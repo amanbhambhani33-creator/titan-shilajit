@@ -34,6 +34,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch }) => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
+  const handleNavClick = (path: string) => {
+    if (path === '/' || location.pathname === path) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    }
+  };
+
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Shop', path: '/shop' },
@@ -73,7 +79,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch }) => {
           <Link
             to="/"
             id="brand-logo-link"
-            className="flex items-center gap-2 sm:gap-2.5 group focus:outline-none min-h-[44px]"
+            onClick={() => handleNavClick('/')}
+            className="flex items-center gap-2 sm:gap-2.5 group focus:outline-none min-h-[44px] cursor-pointer"
           >
             <div className="w-8 h-8 sm:w-9 sm:h-9 bg-[#183D27] border border-[#B88A32]/40 flex items-center justify-center rounded-sm shadow-xs transition-transform group-hover:scale-105 shrink-0">
               <span className="text-[#D4B66A] font-serif text-lg sm:text-xl font-bold">T</span>
@@ -95,7 +102,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch }) => {
               <Link
                 key={link.name}
                 to={link.path}
-                className={`transition-colors hover:text-[#B88A32] ${
+                onClick={() => handleNavClick(link.path)}
+                className={`transition-colors hover:text-[#B88A32] cursor-pointer ${
                   location.pathname === link.path
                     ? 'text-[#B88A32] font-bold opacity-100'
                     : 'text-[#10110F]'
@@ -189,7 +197,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch }) => {
                 <Link
                   key={link.name}
                   to={link.path}
-                  className={`text-lg sm:text-xl font-serif tracking-wide py-3 border-b border-white/10 flex items-center justify-between min-h-[48px] ${
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleNavClick(link.path);
+                  }}
+                  className={`text-lg sm:text-xl font-serif tracking-wide py-3 border-b border-white/10 flex items-center justify-between min-h-[48px] cursor-pointer ${
                     location.pathname === link.path ? 'text-[#D4B66A] font-semibold' : 'text-[#F7F3E8]'
                   }`}
                 >

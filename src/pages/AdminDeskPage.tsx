@@ -60,8 +60,13 @@ export const AdminDeskPage: React.FC = () => {
     isFirebaseSynced,
     addProduct,
     updateProduct,
+    updateProductStock,
+    toggleProductInStock,
     deleteProduct,
     resetProductsToDefault,
+    lowStockProducts,
+    lowStockCount,
+    orders,
     updateHeroBanner,
     updateLaunchBanner,
     updateAnnouncementBar,
@@ -81,7 +86,7 @@ export const AdminDeskPage: React.FC = () => {
     triggerSplash,
   } = useStoreContent();
 
-  const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'quality' | 'developer' | 'rbac' | 'settings'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'quality' | 'developer' | 'rbac' | 'settings' | 'orders'>('products');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
 
@@ -140,6 +145,7 @@ export const AdminDeskPage: React.FC = () => {
     rating: 5.0,
     reviewCount: 1,
     inStock: true,
+    stockQty: 50,
     images: [
       'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85',
     ],
@@ -211,7 +217,8 @@ export const AdminDeskPage: React.FC = () => {
       servings: newProductForm.servings || '30 Servings',
       rating: Number(newProductForm.rating) || 5.0,
       reviewCount: Number(newProductForm.reviewCount) || 1,
-      inStock: newProductForm.inStock !== false,
+      inStock: newProductForm.inStock !== false && (Number(newProductForm.stockQty) > 0 || newProductForm.stockQty === undefined),
+      stockQty: newProductForm.stockQty !== undefined ? Number(newProductForm.stockQty) : 50,
       images: newProductForm.images?.length ? newProductForm.images : [
         'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85'
       ],
@@ -592,10 +599,20 @@ export const AdminDeskPage: React.FC = () => {
         {/* Tab Navigation */}
         <div className="flex overflow-x-auto no-scrollbar gap-2 border-b border-[#10110F]/10 pb-4 mb-6 sm:mb-8 whitespace-nowrap">
           {[
-            { id: 'products', label: 'Products & Pricing', icon: Package },
+            {
+              id: 'products',
+              label: `Products & Stock (${products.length})`,
+              badge: lowStockCount > 0 ? `${lowStockCount} Low Stock` : undefined,
+              icon: Package,
+            },
             { id: 'banners', label: 'Banners & Launches', icon: ImageIcon },
             { id: 'quality', label: 'Quality & Trust & Benefits', icon: ShieldCheck },
             { id: 'developer', label: 'Developer Text Editor', icon: FileText },
+            {
+              id: 'orders',
+              label: `Orders & Repeat Check (${orders.length})`,
+              icon: Package,
+            },
             {
               id: 'rbac',
               label: `Staff & Access ${
@@ -613,7 +630,7 @@ export const AdminDeskPage: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-xs text-xs font-bold tracking-wider uppercase flex items-center gap-2 transition-all shrink-0 min-h-[40px] ${
+                className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-xs text-xs font-bold tracking-wider uppercase flex items-center gap-2 transition-all shrink-0 min-h-[40px] cursor-pointer ${
                   isActive
                     ? 'bg-[#183D27] text-[#F7F3E8] shadow-md border-b-2 border-[#B88A32]'
                     : 'bg-white/80 text-[#10110F] hover:bg-[#10110F] hover:text-[#F7F3E8] border border-[#10110F]/10'
@@ -621,6 +638,11 @@ export const AdminDeskPage: React.FC = () => {
               >
                 <Icon className={`w-4 h-4 ${isActive ? 'text-[#D4B66A]' : ''}`} />
                 <span>{tab.label}</span>
+                {tab.badge && (
+                  <span className="px-2 py-0.5 rounded-full bg-amber-500 text-black text-[9px] font-black tracking-tight animate-pulse">
+                    {tab.badge}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -631,103 +653,293 @@ export const AdminDeskPage: React.FC = () => {
         {/* ========================================================================= */}
         {activeTab === 'products' && (
           <div className="space-y-6">
+            {/* LOW STOCK ALERT NOTIFICATION BANNER (< 20 pcs) */}
+            {lowStockCount > 0 ? (
+              <div className="p-4 sm:p-5 rounded-xs bg-amber-500/10 border-2 border-amber-500/60 text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in shadow-xs">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="font-bold text-sm text-amber-900 uppercase tracking-wide">
+                        ⚠️ INVENTORY ALERT: {lowStockCount} PRODUCT(S) LOW IN STOCK (&lt; 20 PCS)
+                      </h4>
+                      <span className="px-2 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-black tracking-widest uppercase">
+                        ACTION REQUIRED
+                      </span>
+                    </div>
+                    <p className="text-xs text-amber-800 mt-0.5">
+                      The following items are below the 20 pcs safe threshold. Adjust quantities or replenish inventory to prevent live store stockouts:
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-2.5">
+                      {lowStockProducts.map((lp) => (
+                        <span
+                          key={lp.id}
+                          className="inline-flex items-center gap-2 px-2.5 py-1 rounded-xs bg-amber-100 text-amber-950 text-xs font-bold border border-amber-300 shadow-2xs"
+                        >
+                          <span>{lp.name}:</span>
+                          <span className={lp.inStock && (lp.stockQty ?? 0) > 0 ? 'text-amber-800 font-black' : 'text-red-700 font-black uppercase'}>
+                            {lp.inStock && (lp.stockQty ?? 0) > 0 ? `${lp.stockQty ?? 0} pcs remaining` : 'OUT OF STOCK'}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    saveAllToFirebase();
+                    showToast('Inventory status synced with Firestore cloud database.');
+                  }}
+                  className="px-4 py-2 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shrink-0 shadow-sm transition-colors cursor-pointer"
+                >
+                  <Cloud className="w-3.5 h-3.5 text-[#D4B66A]" />
+                  <span>Sync Stock Cloud</span>
+                </button>
+              </div>
+            ) : (
+              <div className="p-3.5 rounded-xs bg-emerald-500/10 border border-emerald-500/40 text-emerald-900 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span className="font-semibold">All inventory levels are healthy (&ge; 20 pcs for all catalog items).</span>
+                </div>
+                <span className="text-[10px] font-mono text-emerald-700 uppercase tracking-widest">Firestore Live Synced</span>
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-xs border border-[#10110F]/10 shadow-xs">
               <div>
                 <h2 className="font-serif text-xl font-bold text-[#10110F]">
-                  Product Catalog ({products.length} Products)
+                  Product Catalog &amp; Live Stock Management ({products.length} Products)
                 </h2>
                 <p className="text-xs text-[#66704B]">
-                  Change product images, prices, descriptions, or add new catalog items.
+                  Manage prices, images, backend quantities, and toggle out-of-stock status with instant Firestore persistence.
                 </p>
               </div>
 
-              <button
-                onClick={() => setIsAddingNew(true)}
-                className="px-5 py-2.5 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-all"
-              >
-                <Plus className="w-4 h-4 text-[#D4B66A]" />
-                <span>Add New Product</span>
-              </button>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <button
+                  onClick={() => {
+                    saveAllToFirebase();
+                    showToast('All product stock and content pushed to Firestore!');
+                  }}
+                  className="px-4 py-2.5 rounded-xs border border-[#183D27] text-[#183D27] hover:bg-[#183D27] hover:text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Cloud className="w-3.5 h-3.5" />
+                  <span>Push to Firestore</span>
+                </button>
+
+                <button
+                  onClick={() => setIsAddingNew(true)}
+                  className="px-5 py-2.5 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+                >
+                  <Plus className="w-4 h-4 text-[#D4B66A]" />
+                  <span>Add New Product</span>
+                </button>
+              </div>
             </div>
 
             {/* Product List Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((p) => (
-                <div
-                  key={p.id}
-                  className="bg-white rounded-xs border border-[#10110F]/10 overflow-hidden shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between"
-                >
-                  <div>
-                    {/* Image Preview */}
-                    <div className="relative aspect-video w-full bg-[#10110F] overflow-hidden">
-                      <img
-                        src={p.images[0]}
-                        alt={p.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded-xs bg-[#183D27] text-[#D4B66A] text-[9px] font-bold uppercase tracking-wider border border-[#B88A32]/30">
-                        {p.category}
+              {products.map((p) => {
+                const isItemOutOfStock = !p.inStock || (p.stockQty !== undefined && p.stockQty <= 0);
+                const isItemLowStock = p.inStock && (p.stockQty !== undefined && p.stockQty < 20);
+
+                return (
+                  <div
+                    key={p.id}
+                    className={`bg-white rounded-xs border overflow-hidden shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between ${
+                      isItemOutOfStock
+                        ? 'border-red-300 ring-1 ring-red-400/50 bg-red-50/20'
+                        : isItemLowStock
+                        ? 'border-amber-300 ring-1 ring-amber-400/50'
+                        : 'border-[#10110F]/10'
+                    }`}
+                  >
+                    <div>
+                      {/* Image Preview */}
+                      <div className="relative aspect-video w-full bg-[#10110F] overflow-hidden">
+                        <img
+                          src={p.images[0]}
+                          alt={p.name}
+                          className={`w-full h-full object-cover ${isItemOutOfStock ? 'opacity-50 grayscale' : ''}`}
+                        />
+                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-xs bg-[#183D27] text-[#D4B66A] text-[9px] font-bold uppercase tracking-wider border border-[#B88A32]/30">
+                          {p.category}
+                        </div>
+                        <div className="absolute top-2 right-2">
+                          {isItemOutOfStock ? (
+                            <span className="px-2 py-0.5 rounded-xs bg-red-700 text-white text-[10px] font-black uppercase tracking-wider shadow-sm">
+                              OUT OF STOCK
+                            </span>
+                          ) : isItemLowStock ? (
+                            <span className="px-2 py-0.5 rounded-xs bg-amber-500 text-black text-[10px] font-black uppercase tracking-wider shadow-sm">
+                              LOW: {p.stockQty} PCS
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-xs bg-emerald-700 text-white text-[10px] font-bold uppercase tracking-wider shadow-sm">
+                              {p.stockQty ?? 50} PCS
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="absolute top-2 right-2 px-2 py-0.5 rounded-xs bg-white text-[#10110F] text-[10px] font-bold">
-                        {p.discount}
+
+                      {/* Content */}
+                      <div className="p-4 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] uppercase tracking-wider text-[#66704B] font-semibold">
+                            {p.size} • {p.servings}
+                          </span>
+                          <span
+                            className={`text-xs font-bold ${
+                              isItemOutOfStock
+                                ? 'text-red-700'
+                                : isItemLowStock
+                                ? 'text-amber-700'
+                                : 'text-emerald-700'
+                            }`}
+                          >
+                            {isItemOutOfStock ? '● Out of Stock' : isItemLowStock ? '● Low Stock' : '● In Stock'}
+                          </span>
+                        </div>
+
+                        <h3 className="font-serif text-base font-bold text-[#10110F] line-clamp-1">
+                          {p.name}
+                        </h3>
+
+                        <p className="text-xs text-[#66704B] line-clamp-2">
+                          {p.shortDescription || p.tagline}
+                        </p>
+
+                        <div className="flex items-baseline gap-2 pt-1 border-t border-[#10110F]/10">
+                          <span className="font-serif text-xl font-bold text-[#183D27]">
+                            ₹{p.price.toLocaleString('en-IN')}
+                          </span>
+                          {p.mrp && (
+                            <span className="text-xs line-through text-[#10110F]/40 font-sans">
+                              ₹{p.mrp.toLocaleString('en-IN')}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Backend Stock Management Quick Bar */}
+                        <div className="pt-2 border-t border-[#10110F]/10 bg-[#F7F3E8]/80 p-2.5 rounded-xs space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-[10px] uppercase font-bold text-[#10110F]">
+                              Stock Units (Pcs):
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const current = p.stockQty ?? 50;
+                                  const next = Math.max(0, current - 5);
+                                  updateProductStock(p.id, next);
+                                  showToast(`Stock updated to ${next} pcs`);
+                                }}
+                                className="w-6 h-6 rounded-xs bg-white border border-[#10110F]/20 text-xs font-bold hover:bg-[#10110F] hover:text-white flex items-center justify-center cursor-pointer"
+                                title="Reduce 5 pcs"
+                              >
+                                -5
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const current = p.stockQty ?? 50;
+                                  const next = Math.max(0, current - 1);
+                                  updateProductStock(p.id, next);
+                                  showToast(`Stock updated to ${next} pcs`);
+                                }}
+                                className="w-6 h-6 rounded-xs bg-white border border-[#10110F]/20 text-xs font-bold hover:bg-[#10110F] hover:text-white flex items-center justify-center cursor-pointer"
+                                title="Reduce 1 pc"
+                              >
+                                -1
+                              </button>
+                              <span className="font-mono font-bold text-xs px-2 min-w-[32px] text-center">
+                                {p.stockQty ?? 50}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const current = p.stockQty ?? 50;
+                                  const next = current + 5;
+                                  updateProductStock(p.id, next);
+                                  showToast(`Stock updated to ${next} pcs`);
+                                }}
+                                className="w-6 h-6 rounded-xs bg-white border border-[#10110F]/20 text-xs font-bold hover:bg-[#10110F] hover:text-white flex items-center justify-center cursor-pointer"
+                                title="Add 5 pcs"
+                              >
+                                +5
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const current = p.stockQty ?? 50;
+                                  const next = current + 20;
+                                  updateProductStock(p.id, next);
+                                  showToast(`Restocked +20 pcs! Total: ${next}`);
+                                }}
+                                className="px-1.5 h-6 rounded-xs bg-[#183D27] text-[#D4B66A] text-[10px] font-bold hover:bg-[#10110F] flex items-center justify-center cursor-pointer"
+                                title="Restock +20 pcs"
+                              >
+                                +20
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-1 border-t border-[#10110F]/10">
+                            <span className="text-[10px] font-bold uppercase text-[#66704B]">
+                              Storefront Availability:
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                toggleProductInStock(p.id);
+                                showToast(
+                                  p.inStock
+                                    ? `Marked "${p.name}" as Out of Stock in live store.`
+                                    : `Marked "${p.name}" as In Stock in live store.`
+                                );
+                              }}
+                              className={`px-2.5 py-1 rounded-xs text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                                p.inStock
+                                  ? 'bg-red-100 hover:bg-red-200 text-red-800 border border-red-300'
+                                  : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border border-emerald-300'
+                              }`}
+                            >
+                              {p.inStock ? 'Mark Out of Stock' : 'Mark In Stock'}
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Content */}
-                    <div className="p-4 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase tracking-wider text-[#66704B] font-semibold">
-                          {p.size} • {p.servings}
-                        </span>
-                        <span className="text-xs font-bold text-emerald-700">
-                          {p.inStock ? 'In Stock' : 'Out of Stock'}
-                        </span>
-                      </div>
+                    {/* Actions */}
+                    <div className="p-4 bg-[#F7F3E8]/60 border-t border-[#10110F]/10 flex items-center justify-between gap-2">
+                      <button
+                        onClick={() => setEditingProduct({ ...p })}
+                        className="flex-1 px-3 py-2 rounded-xs bg-[#10110F] hover:bg-[#183D27] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>Edit Product &amp; Stock</span>
+                      </button>
 
-                      <h3 className="font-serif text-base font-bold text-[#10110F] line-clamp-1">
-                        {p.name}
-                      </h3>
-
-                      <p className="text-xs text-[#66704B] line-clamp-2">
-                        {p.shortDescription || p.tagline}
-                      </p>
-
-                      <div className="flex items-baseline gap-2 pt-2 border-t border-[#10110F]/10">
-                        <span className="font-serif text-xl font-bold text-[#183D27]">
-                          ₹{p.price.toLocaleString('en-IN')}
-                        </span>
-                        <span className="text-xs line-through text-[#10110F]/40 font-sans">
-                          ₹{p.mrp.toLocaleString('en-IN')}
-                        </span>
-                      </div>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to delete "${p.name}"?`)) {
+                            deleteProduct(p.id);
+                            showToast('Product deleted.');
+                          }
+                        }}
+                        className="p-2 rounded-xs border border-red-200 text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        title="Delete Product"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-
-                  {/* Actions */}
-                  <div className="p-4 bg-[#F7F3E8]/60 border-t border-[#10110F]/10 flex items-center justify-between gap-2">
-                    <button
-                      onClick={() => setEditingProduct({ ...p })}
-                      className="flex-1 px-3 py-2 rounded-xs bg-[#10110F] hover:bg-[#183D27] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" />
-                      <span>Edit</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        if (confirm(`Are you sure you want to delete "${p.name}"?`)) {
-                          deleteProduct(p.id);
-                          showToast('Product deleted.');
-                        }
-                      }}
-                      className="p-2 rounded-xs border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
-                      title="Delete Product"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -1504,18 +1716,68 @@ export const AdminDeskPage: React.FC = () => {
                 />
               </div>
 
-              <div className="flex items-center gap-3 pt-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={editingProduct.inStock}
-                    onChange={(e) =>
-                      setEditingProduct({ ...editingProduct, inStock: e.target.checked })
-                    }
-                    className="rounded-xs text-[#183D27] focus:ring-[#183D27]"
-                  />
-                  <span className="text-xs font-bold text-[#10110F]">In Stock</span>
-                </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#10110F]/10">
+                <div>
+                  <label className="block text-xs font-bold uppercase text-[#10110F] mb-1">
+                    Backend Stock Quantity (Units / Pcs)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      value={editingProduct.stockQty ?? 50}
+                      onChange={(e) => {
+                        const val = Math.max(0, Number(e.target.value));
+                        setEditingProduct({
+                          ...editingProduct,
+                          stockQty: val,
+                          inStock: val > 0 ? editingProduct.inStock : false,
+                        });
+                      }}
+                      className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs font-mono font-bold"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const current = editingProduct.stockQty ?? 50;
+                        setEditingProduct({
+                          ...editingProduct,
+                          stockQty: current + 20,
+                          inStock: true,
+                        });
+                      }}
+                      className="px-3 py-2 rounded-xs bg-[#183D27] text-[#D4B66A] text-[10px] font-bold uppercase tracking-wider shrink-0"
+                    >
+                      +20 Pcs
+                    </button>
+                  </div>
+                  <span className="text-[10px] text-[#66704B] block mt-1">
+                    Automatic notification triggered when stock is &lt; 20 pcs.
+                  </span>
+                </div>
+
+                <div className="flex flex-col justify-center">
+                  <span className="block text-xs font-bold uppercase text-[#10110F] mb-1">
+                    Storefront Live Availability
+                  </span>
+                  <label className="flex items-center gap-2 cursor-pointer mt-1">
+                    <input
+                      type="checkbox"
+                      checked={editingProduct.inStock && (editingProduct.stockQty === undefined || editingProduct.stockQty > 0)}
+                      onChange={(e) =>
+                        setEditingProduct({
+                          ...editingProduct,
+                          inStock: e.target.checked,
+                          stockQty: e.target.checked && (editingProduct.stockQty ?? 0) <= 0 ? 50 : editingProduct.stockQty,
+                        })
+                      }
+                      className="rounded-xs text-[#183D27] focus:ring-[#183D27] w-4 h-4"
+                    />
+                    <span className="text-xs font-bold text-[#10110F]">
+                      In Stock (Visible for sale on storefront)
+                    </span>
+                  </label>
+                </div>
               </div>
 
               {/* Modal Buttons */}
@@ -1742,6 +2004,54 @@ export const AdminDeskPage: React.FC = () => {
                   placeholder="Detailed description for the product page..."
                   className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs"
                 />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#10110F]/10">
+                <div>
+                  <label className="block text-xs font-bold uppercase text-[#10110F] mb-1">
+                    Initial Stock Quantity (Units / Pcs)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={newProductForm.stockQty ?? 50}
+                    onChange={(e) => {
+                      const val = Math.max(0, Number(e.target.value));
+                      setNewProductForm({
+                        ...newProductForm,
+                        stockQty: val,
+                        inStock: val > 0,
+                      });
+                    }}
+                    className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs font-mono font-bold"
+                  />
+                  <span className="text-[10px] text-[#66704B] block mt-1">
+                    Automatic notification triggered when stock is &lt; 20 pcs.
+                  </span>
+                </div>
+
+                <div className="flex flex-col justify-center">
+                  <span className="block text-xs font-bold uppercase text-[#10110F] mb-1">
+                    Storefront Live Availability
+                  </span>
+                  <label className="flex items-center gap-2 cursor-pointer mt-1">
+                    <input
+                      type="checkbox"
+                      checked={newProductForm.inStock !== false && (newProductForm.stockQty ?? 50) > 0}
+                      onChange={(e) =>
+                        setNewProductForm({
+                          ...newProductForm,
+                          inStock: e.target.checked,
+                          stockQty: e.target.checked && (newProductForm.stockQty ?? 0) <= 0 ? 50 : newProductForm.stockQty,
+                        })
+                      }
+                      className="rounded-xs text-[#183D27] focus:ring-[#183D27] w-4 h-4"
+                    />
+                    <span className="text-xs font-bold text-[#10110F]">
+                      In Stock (Visible for sale on storefront)
+                    </span>
+                  </label>
+                </div>
               </div>
 
               {/* Modal Buttons */}

@@ -25,7 +25,7 @@ import { getProductPacks, getPackShortBadge, getPackShortName, getPackShortQuant
 export const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { addToCart, getItemQuantity } = useCart();
   const { products } = useStoreContent();
 
   const product = products.find((p) => p.slug === slug || p.id === slug);
@@ -33,16 +33,33 @@ export const ProductDetailPage: React.FC = () => {
 
   const [selectedPackIndex, setSelectedPackIndex] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'overview' | 'how-to-use' | 'lab-testing' | 'reviews'>('overview');
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [isAddedToast, setIsAddedToast] = useState(false);
+
+  const currentPack: ProductPack = packs[selectedPackIndex] || packs[0];
+
+  // Stock check
+  const isOutOfStock = !product || !product.inStock || (product.stockQty !== undefined && product.stockQty <= 0);
+
+  // Cart quantity sync (Requirement 3: sync with cart so increasing sets to new qty rather than summing)
+  const cartQty = product ? getItemQuantity(product.id, currentPack?.id) : 0;
+  const [quantity, setQuantity] = useState(cartQty > 0 ? cartQty : 1);
 
   useEffect(() => {
     window.scrollTo(0, 0);
     setSelectedImageIndex(0);
     setSelectedPackIndex(1);
-    setQuantity(1);
   }, [slug]);
+
+  useEffect(() => {
+    if (product) {
+      const existing = getItemQuantity(product.id, currentPack?.id);
+      if (existing > 0) {
+        setQuantity(existing);
+      }
+    }
+  }, [product?.id, currentPack?.id, getItemQuantity]);
 
   if (!product) {
     return (
@@ -59,7 +76,6 @@ export const ProductDetailPage: React.FC = () => {
     );
   }
 
-  const currentPack: ProductPack = packs[selectedPackIndex] || packs[0];
   const displayImage = currentPack?.image || product.images[selectedImageIndex] || product.images[0];
   const displayPrice = currentPack ? currentPack.price : product.price;
   const displayMrp = currentPack ? currentPack.mrp : product.mrp;
@@ -73,7 +89,10 @@ export const ProductDetailPage: React.FC = () => {
   };
 
   const handleAddToCart = () => {
-    addToCart(product, quantity, currentPack);
+    if (isOutOfStock) return;
+    addToCart(product, quantity, currentPack, 'set');
+    setIsAddedToast(true);
+    setTimeout(() => setIsAddedToast(false), 2000);
   };
 
   return (
@@ -301,26 +320,52 @@ export const ProductDetailPage: React.FC = () => {
 
             {/* CTAs */}
             <div className="flex flex-col gap-3">
-              {/* Big Primary WhatsApp Button */}
-              <a
-                id="product-detail-buy-whatsapp-btn"
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-4 rounded-xs bg-[#25D366] hover:bg-[#1EBE5D] text-[#10110F] font-bold text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg transition-all min-h-[48px]"
-              >
-                <MessageCircle className="w-5 h-5 text-[#10110F]" />
-                <span>ORDER ON WHATSAPP (₹{displayPrice * quantity})</span>
-              </a>
+              {isOutOfStock ? (
+                <div className="p-4 rounded-xs bg-stone-200 text-stone-700 text-center font-bold text-xs uppercase tracking-widest border border-stone-300">
+                  ⚠️ THIS PRODUCT IS CURRENTLY OUT OF STOCK
+                </div>
+              ) : (
+                /* Big Primary WhatsApp Button */
+                <a
+                  id="product-detail-buy-whatsapp-btn"
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-4 rounded-xs bg-[#25D366] hover:bg-[#1EBE5D] text-[#10110F] font-bold text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg transition-all min-h-[48px]"
+                >
+                  <MessageCircle className="w-5 h-5 text-[#10110F]" />
+                  <span>ORDER ON WHATSAPP (₹{displayPrice * quantity})</span>
+                </a>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={handleAddToCart}
-                  className="py-3.5 rounded-xs bg-[#10110F] hover:bg-[#183D27] text-[#F7F3E8] font-semibold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors min-h-[44px]"
-                >
-                  <ShoppingBag className="w-4 h-4 text-[#D4B66A]" />
-                  <span>ADD TO CART</span>
-                </button>
+                {isOutOfStock ? (
+                  <button
+                    disabled
+                    className="py-3.5 rounded-xs bg-stone-300 text-stone-500 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-not-allowed min-h-[44px]"
+                  >
+                    <span>OUT OF STOCK</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleAddToCart}
+                    className="py-3.5 rounded-xs bg-[#10110F] hover:bg-[#183D27] text-[#F7F3E8] font-semibold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors min-h-[44px] cursor-pointer"
+                  >
+                    {isAddedToast ? (
+                      <>
+                        <Check className="w-4 h-4 text-[#D4B66A]" />
+                        <span className="text-[#D4B66A]">
+                          {cartQty > 0 ? 'UPDATED!' : 'ADDED!'}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingBag className="w-4 h-4 text-[#D4B66A]" />
+                        <span>{cartQty > 0 ? `UPDATE CART (${quantity})` : 'ADD TO CART'}</span>
+                      </>
+                    )}
+                  </button>
+                )}
 
                 <Link
                   to="/wellness-assessment"
@@ -524,10 +569,12 @@ export const ProductDetailPage: React.FC = () => {
       </div>
 
       {/* Quick View Modal */}
-      <QuickViewModal
-        product={quickViewProduct}
-        onClose={() => setQuickViewProduct(null)}
-      />
+      {quickViewProduct && (
+        <QuickViewModal
+          product={quickViewProduct}
+          onClose={() => setQuickViewProduct(null)}
+        />
+      )}
     </div>
   );
 };

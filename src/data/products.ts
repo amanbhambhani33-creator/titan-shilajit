@@ -15,6 +15,7 @@ export const PRODUCTS: Product[] = [
     rating: 4.9,
     reviewCount: 342,
     inStock: true,
+    stockQty: 85,
     images: [
       'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85',
       'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=85',
@@ -85,6 +86,7 @@ export const PRODUCTS: Product[] = [
     rating: 4.8,
     reviewCount: 215,
     inStock: true,
+    stockQty: 42,
     images: [
       'https://images.unsplash.com/photo-1587049352851-8d4e89133924?auto=format&fit=crop&w=1200&q=85',
       'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=85',
@@ -148,6 +150,7 @@ export const PRODUCTS: Product[] = [
     rating: 4.9,
     reviewCount: 184,
     inStock: true,
+    stockQty: 18,
     images: [
       'https://images.unsplash.com/photo-1511381939415-e44015466834?auto=format&fit=crop&w=1200&q=85',
       'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85',
@@ -208,6 +211,7 @@ export const PRODUCTS: Product[] = [
     rating: 4.8,
     reviewCount: 147,
     inStock: true,
+    stockQty: 34,
     images: [
       'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=1200&q=85',
       'https://images.unsplash.com/photo-1587049352851-8d4e89133924?auto=format&fit=crop&w=1200&q=85',
@@ -268,6 +272,7 @@ export const PRODUCTS: Product[] = [
     rating: 5.0,
     reviewCount: 96,
     inStock: true,
+    stockQty: 26,
     images: [
       'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85',
       'https://images.unsplash.com/photo-1587049352851-8d4e89133924?auto=format&fit=crop&w=1200&q=85',
@@ -328,6 +333,7 @@ export const PRODUCTS: Product[] = [
     rating: 4.9,
     reviewCount: 112,
     inStock: true,
+    stockQty: 15,
     images: [
       'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=85',
       'https://images.unsplash.com/photo-1511381939415-e44015466834?auto=format&fit=crop&w=1200&q=85',

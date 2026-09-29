@@ -6,7 +6,8 @@ interface CartContextType {
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
-  addToCart: (product: Product, quantity?: number, selectedPack?: ProductPack) => void;
+  addToCart: (product: Product, quantity?: number, selectedPack?: ProductPack, mode?: 'set' | 'add') => void;
+  getItemQuantity: (productId: string, packId?: string) => number;
   removeFromCart: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
@@ -44,7 +45,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const openCart = () => setIsOpen(true);
   const closeCart = () => setIsOpen(false);
 
-  const addToCart = (product: Product, quantity: number = 1, selectedPack?: ProductPack) => {
+  const getItemQuantity = (productId: string, packId?: string): number => {
+    const itemKey = packId ? `${productId}-${packId}` : productId;
+    const found = items.find((item) => (item.id || item.product.id) === itemKey);
+    return found ? found.quantity : 0;
+  };
+
+  const addToCart = (
+    product: Product,
+    quantity: number = 1,
+    selectedPack?: ProductPack,
+    mode: 'set' | 'add' = 'set'
+  ) => {
     const itemKey = selectedPack ? `${product.id}-${selectedPack.id}` : product.id;
 
     setItems((prev) => {
@@ -52,7 +64,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (existingIndex > -1) {
         return prev.map((item, idx) =>
           idx === existingIndex
-            ? { ...item, quantity: item.quantity + quantity, selectedPack: selectedPack || item.selectedPack }
+            ? {
+                ...item,
+                // When mode is 'set' (default when coming from product card/page stepper), set to selected quantity
+                // rather than summing up item.quantity + quantity
+                quantity: mode === 'set' ? quantity : item.quantity + quantity,
+                selectedPack: selectedPack || item.selectedPack,
+              }
             : item
         );
       }
@@ -102,6 +120,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         openCart,
         closeCart,
         addToCart,
+        getItemQuantity,
         removeFromCart,
         updateQuantity,
         clearCart,
