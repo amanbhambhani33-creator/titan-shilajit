@@ -291,13 +291,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
               setAdminUsers(loaded);
             } else {
-              // Seed permanent admins to Firestore if collection is empty
-              INITIAL_PERMANENT_ADMINS.forEach(async (permAdmin) => {
-                try {
-                  const docId = permAdmin.email.replace(/[^a-zA-Z0-9]/g, '_');
-                  await setDoc(doc(db, 'admin_users', docId), permAdmin);
-                } catch (e) {}
-              });
+              setAdminUsers(INITIAL_PERMANENT_ADMINS);
             }
           },
           (err) => {

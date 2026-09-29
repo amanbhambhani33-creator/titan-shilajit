@@ -9,6 +9,7 @@ import {
   User,
 } from 'firebase/auth';
 import {
+  initializeFirestore,
   getFirestore,
   doc,
   setDoc,
@@ -38,9 +39,23 @@ export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 // Initialize Auth
 export const auth = getAuth(app);
 
-// Initialize Firestore with custom databaseId if configured
+// Initialize Firestore with custom databaseId and auto-detect long polling to prevent iframe connection drops
 const databaseId = firebaseConfigJson.firestoreDatabaseId || '(default)';
-export const db = getFirestore(app, databaseId);
+
+let firestoreInstance;
+try {
+  firestoreInstance = initializeFirestore(
+    app,
+    {
+      experimentalAutoDetectLongPolling: true,
+    },
+    databaseId
+  );
+} catch {
+  firestoreInstance = getFirestore(app, databaseId);
+}
+
+export const db = firestoreInstance;
 
 export {
   signInWithEmailAndPassword,

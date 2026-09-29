@@ -68,6 +68,30 @@
         "reviewedAt": { "type": "string" },
         "reviewedBy": { "type": "string" }
       }
+    },
+    "Order": {
+      "collection": "orders",
+      "fields": {
+        "orderNumber": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "customerEmail": { "type": "string" },
+        "shippingAddress": { "type": "string" },
+        "shippingAddressDetails": { "type": "map" },
+        "deliveryDetails": { "type": "map" },
+        "invoiceNumber": { "type": "string" },
+        "invoiceDate": { "type": "string" },
+        "paymentStatus": { "type": "string" },
+        "razorpayDetails": { "type": "map" },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "discount": { "type": "number" },
+        "couponCode": { "type": "string" },
+        "total": { "type": "number" },
+        "status": { "type": "string" },
+        "paymentMethod": { "type": "string" },
+        "createdAt": { "type": "string" }
+      }
     }
   }
 }
