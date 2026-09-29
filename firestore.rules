@@ -17,12 +17,12 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
-    match /orders/{orderId} {
-      allow read, write: if true;
+    match /orders/{document=**} {
+      allow read, write, list: if true;
     }
 
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write, list: if true;
     }
   }
 }

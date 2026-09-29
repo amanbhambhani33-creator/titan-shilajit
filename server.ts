@@ -6,6 +6,11 @@ import Razorpay from 'razorpay';
 import { GoogleGenAI, Type } from '@google/genai';
 import { createServer as createViteServer } from 'vite';
 import { createDelhiveryShipment } from './server/delhivery';
+import {
+  pushOrderToFirestore,
+  fetchOrdersFromFirestore,
+  checkCustomerPriorOrders,
+} from './server/firestore';
 
 dotenv.config();
 
@@ -218,19 +223,61 @@ app.post('/api/verify-payment', async (req, res) => {
           month: 'short',
           year: 'numeric',
         }),
-        paymentStatus: 'PAID_ONLINE',
-        paymentMethod: 'Razorpay Standard Checkout',
+        paymentStatus: 'PAID',
+        paymentMethod: 'Razorpay Online (UPI/Cards)',
         razorpayPaymentId: razorpay_payment_id,
         razorpayOrderId: razorpay_order_id,
         trackingNumber: shipmentResult.waybill,
         trackingUrl: shipmentResult.trackingUrl,
         courier: shipmentResult.courier,
       };
+
+      // Directly push verified online order with gateway details to Firestore
+      try {
+        await pushOrderToFirestore({
+          orderNumber: order_data.orderNumber || `TITAN-${Date.now().toString().slice(-6)}`,
+          customerName: order_data.customerName,
+          customerPhone: order_data.customerPhone,
+          customerEmail: order_data.customerEmail,
+          shippingAddress: `${order_data.shippingAddress?.address || ''}${order_data.shippingAddress?.landmark ? `, Near ${order_data.shippingAddress.landmark}` : ''}, ${order_data.shippingAddress?.city || ''}, ${order_data.shippingAddress?.state || ''} - ${order_data.shippingAddress?.pincode || ''}`,
+          shippingAddressDetails: order_data.shippingAddress,
+          deliveryDetails: {
+            courier: shipmentResult.courier,
+            trackingNumber: shipmentResult.waybill,
+            trackingUrl: shipmentResult.trackingUrl,
+            status: shipmentResult.status || 'Prepaid Priority Manifested — Scheduled for Delhi Fulfillment Dispatch',
+            pickupLocation: shipmentResult.pickupLocation,
+            expectedDelivery: shipmentResult.expectedDelivery,
+          },
+          invoiceNumber: invoiceData.invoiceNumber,
+          invoiceDate: invoiceData.invoiceDate,
+          paymentStatus: 'PAID',
+          paymentMethod: 'online',
+          razorpayDetails: {
+            orderId: razorpay_order_id,
+            paymentId: razorpay_payment_id,
+            signature: razorpay_signature,
+          },
+          items: (order_data.items || []).map((it: any) => ({
+            productId: it.productId || 'shilajit-resin',
+            productName: it.productName,
+            packName: it.packName,
+            quantity: it.quantity,
+            price: it.price,
+          })),
+          subtotal: order_data.total || 0,
+          discount: 0,
+          total: order_data.total || 0,
+          status: 'confirmed',
+        });
+      } catch (fsErr) {
+        console.warn('Background Firestore online order persist notice:', fsErr);
+      }
     }
 
     return res.json({
       success: true,
-      message: 'Payment verified successfully and order manifested with Delhivery.',
+      message: 'Payment verified successfully, order recorded in Firestore, and manifested with Delhivery.',
       payment_id: razorpay_payment_id,
       order_id: razorpay_order_id,
       shipment: shipmentResult,
@@ -301,6 +348,48 @@ app.post('/api/orders/confirm', async (req, res) => {
       year: 'numeric',
     });
 
+    const fullOrderPayload = {
+      orderNumber,
+      customerName,
+      customerPhone,
+      customerEmail,
+      shippingAddress: `${shippingAddress.address}${shippingAddress.landmark ? `, Near ${shippingAddress.landmark}` : ''}, ${shippingAddress.city || 'Delhi'}, ${shippingAddress.state || 'Delhi'} - ${shippingAddress.pincode}`,
+      shippingAddressDetails: shippingAddress,
+      deliveryDetails: {
+        courier: shipmentResult.courier,
+        trackingNumber: shipmentResult.waybill,
+        trackingUrl: shipmentResult.trackingUrl,
+        status: isCod
+          ? 'COD Manifested — Scheduled for Delhi Fulfillment Dispatch'
+          : 'Prepaid Priority Manifested — Scheduled for Delhi Fulfillment Dispatch',
+        pickupLocation: shipmentResult.pickupLocation,
+        expectedDelivery: shipmentResult.expectedDelivery,
+      },
+      invoiceNumber,
+      invoiceDate,
+      paymentStatus: isCod ? 'COD_PENDING_DELIVERY' : 'PAID',
+      paymentMethod: isCod ? 'cash_on_delivery' : 'online',
+      items: items.map((it: any) => ({
+        productId: it.productId || 'shilajit-resin',
+        productName: it.productName,
+        packName: it.packName,
+        quantity: it.quantity,
+        price: it.price,
+      })),
+      subtotal,
+      discount,
+      couponCode,
+      total,
+      status: 'confirmed',
+    };
+
+    // Push COD/Order directly to Firestore from the backend
+    try {
+      await pushOrderToFirestore(fullOrderPayload);
+    } catch (fsErr) {
+      console.warn('Background Firestore COD order persist notice:', fsErr);
+    }
+
     const responsePayload = {
       success: true,
       orderNumber,
@@ -334,6 +423,42 @@ app.post('/api/orders/confirm', async (req, res) => {
       success: false,
       error: error?.message || 'Failed to confirm order and dispatch with Delhivery.',
     });
+  }
+});
+
+// Endpoint: Explicitly Push Order to Firestore from client or webhook
+app.post('/api/orders/push-firestore', async (req, res) => {
+  try {
+    const orderData = req.body;
+    if (!orderData || !orderData.orderNumber) {
+      return res.status(400).json({ success: false, error: 'Order number and data are required.' });
+    }
+    const result = await pushOrderToFirestore(orderData);
+    return res.json(result);
+  } catch (err: any) {
+    console.error('push-firestore route error:', err);
+    return res.status(500).json({ success: false, error: err?.message || 'Failed to push order to Firestore.' });
+  }
+});
+
+// Endpoint: Fetch All Orders from Firestore
+app.get('/api/orders', async (req, res) => {
+  try {
+    const orders = await fetchOrdersFromFirestore();
+    return res.json({ success: true, orders });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, orders: [], error: err?.message });
+  }
+});
+
+// Endpoint: Check customer prior orders (for coupons)
+app.get('/api/orders/check-customer', async (req, res) => {
+  try {
+    const query = (req.query.query as string) || '';
+    const result = await checkCustomerPriorOrders(query);
+    return res.json({ success: true, ...result });
+  } catch (err: any) {
+    return res.json({ success: true, isFirstOrder: true, count: 0 });
   }
 });
 

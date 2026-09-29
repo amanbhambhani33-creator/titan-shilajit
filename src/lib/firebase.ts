@@ -39,7 +39,7 @@ export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 // Initialize Auth
 export const auth = getAuth(app);
 
-// Initialize Firestore with custom databaseId and auto-detect long polling to prevent iframe connection drops
+// Initialize Firestore with custom databaseId and forced long polling to prevent iframe connection drops
 const databaseId = firebaseConfigJson.firestoreDatabaseId || '(default)';
 
 let firestoreInstance;
@@ -47,7 +47,7 @@ try {
   firestoreInstance = initializeFirestore(
     app,
     {
-      experimentalAutoDetectLongPolling: true,
+      experimentalForceLongPolling: true,
     },
     databaseId
   );

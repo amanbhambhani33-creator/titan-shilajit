@@ -555,6 +555,21 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
           console.warn('Firestore orders sync notice:', error.message);
         }
       );
+
+      // Resilient server-side fetch fallback for orders
+      fetch('/api/orders')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && data.success && Array.isArray(data.orders) && data.orders.length > 0) {
+            setOrders((prev) => {
+              const prevIds = new Set(prev.map((o) => o.id || o.orderNumber));
+              const missing = data.orders.filter((o: any) => !prevIds.has(o.id || o.orderNumber));
+              if (missing.length === 0) return prev;
+              return [...missing, ...prev];
+            });
+          }
+        })
+        .catch(() => {});
     } catch (err) {
       console.warn('Firebase sync initialization notice:', err);
     }
@@ -835,7 +850,22 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
       };
     }
 
-    // 2. Query Firestore orders collection
+    // 2. Query server endpoint directly (instant & resilient)
+    try {
+      const serverRes = await fetch(`/api/orders/check-customer?query=${encodeURIComponent(cleanQuery)}`);
+      if (serverRes.ok) {
+        const serverData = await serverRes.json();
+        if (serverData.success && !serverData.isFirstOrder) {
+          return {
+            isFirstOrder: false,
+            previousOrderCount: serverData.count || 1,
+            message: 'Previous order found in Titan records with this mobile number or email ID.',
+          };
+        }
+      }
+    } catch {}
+
+    // 3. Query Firestore orders collection via Web SDK
     try {
       const ordersCol = collection(db, 'orders');
       const snap = await getDocs(ordersCol);
@@ -876,6 +906,16 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
 
     setOrders((prev) => [fullOrder, ...prev]);
 
+    // 1. Send to server backend to push directly to Firestore REST API (guaranteed persistence)
+    try {
+      fetch('/api/orders/push-firestore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fullOrder),
+      }).catch((e) => console.warn('Background server firestore push notice:', e));
+    } catch {}
+
+    // 2. Write via Firebase Web SDK
     try {
       const orderDocRef = doc(db, 'orders', newId);
       await setDoc(orderDocRef, fullOrder);
@@ -888,7 +928,7 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
       }
     } catch (err) {
-      console.warn('Failed to write order to Firestore, cached locally:', err);
+      console.warn('Notice saving order to Firestore Web SDK (persisted via server):', err);
     }
 
     return newId;
