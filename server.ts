@@ -5,7 +5,11 @@ import dotenv from 'dotenv';
 import Razorpay from 'razorpay';
 import { GoogleGenAI, Type } from '@google/genai';
 import { createServer as createViteServer } from 'vite';
-import { createDelhiveryShipment } from './server/delhivery';
+import {
+  createDelhiveryShipment,
+  checkDelhiveryPincodeServiceability,
+  DELHIVERY_CONFIG,
+} from './server/delhivery';
 import {
   pushOrderToFirestore,
   fetchOrdersFromFirestore,
@@ -460,6 +464,83 @@ app.get('/api/orders/check-customer', async (req, res) => {
   } catch (err: any) {
     return res.json({ success: true, isFirstOrder: true, count: 0 });
   }
+});
+
+// DELHIVERY B2C LOGISTICS API ENDPOINTS
+
+// 1. B2C Pincode Serviceability Check
+// Spec: GET https://staging-express.delhivery.com/c/api/pin-codes/json/?filter_codes={pincode}
+app.get('/api/delhivery/serviceability', async (req, res) => {
+  try {
+    const pincode = (req.query.pincode as string) || '';
+    if (!pincode) {
+      return res.status(400).json({ success: false, error: 'Pincode is required.' });
+    }
+    const result = await checkDelhiveryPincodeServiceability(pincode);
+    return res.json(result);
+  } catch (err: any) {
+    console.error('Delhivery serviceability error:', err);
+    return res.status(500).json({
+      success: false,
+      error: err?.message || 'Error checking serviceability.',
+    });
+  }
+});
+
+app.get('/api/delhivery/pincode/:pincode', async (req, res) => {
+  try {
+    const { pincode } = req.params;
+    const result = await checkDelhiveryPincodeServiceability(pincode);
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// 2. Direct Shipment Creation (CMU)
+// Spec: POST https://staging-express.delhivery.com/api/cmu/create.json
+app.post('/api/delhivery/create-shipment', async (req, res) => {
+  try {
+    const shipmentData = req.body;
+    if (!shipmentData || !shipmentData.orderNumber || !shipmentData.consignee) {
+      return res.status(400).json({
+        success: false,
+        error: 'Order number and consignee information are required.',
+      });
+    }
+    const result = await createDelhiveryShipment(shipmentData);
+    return res.json(result);
+  } catch (err: any) {
+    console.error('Delhivery create shipment route error:', err);
+    return res.status(500).json({
+      success: false,
+      error: err?.message || 'Failed to create Delhivery shipment.',
+    });
+  }
+});
+
+// 3. Delhivery Status & Configuration
+app.get('/api/delhivery/config', (req, res) => {
+  res.json({
+    success: true,
+    configured: Boolean(process.env.DELHIVERY_TOKEN || process.env.DELHIVERY_CLIENT_SECRET),
+    baseUrl: DELHIVERY_CONFIG.baseUrl,
+    pickupLocation: DELHIVERY_CONFIG.pickupLocation,
+    warehouse: DELHIVERY_CONFIG.warehouse,
+  });
+});
+
+app.post('/api/delhivery/config', (req, res) => {
+  const { token, baseUrl, pickupLocation } = req.body;
+  if (token) process.env.DELHIVERY_TOKEN = token;
+  if (baseUrl) process.env.DELHIVERY_API_URL = baseUrl;
+  if (pickupLocation) process.env.DELHIVERY_PICKUP_LOCATION = pickupLocation;
+  res.json({
+    success: true,
+    message: 'Delhivery settings updated successfully.',
+    baseUrl: DELHIVERY_CONFIG.baseUrl,
+    pickupLocation: DELHIVERY_CONFIG.pickupLocation,
+  });
 });
 
 // API: Wellness Assessment Submission
