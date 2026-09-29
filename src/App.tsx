@@ -18,6 +18,7 @@ import { WhyTitanPage } from './pages/WhyTitanPage';
 import { ShilajitGuidePage } from './pages/ShilajitGuidePage';
 import { WellnessAssessmentPage } from './pages/WellnessAssessmentPage';
 import { AboutPage } from './pages/AboutPage';
+import { FaqPage } from './pages/FaqPage';
 import { PolicyPage } from './pages/PolicyPage';
 import { AdminDeskPage } from './pages/AdminDeskPage';
 
@@ -57,6 +58,8 @@ export const App: React.FC = () => {
                 <Route path="/shilajit-guide" element={<ShilajitGuidePage />} />
                 <Route path="/wellness-assessment" element={<WellnessAssessmentPage />} />
                 <Route path="/about" element={<AboutPage />} />
+                <Route path="/faq" element={<FaqPage />} />
+                <Route path="/faqs" element={<FaqPage />} />
                 <Route path="/shipping-policy" element={<PolicyPage />} />
                 <Route path="/refund-policy" element={<PolicyPage />} />
                 <Route path="/privacy-policy" element={<PolicyPage />} />

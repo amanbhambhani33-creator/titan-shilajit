@@ -45,6 +45,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch }) => {
     { name: 'Shop', path: '/shop' },
     { name: 'Why Titan', path: '/why-titan' },
     { name: 'Shilajit Guide', path: '/shilajit-guide' },
+    { name: 'FAQ', path: '/faq' },
     { name: 'Wellness Assessment', path: '/wellness-assessment', highlight: true },
     { name: 'About', path: '/about' },
   ];

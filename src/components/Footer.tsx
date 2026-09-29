@@ -137,8 +137,8 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/shilajit-guide#faqs" className="hover:text-[#D4B66A] transition-colors">
-                  Frequently Asked Questions
+                <Link to="/faq" className="hover:text-[#D4B66A] transition-colors">
+                  Frequently Asked Questions (FAQ)
                 </Link>
               </li>
             </ul>

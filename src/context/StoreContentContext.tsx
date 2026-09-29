@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage, OrderRecord } from '../types';
+import { Product, BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage, OrderRecord, Review } from '../types';
 import { PRODUCTS as DEFAULT_PRODUCTS } from '../data/products';
+import { REVIEWS as DEFAULT_REVIEWS } from '../data/reviews';
 import { TRUST_STRIP_ITEMS, BRAND_CONTACT } from '../data/content';
 import { db, doc, getDoc, setDoc, onSnapshot, collection, getDocs, query, where } from '../lib/firebase';
 
@@ -213,7 +214,7 @@ const DEFAULT_HERO: HeroBannerConfig = {
   gradeBadge: 'GRADE-A HIGH ROCK RESIN',
   imagePosition: 'right',
   showWords: false, // Strict user instruction: "no words required only picture transistion req"
-  autoplayInterval: 4500,
+  autoplayInterval: 7500,
   transitionEffect: 'fade',
   pictures: DEFAULT_HERO_PICTURES,
 };
@@ -322,6 +323,12 @@ interface StoreContentContextType {
   updateQualityTrust: (updates: Partial<QualityTrustConfig>) => Promise<boolean>;
   updateQualityTrustCard: (cardId: string, updates: Partial<QualityTrustCard>) => Promise<boolean>;
   updatePageContent: <K extends keyof PageContentConfig>(section: K, updates: Partial<PageContentConfig[K]>) => void;
+  // Reviews management
+  reviews: Review[];
+  addReview: (review: Review) => Promise<boolean>;
+  updateReview: (id: string, updates: Partial<Review>) => Promise<boolean>;
+  deleteReview: (id: string) => Promise<boolean>;
+  resetReviewsToDefault: () => Promise<boolean>;
   saveAllToFirebase: () => Promise<boolean>;
   testFirestoreConnection: () => Promise<{ success: boolean; message: string }>;
   resetAllContent: () => void;
@@ -331,6 +338,7 @@ const StoreContentContext = createContext<StoreContentContextType | undefined>(u
 
 const PRODUCTS_STORAGE_KEY = 'titan_store_products_v2';
 const CONTENT_STORAGE_KEY = 'titan_store_content_v2';
+const REVIEWS_STORAGE_KEY = 'titan_store_reviews_v2';
 const SPLASH_SEEN_KEY = 'titan_splash_seen_session';
 const LAST_SYNC_STORAGE_KEY = 'titan_last_firestore_sync';
 
@@ -342,6 +350,19 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
     } catch {
       return null;
     }
+  });
+
+  // Load reviews with fallback
+  const [reviews, setReviews] = useState<Review[]>(() => {
+    try {
+      const saved = localStorage.getItem(REVIEWS_STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.warn('Failed to load reviews from storage:', e);
+    }
+    return DEFAULT_REVIEWS;
   });
 
   // Load products with fallback
@@ -434,6 +455,7 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
   useEffect(() => {
     let unsubscribeContent: (() => void) | null = null;
     let unsubscribeProducts: (() => void) | null = null;
+    let unsubscribeReviews: (() => void) | null = null;
     let unsubscribeOrders: (() => void) | null = null;
 
     try {
@@ -498,6 +520,23 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
       );
 
+      // Reviews realtime snapshot
+      const reviewsDocRef = doc(db, 'store_content', 'reviews');
+      unsubscribeReviews = onSnapshot(
+        reviewsDocRef,
+        (snap) => {
+          if (snap.exists()) {
+            const data = snap.data();
+            if (data && Array.isArray(data.items) && data.items.length > 0) {
+              setReviews(data.items);
+            }
+          }
+        },
+        (error) => {
+          console.warn('Firestore reviews sync notice (using local cache):', error.message);
+        }
+      );
+
       // Orders realtime snapshot
       const ordersColRef = collection(db, 'orders');
       unsubscribeOrders = onSnapshot(
@@ -523,9 +562,19 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
     return () => {
       if (unsubscribeContent) unsubscribeContent();
       if (unsubscribeProducts) unsubscribeProducts();
+      if (unsubscribeReviews) unsubscribeReviews();
       if (unsubscribeOrders) unsubscribeOrders();
     };
   }, []);
+
+  // Save to localStorage whenever state changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(REVIEWS_STORAGE_KEY, JSON.stringify(reviews));
+    } catch (e) {
+      console.error('Error saving reviews to storage:', e);
+    }
+  }, [reviews]);
 
   // Save to localStorage whenever state changes
   useEffect(() => {
@@ -574,6 +623,12 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
       const productsDocRef = doc(db, 'store_content', 'products');
       await setDoc(productsDocRef, {
         items: products,
+        updatedAt: new Date().toISOString(),
+      }, { merge: true });
+
+      const reviewsDocRef = doc(db, 'store_content', 'reviews');
+      await setDoc(reviewsDocRef, {
+        items: reviews,
         updatedAt: new Date().toISOString(),
       }, { merge: true });
 
@@ -696,6 +751,62 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
       return true;
     } catch (e) {
       console.warn('Firestore deleteProduct error:', e);
+      return false;
+    }
+  };
+
+  // Reviews actions (realtime Firestore push for instant live updates)
+  const addReview = async (newReview: Review): Promise<boolean> => {
+    const updated = [newReview, ...reviews];
+    setReviews(updated);
+    try {
+      const reviewsDocRef = doc(db, 'store_content', 'reviews');
+      await setDoc(reviewsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: true });
+      setIsFirebaseSynced(true);
+      return true;
+    } catch (e) {
+      console.warn('Firestore addReview error:', e);
+      return false;
+    }
+  };
+
+  const updateReview = async (id: string, updates: Partial<Review>): Promise<boolean> => {
+    const updated = reviews.map((r) => (r.id === id ? { ...r, ...updates } : r));
+    setReviews(updated);
+    try {
+      const reviewsDocRef = doc(db, 'store_content', 'reviews');
+      await setDoc(reviewsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: true });
+      setIsFirebaseSynced(true);
+      return true;
+    } catch (e) {
+      console.warn('Firestore updateReview error:', e);
+      return false;
+    }
+  };
+
+  const deleteReview = async (id: string): Promise<boolean> => {
+    const updated = reviews.filter((r) => r.id !== id);
+    setReviews(updated);
+    try {
+      const reviewsDocRef = doc(db, 'store_content', 'reviews');
+      await setDoc(reviewsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: true });
+      setIsFirebaseSynced(true);
+      return true;
+    } catch (e) {
+      console.warn('Firestore deleteReview error:', e);
+      return false;
+    }
+  };
+
+  const resetReviewsToDefault = async (): Promise<boolean> => {
+    setReviews(DEFAULT_REVIEWS);
+    try {
+      const reviewsDocRef = doc(db, 'store_content', 'reviews');
+      await setDoc(reviewsDocRef, { items: DEFAULT_REVIEWS, updatedAt: new Date().toISOString() }, { merge: true });
+      setIsFirebaseSynced(true);
+      return true;
+    } catch (e) {
+      console.warn('Firestore resetReviewsToDefault error:', e);
       return false;
     }
   };
@@ -925,6 +1036,11 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
         updateQualityTrust,
         updateQualityTrustCard,
         updatePageContent,
+        reviews,
+        addReview,
+        updateReview,
+        deleteReview,
+        resetReviewsToDefault,
         saveAllToFirebase,
         testFirestoreConnection,
         resetAllContent,

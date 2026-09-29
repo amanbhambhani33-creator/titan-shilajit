@@ -161,7 +161,7 @@ export const AdminPictureTransitionSection: React.FC<AdminPictureTransitionSecti
     setPictures(DEFAULT_HERO_PICTURES);
     updateHeroBanner({
       showWords: false,
-      autoplayInterval: 4500,
+      autoplayInterval: 7500,
       transitionEffect: 'fade',
       pictures: DEFAULT_HERO_PICTURES,
     });
@@ -289,18 +289,18 @@ export const AdminPictureTransitionSection: React.FC<AdminPictureTransitionSecti
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-[#F7F3E8] p-4 rounded-xs border border-[#10110F]/10">
         <div>
           <label className="block text-[10px] font-bold uppercase tracking-wider text-[#10110F] mb-1">
-            Autoplay Interval (Mandatory 3–5s)
+            Autoplay Carousel Speed
           </label>
           <select
             value={autoplayInterval}
             onChange={(e) => updateHeroBanner({ autoplayInterval: Number(e.target.value) })}
             className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs bg-white font-medium cursor-pointer"
           >
-            <option value={3000}>3.0 Seconds (Fast)</option>
-            <option value={3500}>3.5 Seconds (Dynamic)</option>
-            <option value={4000}>4.0 Seconds (Recommended • 4s)</option>
-            <option value={4500}>4.5 Seconds (Smooth • 4.5s)</option>
-            <option value={5000}>5.0 Seconds (Relaxed • 5s)</option>
+            <option value={6000}>6.0 Seconds (Standard)</option>
+            <option value={7500}>7.5 Seconds (Calm • Recommended)</option>
+            <option value={9000}>9.0 Seconds (Relaxed)</option>
+            <option value={11000}>11.0 Seconds (Slow &amp; Cinematic)</option>
+            <option value={14000}>14.0 Seconds (Ultra Slow Gallery)</option>
           </select>
         </div>
 

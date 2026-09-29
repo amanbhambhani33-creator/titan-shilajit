@@ -1,9 +1,11 @@
 import React from 'react';
 import { Star, ShieldCheck, MessageCircle } from 'lucide-react';
-import { REVIEWS } from '../data/reviews';
+import { useStoreContent } from '../context/StoreContentContext';
 import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
 
 export const ReviewSection: React.FC = () => {
+  const { reviews } = useStoreContent();
+  const displayReviews = reviews && reviews.length > 0 ? reviews : [];
   return (
     <section id="reviews-section" className="py-20 lg:py-28 bg-[#F7F3E8] text-[#10110F] relative border-b border-[#10110F]/5">
       <div className="max-w-7xl mx-auto px-6 lg:px-10">
@@ -30,7 +32,7 @@ export const ReviewSection: React.FC = () => {
 
         {/* Reviews Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {REVIEWS.slice(0, 3).map((review) => (
+          {displayReviews.slice(0, 3).map((review) => (
             <div
               key={review.id}
               className="p-6 rounded-sm bg-white border border-[#10110F]/5 flex flex-col justify-between hover:border-[#B88A32]/40 transition-all shadow-xs"

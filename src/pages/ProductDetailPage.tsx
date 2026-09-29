@@ -14,7 +14,6 @@ import {
   Info,
 } from 'lucide-react';
 import { useStoreContent } from '../context/StoreContentContext';
-import { REVIEWS } from '../data/reviews';
 import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
 import { getProductWhatsAppUrl } from '../utils/whatsapp';
@@ -26,7 +25,7 @@ export const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { addToCart, getItemQuantity } = useCart();
-  const { products } = useStoreContent();
+  const { products, reviews } = useStoreContent();
 
   const product = products.find((p) => p.slug === slug || p.id === slug);
   const packs = product ? getProductPacks(product) : [];
@@ -82,7 +81,10 @@ export const ProductDetailPage: React.FC = () => {
 
   const whatsappUrl = getProductWhatsAppUrl(product, quantity, currentPack);
   const relatedProducts = products.filter((p) => p.id !== product.id).slice(0, 3);
-  const productReviews = REVIEWS.filter((r) => r.productId === product.id);
+  const matchedReviews = (reviews || []).filter(
+    (r) => r.productId === product.id || (r.productName && r.productName.toLowerCase().includes(product.name.toLowerCase()))
+  );
+  const productReviews = matchedReviews.length > 0 ? matchedReviews : (reviews || []).slice(0, 3);
 
   const handleSelectPack = (idx: number) => {
     setSelectedPackIndex(idx);

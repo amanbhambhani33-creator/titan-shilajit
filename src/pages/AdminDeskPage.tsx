@@ -33,14 +33,17 @@ import {
   Unlock,
   Users,
   Crown,
+  Star,
 } from 'lucide-react';
 import { useStoreContent, HeroBannerConfig, LaunchBannerConfig, BrandStoryConfig } from '../context/StoreContentContext';
 import { useAuth } from '../context/AuthContext';
-import { Product } from '../types';
+import { Product, Review } from '../types';
 import { AdminLoginGate } from '../components/AdminLoginGate';
 import { AdminRBACSection } from '../components/AdminRBACSection';
 import { AdminQualityTrustSection } from '../components/AdminQualityTrustSection';
 import { AdminPictureTransitionSection } from '../components/AdminPictureTransitionSection';
+import { AdminReviewsSection } from '../components/AdminReviewsSection';
+import { AdminProductImageUploader } from '../components/AdminProductImageUploader';
 
 export const AdminDeskPage: React.FC = () => {
   const {
@@ -84,9 +87,13 @@ export const AdminDeskPage: React.FC = () => {
     saveAllToFirebase,
     resetAllContent,
     triggerSplash,
+    reviews,
+    addReview,
+    deleteReview,
+    resetReviewsToDefault,
   } = useStoreContent();
 
-  const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'quality' | 'developer' | 'rbac' | 'settings' | 'orders'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'quality' | 'developer' | 'rbac' | 'settings' | 'orders' | 'reviews'>('products');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
 
@@ -606,6 +613,11 @@ export const AdminDeskPage: React.FC = () => {
               icon: Package,
             },
             { id: 'banners', label: 'Banners & Launches', icon: ImageIcon },
+            {
+              id: 'reviews',
+              label: `Customer Reviews (${reviews.length})`,
+              icon: Star,
+            },
             { id: 'quality', label: 'Quality & Trust & Benefits', icon: ShieldCheck },
             { id: 'developer', label: 'Developer Text Editor', icon: FileText },
             {
@@ -1179,6 +1191,20 @@ export const AdminDeskPage: React.FC = () => {
         )}
 
         {/* ========================================================================= */}
+        {/* TAB: CUSTOMER REVIEWS */}
+        {/* ========================================================================= */}
+        {activeTab === 'reviews' && (
+          <AdminReviewsSection
+            reviews={reviews}
+            products={products}
+            addReview={addReview}
+            deleteReview={deleteReview}
+            resetReviewsToDefault={resetReviewsToDefault}
+            showToast={showToast}
+          />
+        )}
+
+        {/* ========================================================================= */}
         {/* TAB: QUALITY & TRUST & PRODUCT BENEFITS */}
         {/* ========================================================================= */}
         {activeTab === 'quality' && (
@@ -1629,19 +1655,15 @@ export const AdminDeskPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase text-[#10110F] mb-1">
-                  Primary Image URL
-                </label>
-                <input
-                  type="text"
-                  value={editingProduct.images[0] || ''}
-                  onChange={(e) => {
-                    const newImgs = [...editingProduct.images];
-                    newImgs[0] = e.target.value;
-                    setEditingProduct({ ...editingProduct, images: newImgs });
-                  }}
-                  className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs"
-                  required
+                <AdminProductImageUploader
+                  images={editingProduct.images || []}
+                  onChange={(imgs) =>
+                    setEditingProduct({
+                      ...editingProduct,
+                      images: imgs.length > 0 ? imgs : ['https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85'],
+                    })
+                  }
+                  maxImages={5}
                 />
               </div>
 
@@ -1914,18 +1936,15 @@ export const AdminDeskPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase text-[#10110F] mb-1">
-                  Product Image URL *
-                </label>
-                <input
-                  type="text"
-                  value={newProductForm.images?.[0] || ''}
-                  onChange={(e) =>
-                    setNewProductForm({ ...newProductForm, images: [e.target.value] })
+                <AdminProductImageUploader
+                  images={newProductForm.images || []}
+                  onChange={(imgs) =>
+                    setNewProductForm({
+                      ...newProductForm,
+                      images: imgs.length > 0 ? imgs : ['https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85'],
+                    })
                   }
-                  placeholder="https://..."
-                  className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs"
-                  required
+                  maxImages={5}
                 />
               </div>
 
