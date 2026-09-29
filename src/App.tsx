@@ -20,6 +20,7 @@ import { WellnessAssessmentPage } from './pages/WellnessAssessmentPage';
 import { AboutPage } from './pages/AboutPage';
 import { FaqPage } from './pages/FaqPage';
 import { PolicyPage } from './pages/PolicyPage';
+import { CheckoutPage } from './pages/CheckoutPage';
 import { AdminDeskPage } from './pages/AdminDeskPage';
 
 export const App: React.FC = () => {
@@ -60,6 +61,9 @@ export const App: React.FC = () => {
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/faq" element={<FaqPage />} />
                 <Route path="/faqs" element={<FaqPage />} />
+                <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/billing" element={<CheckoutPage />} />
+                <Route path="/order-confirmation" element={<CheckoutPage />} />
                 <Route path="/shipping-policy" element={<PolicyPage />} />
                 <Route path="/refund-policy" element={<PolicyPage />} />
                 <Route path="/privacy-policy" element={<PolicyPage />} />

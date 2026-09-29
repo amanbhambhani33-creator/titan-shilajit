@@ -195,6 +195,23 @@ export interface AccessRequestRecord {
   reviewNotes?: string;
 }
 
+export interface ShippingAddressData {
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  landmark?: string;
+}
+
+export interface DeliveryDetails {
+  courier: string;
+  trackingNumber: string;
+  trackingUrl: string;
+  status: string;
+  pickupLocation?: string;
+  expectedDelivery?: string;
+}
+
 export interface OrderRecord {
   id: string;
   orderNumber: string;
@@ -202,6 +219,16 @@ export interface OrderRecord {
   customerPhone: string;
   customerEmail: string;
   shippingAddress?: string;
+  shippingAddressDetails?: ShippingAddressData;
+  deliveryDetails?: DeliveryDetails;
+  invoiceNumber?: string;
+  invoiceDate?: string;
+  paymentStatus?: 'PAID' | 'COD_PENDING_DELIVERY' | 'PENDING' | 'FAILED';
+  razorpayDetails?: {
+    orderId?: string;
+    paymentId?: string;
+    signature?: string;
+  };
   items: {
     productId: string;
     productName: string;
@@ -217,4 +244,11 @@ export interface OrderRecord {
   paymentMethod: 'whatsapp_prepaid' | 'cash_on_delivery' | 'online';
   createdAt: string;
 }
+
+declare global {
+  interface Window {
+    Razorpay?: any;
+  }
+}
+
 

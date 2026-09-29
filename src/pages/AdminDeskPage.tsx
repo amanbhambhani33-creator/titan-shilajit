@@ -44,6 +44,7 @@ import { AdminQualityTrustSection } from '../components/AdminQualityTrustSection
 import { AdminPictureTransitionSection } from '../components/AdminPictureTransitionSection';
 import { AdminReviewsSection } from '../components/AdminReviewsSection';
 import { AdminProductImageUploader } from '../components/AdminProductImageUploader';
+import { AdminOrdersSection } from '../components/AdminOrdersSection';
 
 export const AdminDeskPage: React.FC = () => {
   const {
@@ -1474,6 +1475,13 @@ export const AdminDeskPage: React.FC = () => {
               </div>
             </div>
           </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB: ORDERS, RAZORPAY & DELHIVERY LOGISTICS */}
+        {/* ========================================================================= */}
+        {activeTab === 'orders' && (
+          <AdminOrdersSection orders={orders} onToast={showToast} />
         )}
 
         {/* ========================================================================= */}

@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "delhivery-one": {
+      "command": "uvx",
+      "args": [
+        "d1-mcp-mint@latest"
+      ],
+      "env": {
+        "D1_CLIENT_ID": "ucp-service-cli",
+        "D1_CLIENT_SECRET": "6SQOQUTNWO35ZPD8HM8WUM5H0QDVLSRB",
+        "D1_AUTH_URL": "https://ucp-auth.delhivery.com/facelessvoid",
+        "D1_REALM": "ucp-VP8CLTGCB018",
+        "D1_CLIENT_CMS": "cms::client::8eeb921b-bbde-11f1-8d4f-02ffcaa300af",
+        "D1_MCP_URL": "https://mcp-client.delhivery.com/mcp"
+      }
+    }
+  }
+}

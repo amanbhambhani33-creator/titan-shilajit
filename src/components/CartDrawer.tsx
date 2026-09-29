@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   X,
   Trash2,
@@ -12,6 +12,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Lock,
+  CreditCard,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useStoreContent } from '../context/StoreContentContext';
@@ -19,6 +20,7 @@ import { BRAND_CONTACT } from '../data/content';
 import { AnnouncementBar } from './AnnouncementBar';
 
 export const CartDrawer: React.FC = () => {
+  const navigate = useNavigate();
   const { items, isOpen, closeCart, updateQuantity, removeFromCart, totalItems, totalPrice } = useCart();
   const { checkCustomerFirstOrder, recordOrder } = useStoreContent();
 
@@ -465,23 +467,51 @@ Please confirm order dispatch and share payment details. Thank you!`;
 
             <div className="flex items-center gap-2 p-2 rounded-sm bg-[#183D27]/10 border border-[#183D27]/20 text-[11px] text-[#183D27]">
               <ShieldCheck className="w-4 h-4 text-[#183D27] shrink-0" />
-              <span>Complimentary Express Shipping & Authentic Lab Certificate included</span>
+              <span>Complimentary Delhivery Pan-India Express Shipping included</span>
             </div>
 
-            {/* Confirm Order via WhatsApp */}
+            {/* Primary Action: Proceed to Billing & Checkout */}
             <button
-              id="cart-checkout-whatsapp-btn"
-              onClick={handleConfirmOrderWhatsApp}
-              className="w-full py-3.5 rounded-sm bg-[#25D366] hover:bg-[#1EBE5D] text-[#10110F] font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2.5 shadow-md transition-all cursor-pointer min-h-[44px]"
+              id="cart-checkout-proceed-btn"
+              onClick={() => {
+                try {
+                  if (customerName) localStorage.setItem('titan_checkout_name', customerName);
+                  if (customerPhone) localStorage.setItem('titan_checkout_phone', customerPhone);
+                  if (customerEmail) localStorage.setItem('titan_checkout_email', customerEmail);
+                } catch {}
+                closeCart();
+                navigate('/checkout');
+              }}
+              className="w-full py-4 rounded-sm bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2.5 shadow-md transition-all cursor-pointer min-h-[46px]"
             >
-              <MessageCircle className="w-5 h-5 text-[#10110F]" />
-              <span>CONFIRM ORDER ON WHATSAPP (₹{finalTotal})</span>
-              <ArrowRight className="w-4 h-4" />
+              <Lock className="w-4 h-4 text-[#D4B66A]" />
+              <span>PROCEED TO BILLING & CHECKOUT (₹{finalTotal})</span>
+              <ArrowRight className="w-4 h-4 text-[#D4B66A]" />
             </button>
 
-            <p className="text-[10px] text-center text-[#66704B]">
-              Direct ordering via WhatsApp ensures priority Delhi dispatch, batch authenticity certificates, and personalized routine advice.
-            </p>
+            {/* Payment & Delivery Badges */}
+            <div className="flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-wider text-[#66704B]">
+              <span className="flex items-center gap-1">
+                <CreditCard className="w-3 h-3 text-[#183D27]" />
+                Cards & UPI
+              </span>
+              <span>•</span>
+              <span>Cash on Delivery</span>
+              <span>•</span>
+              <span>Delhivery One</span>
+            </div>
+
+            {/* Secondary WhatsApp Concierge Fallback */}
+            <div className="pt-1 text-center">
+              <button
+                type="button"
+                onClick={handleConfirmOrderWhatsApp}
+                className="text-[11px] text-[#183D27] hover:underline font-semibold inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
+                <span>Prefer ordering with Concierge on WhatsApp? Click here</span>
+              </button>
+            </div>
           </div>
         )}
       </div>

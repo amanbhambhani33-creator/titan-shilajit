@@ -12,6 +12,8 @@ import {
   Clock,
   ArrowRight,
   Info,
+  Lock,
+  CreditCard,
 } from 'lucide-react';
 import { useStoreContent } from '../context/StoreContentContext';
 import { ProductCard } from '../components/ProductCard';
@@ -95,6 +97,12 @@ export const ProductDetailPage: React.FC = () => {
     addToCart(product, quantity, currentPack, 'set');
     setIsAddedToast(true);
     setTimeout(() => setIsAddedToast(false), 2000);
+  };
+
+  const handleBuyNow = () => {
+    if (isOutOfStock || !product) return;
+    addToCart(product, quantity, currentPack, 'set');
+    navigate('/checkout');
   };
 
   return (
@@ -327,17 +335,16 @@ export const ProductDetailPage: React.FC = () => {
                   ⚠️ THIS PRODUCT IS CURRENTLY OUT OF STOCK
                 </div>
               ) : (
-                /* Big Primary WhatsApp Button */
-                <a
-                  id="product-detail-buy-whatsapp-btn"
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-4 rounded-xs bg-[#25D366] hover:bg-[#1EBE5D] text-[#10110F] font-bold text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg transition-all min-h-[48px]"
+                /* Big Primary Buy Now Button Redirecting to Billing */
+                <button
+                  id="product-detail-buy-now-btn"
+                  onClick={handleBuyNow}
+                  className="w-full py-4 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] font-bold text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg transition-all min-h-[48px] cursor-pointer"
                 >
-                  <MessageCircle className="w-5 h-5 text-[#10110F]" />
-                  <span>ORDER ON WHATSAPP (₹{displayPrice * quantity})</span>
-                </a>
+                  <Lock className="w-4 h-4 text-[#D4B66A]" />
+                  <span>BUY NOW — PROCEED TO BILLING (₹{displayPrice * quantity})</span>
+                  <ArrowRight className="w-4 h-4 text-[#D4B66A]" />
+                </button>
               )}
 
               <div className="grid grid-cols-2 gap-3">
@@ -377,8 +384,27 @@ export const ProductDetailPage: React.FC = () => {
                 </Link>
               </div>
 
-              <div className="mt-1 text-center text-[11px] text-[#66704B]">
-                Complimentary express shipping across India • Cash on delivery available via WhatsApp concierge
+              {/* Payment Methods & Delhivery Dispatch Trust Row */}
+              <div className="flex items-center justify-center gap-2 text-[10.5px] font-bold uppercase tracking-wider text-[#66704B] pt-1">
+                <span>Cash on Delivery</span>
+                <span>•</span>
+                <span>UPI & Cards (Razorpay)</span>
+                <span>•</span>
+                <span>Delhivery Express</span>
+              </div>
+
+              {/* Concierge Assistance Link */}
+              <div className="mt-0.5 text-center text-[11px] text-[#66704B]">
+                Need custom advice?{' '}
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#183D27] font-bold hover:underline inline-flex items-center gap-1"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
+                  <span>Chat with Delhi Concierge</span>
+                </a>
               </div>
             </div>
           </div>

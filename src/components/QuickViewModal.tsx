@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   X,
   MessageCircle,
@@ -12,6 +12,7 @@ import {
   FlaskConical,
   Droplet,
   Ban,
+  Lock,
 } from 'lucide-react';
 import { Product, ProductPack } from '../types';
 import { getProductWhatsAppUrl } from '../utils/whatsapp';
@@ -29,6 +30,7 @@ interface QuickViewModalContentProps {
 }
 
 const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, onClose }) => {
+  const navigate = useNavigate();
   const { addToCart, getItemQuantity } = useCart();
   const packs = getProductPacks(product);
   const [selectedPackIndex, setSelectedPackIndex] = useState(1);
@@ -65,6 +67,13 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, 
       setIsAddedToast(false);
       onClose();
     }, 900);
+  };
+
+  const handleBuyNow = () => {
+    if (isOutOfStock) return;
+    addToCart(product, quantity, currentPack, 'set');
+    onClose();
+    navigate('/checkout');
   };
 
   const handleSelectPack = (idx: number) => {
@@ -293,16 +302,15 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, 
               </div>
             ) : (
               <>
-                <a
-                  id="modal-buy-whatsapp-btn"
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3.5 rounded-xs bg-[#25D366] hover:bg-[#1EBE5D] text-[#10110F] text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer min-h-[44px]"
+                <button
+                  id="modal-buy-now-btn"
+                  onClick={handleBuyNow}
+                  className="w-full py-3.5 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer min-h-[44px]"
                 >
-                  <MessageCircle className="w-4 h-4 text-[#10110F]" />
-                  <span>ORDER ON WHATSAPP (₹{displayPrice * quantity})</span>
-                </a>
+                  <Lock className="w-4 h-4 text-[#D4B66A]" />
+                  <span>BUY NOW — PROCEED TO BILLING (₹{displayPrice * quantity})</span>
+                  <ArrowRight className="w-4 h-4 text-[#D4B66A]" />
+                </button>
 
                 <div className="grid grid-cols-2 gap-2">
                   <button

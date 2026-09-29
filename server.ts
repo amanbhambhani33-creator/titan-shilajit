@@ -1,8 +1,11 @@
 import express from 'express';
 import path from 'path';
+import crypto from 'crypto';
 import dotenv from 'dotenv';
+import Razorpay from 'razorpay';
 import { GoogleGenAI, Type } from '@google/genai';
 import { createServer as createViteServer } from 'vite';
+import { createDelhiveryShipment } from './server/delhivery';
 
 dotenv.config();
 
@@ -78,7 +81,260 @@ const CLIENT_APPROVED_GUIDANCE = {
 
 // API: Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', brand: 'Titan Shilajit', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    brand: 'Titan Shilajit',
+    timestamp: new Date().toISOString(),
+    razorpayConfigured: Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET),
+  });
+});
+
+// Razorpay Client Setup
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_ThmUmFsVr0BVgV';
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || '56ulscVqmmcmGUt0G1sPoqW9';
+
+let razorpayClient: Razorpay | null = null;
+function getRazorpayClient(): Razorpay {
+  if (!razorpayClient) {
+    razorpayClient = new Razorpay({
+      key_id: RAZORPAY_KEY_ID,
+      key_secret: RAZORPAY_KEY_SECRET,
+    });
+  }
+  return razorpayClient;
+}
+
+// STEP 1: BACKEND - Create Razorpay Order
+app.post('/api/create-order', async (req, res) => {
+  try {
+    const { amount, currency = 'INR', receipt, notes = {} } = req.body;
+
+    // Validate amount
+    const parsedAmount = Math.round(Number(amount));
+    if (isNaN(parsedAmount) || parsedAmount < 100) {
+      return res.status(400).json({
+        error: 'Amount must be a valid number of at least 100 paise (₹1.00).',
+      });
+    }
+
+    const razorpay = getRazorpayClient();
+    const orderOptions = {
+      amount: parsedAmount,
+      currency: currency.toUpperCase(),
+      receipt: receipt || `rcpt_${Date.now().toString().slice(-8)}`,
+      notes: {
+        brand: 'Titan Shilajit',
+        ...notes,
+      },
+    };
+
+    const order = await razorpay.orders.create(orderOptions);
+
+    return res.json({
+      order_id: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      key_id: RAZORPAY_KEY_ID,
+    });
+  } catch (error: any) {
+    console.error('Razorpay create-order error:', error);
+    // Handle auth failure
+    if (error?.statusCode === 401 || error?.error?.code === 'BAD_REQUEST_ERROR' && error?.error?.description?.includes('auth')) {
+      return res.status(401).json({ error: 'Razorpay authentication failed. Verify API credentials.' });
+    }
+    return res.status(500).json({
+      error: error?.error?.description || error?.message || 'Failed to create Razorpay order.',
+    });
+  }
+});
+
+// STEP 3: BACKEND - Verify Payment Signature & Dispatch Delhivery Shipment
+app.post('/api/verify-payment', async (req, res) => {
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      order_data,
+    } = req.body;
+
+    // Missing fields validation
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required signature verification parameters (order_id, payment_id, signature).',
+      });
+    }
+
+    // Algorithm: HMAC-SHA256(order_id + "|" + payment_id, KEY_SECRET)
+    const expectedSignature = crypto
+      .createHmac('sha256', RAZORPAY_KEY_SECRET)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest('hex');
+
+    // Signature comparison
+    if (expectedSignature !== razorpay_signature) {
+      console.warn('Payment verification signature mismatch:', {
+        expected: expectedSignature,
+        received: razorpay_signature,
+      });
+      return res.status(400).json({
+        success: false,
+        error: 'Signature verification failed. Payment cannot be marked as verified.',
+      });
+    }
+
+    // Signature verified successfully!
+    let shipmentResult = null;
+    let invoiceData = null;
+
+    if (order_data) {
+      // Automatic order dispatch to Delhivery One
+      shipmentResult = await createDelhiveryShipment({
+        orderNumber: order_data.orderNumber || `TITAN-${Date.now().toString().slice(-6)}`,
+        consignee: {
+          name: order_data.customerName,
+          phone: order_data.customerPhone,
+          email: order_data.customerEmail,
+          address: order_data.shippingAddress?.address || 'Primary Customer Address',
+          city: order_data.shippingAddress?.city || 'Delhi',
+          state: order_data.shippingAddress?.state || 'Delhi',
+          pincode: order_data.shippingAddress?.pincode || '110001',
+        },
+        items: (order_data.items || []).map((i: any) => ({
+          name: `${i.productName} (${i.packName || 'Standard'})`,
+          quantity: i.quantity,
+          price: i.price,
+        })),
+        totalAmount: order_data.total || 0,
+        paymentMode: 'Prepaid',
+      });
+
+      // Generate Invoice Data
+      invoiceData = {
+        invoiceNumber: `INV-TITAN-${Date.now().toString().slice(-6)}`,
+        invoiceDate: new Date().toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        }),
+        paymentStatus: 'PAID_ONLINE',
+        paymentMethod: 'Razorpay Standard Checkout',
+        razorpayPaymentId: razorpay_payment_id,
+        razorpayOrderId: razorpay_order_id,
+        trackingNumber: shipmentResult.waybill,
+        trackingUrl: shipmentResult.trackingUrl,
+        courier: shipmentResult.courier,
+      };
+    }
+
+    return res.json({
+      success: true,
+      message: 'Payment verified successfully and order manifested with Delhivery.',
+      payment_id: razorpay_payment_id,
+      order_id: razorpay_order_id,
+      shipment: shipmentResult,
+      invoice: invoiceData,
+    });
+  } catch (error: any) {
+    console.error('Verify payment error:', error);
+    return res.status(500).json({
+      success: false,
+      error: error?.message || 'Internal error verifying payment signature.',
+    });
+  }
+});
+
+// Endpoint: Confirm COD or Verified Order with Delhivery Shipment & Invoice Generation
+app.post('/api/orders/confirm', async (req, res) => {
+  try {
+    const {
+      orderNumber = `TITAN-${Date.now().toString().slice(-6)}`,
+      customerName,
+      customerPhone,
+      customerEmail,
+      shippingAddress,
+      items = [],
+      subtotal,
+      discount = 0,
+      couponCode,
+      total,
+      paymentMethod = 'cash_on_delivery', // 'cash_on_delivery' | 'online'
+      paymentDetails,
+    } = req.body;
+
+    if (!customerName || !customerPhone || !shippingAddress?.address || !shippingAddress?.pincode) {
+      return res.status(400).json({
+        success: false,
+        error: 'Customer name, mobile number, street address, and PIN code are required.',
+      });
+    }
+
+    const isCod = paymentMethod === 'cash_on_delivery';
+
+    // Automatic dispatch to delivery partner (Delhivery One)
+    const shipmentResult = await createDelhiveryShipment({
+      orderNumber,
+      consignee: {
+        name: customerName,
+        phone: customerPhone,
+        email: customerEmail,
+        address: `${shippingAddress.address}${shippingAddress.landmark ? `, Near ${shippingAddress.landmark}` : ''}`,
+        city: shippingAddress.city || 'Delhi',
+        state: shippingAddress.state || 'Delhi',
+        pincode: shippingAddress.pincode,
+      },
+      items: items.map((i: any) => ({
+        name: `${i.productName} (${i.packName || 'Standard Pack'})`,
+        quantity: i.quantity,
+        price: i.price,
+      })),
+      totalAmount: total,
+      paymentMode: isCod ? 'COD' : 'Prepaid',
+      codAmount: isCod ? total : 0,
+    });
+
+    const invoiceNumber = `INV-TITAN-${Date.now().toString().slice(-6)}`;
+    const invoiceDate = new Date().toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+
+    const responsePayload = {
+      success: true,
+      orderNumber,
+      invoiceNumber,
+      invoiceDate,
+      paymentMethod: isCod ? 'Cash on Delivery (COD)' : 'Razorpay Online (UPI/Cards)',
+      paymentStatus: isCod ? 'COD_PENDING_DELIVERY' : 'PAID',
+      delivery: {
+        courier: shipmentResult.courier,
+        trackingNumber: shipmentResult.waybill,
+        trackingUrl: shipmentResult.trackingUrl,
+        status: isCod
+          ? 'COD Manifested — Scheduled for Delhi Fulfillment Dispatch'
+          : 'Prepaid Priority Manifested — Scheduled for Delhi Fulfillment Dispatch',
+        pickupLocation: shipmentResult.pickupLocation,
+        expectedDelivery: shipmentResult.expectedDelivery,
+      },
+      summary: {
+        subtotal,
+        discount,
+        couponCode,
+        shipping: 0,
+        total,
+      },
+    };
+
+    return res.json(responsePayload);
+  } catch (error: any) {
+    console.error('Order confirmation error:', error);
+    return res.status(500).json({
+      success: false,
+      error: error?.message || 'Failed to confirm order and dispatch with Delhivery.',
+    });
+  }
 });
 
 // API: Wellness Assessment Submission
