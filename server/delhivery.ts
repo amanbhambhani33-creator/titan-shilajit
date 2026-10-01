@@ -44,6 +44,7 @@ export interface DelhiveryShipmentResult {
   pickupLocation: string;
   expectedDelivery: string;
   bookedAt: string;
+  delhiverySynced: boolean;
   manifestId?: string;
   rawResponse?: any;
   error?: string;
@@ -68,16 +69,23 @@ export interface PincodeServiceabilityResult {
   raw?: any;
 }
 
+// In-memory runtime override (syncable from Firestore or Admin Console)
+let runtimeConfig: { token?: string; baseUrl?: string; pickupLocation?: string } = {};
+
+export function updateDelhiveryRuntimeConfig(cfg: { token?: string; baseUrl?: string; pickupLocation?: string }) {
+  runtimeConfig = { ...runtimeConfig, ...cfg };
+}
+
 // Configurable credentials & endpoints
 export const DELHIVERY_CONFIG = {
   get token(): string {
-    return process.env.DELHIVERY_TOKEN || process.env.DELHIVERY_API_KEY || '6SQOQUTNWO35ZPD8HM8WUM5H0QDVLSRB';
+    return runtimeConfig.token || process.env.DELHIVERY_TOKEN || process.env.DELHIVERY_API_KEY || '6SQOQUTNWO35ZPD8HM8WUM5H0QDVLSRB';
   },
   get baseUrl(): string {
-    return (process.env.DELHIVERY_API_URL || 'https://staging-express.delhivery.com').replace(/\/+$/, '');
+    return (runtimeConfig.baseUrl || process.env.DELHIVERY_API_URL || 'https://staging-express.delhivery.com').replace(/\/+$/, '');
   },
   get pickupLocation(): string {
-    return process.env.DELHIVERY_PICKUP_LOCATION || 'Titan Delhi Central Fulfillment Hub';
+    return runtimeConfig.pickupLocation || process.env.DELHIVERY_PICKUP_LOCATION || 'Titan Delhi Central Fulfillment Hub';
   },
   warehouse: {
     name: 'Titan Delhi Central Fulfillment Hub',
@@ -304,7 +312,7 @@ export async function createDelhiveryShipment(
         seller_name: 'Titan Pure Himalayan Shilajit',
         seller_inv: req.invoiceNumber || `INV-${req.orderNumber}`,
         quantity: totalQuantityStr,
-        waybill: assignedAwb,
+        waybill: '', // Leave blank so Delhivery allocates an authentic Waybill AWB from merchant account pool
         shipment_width: '100',
         shipment_height: '100',
         weight: '250',
@@ -330,53 +338,190 @@ export async function createDelhiveryShipment(
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: postBody,
-      signal: AbortSignal.timeout(4000),
+      signal: AbortSignal.timeout(6000),
     });
 
     if (res.ok) {
       const data = await res.json();
-      let realWaybill = assignedAwb;
+      const pkg = data?.packages && Array.isArray(data.packages) && data.packages[0];
+      const realWaybill = pkg?.waybill || data?.upload_wbn || data?.waybill;
 
-      // Extract waybill from Delhivery CMU response
-      if (data?.packages && Array.isArray(data.packages) && data.packages[0]?.waybill) {
-        realWaybill = data.packages[0].waybill;
-      } else if (data?.upload_wbn) {
-        realWaybill = data.upload_wbn;
-      } else if (data?.waybill) {
-        realWaybill = data.waybill;
+      // Check if Delhivery actually succeeded and created the shipment package
+      const isSuccess = data?.success !== false && !data?.error && Boolean(realWaybill);
+
+      if (isSuccess && realWaybill) {
+        return {
+          success: true,
+          delhiverySynced: true,
+          waybill: realWaybill,
+          courier: 'Delhivery One Express',
+          trackingUrl: `https://www.delhivery.com/track/package/${realWaybill}`,
+          status: isCod
+            ? 'COD Manifested & Scheduled for Delhi Fulfillment Hub Dispatch'
+            : 'Prepaid Priority Manifested & Scheduled for Delhi Fulfillment Hub Dispatch',
+          pickupLocation: pickupLocationName,
+          expectedDelivery: '2–4 Business Days (Express Pan-India)',
+          bookedAt,
+          manifestId: data?.package_manifest || data?.upload_wbn || `MAN-${Date.now().toString().slice(-6)}`,
+          rawResponse: data,
+        };
+      } else {
+        const errorMsg = data?.rmk || (pkg?.remarks && pkg.remarks.join('; ')) || 'Delhivery shipment creation error';
+        return {
+          success: false,
+          delhiverySynced: false,
+          waybill: realWaybill || assignedAwb,
+          courier: 'Delhivery One Express',
+          trackingUrl: `https://www.delhivery.com/track/package/${realWaybill || assignedAwb}`,
+          status: 'Delhivery Dispatch Pending (Check Token / Warehouse Name)',
+          pickupLocation: pickupLocationName,
+          expectedDelivery: '2–4 Business Days (Express Pan-India)',
+          bookedAt,
+          manifestId: `MAN-${Date.now().toString().slice(-6)}`,
+          error: errorMsg,
+          rawResponse: data,
+        };
       }
-
+    } else {
+      const errText = await res.text().catch(() => '');
       return {
-        success: true,
-        waybill: realWaybill,
+        success: false,
+        delhiverySynced: false,
+        waybill: assignedAwb,
         courier: 'Delhivery One Express',
-        trackingUrl: `https://www.delhivery.com/track/package/${realWaybill}`,
-        status: isCod
-          ? 'COD Manifested & Scheduled for Delhi Fulfillment Hub Dispatch'
-          : 'Prepaid Priority Manifested & Scheduled for Delhi Fulfillment Hub Dispatch',
+        trackingUrl,
+        status: `Delhivery HTTP ${res.status} Error`,
         pickupLocation: pickupLocationName,
         expectedDelivery: '2–4 Business Days (Express Pan-India)',
         bookedAt,
-        manifestId: data?.package_manifest || `MAN-${Date.now().toString().slice(-6)}`,
-        rawResponse: data,
+        manifestId: `MAN-${Date.now().toString().slice(-6)}`,
+        error: `HTTP ${res.status}: ${errText.slice(0, 150)}`,
       };
     }
-  } catch (apiErr) {
-    // Staging or offline network fallback
+  } catch (apiErr: any) {
+    return {
+      success: false,
+      delhiverySynced: false,
+      waybill: assignedAwb,
+      courier: 'Delhivery One Express',
+      trackingUrl,
+      status: 'Delhivery Dispatch Pending (Network Offline)',
+      pickupLocation: pickupLocationName,
+      expectedDelivery: '2–4 Business Days (Express Pan-India)',
+      bookedAt,
+      manifestId: `MAN-${Date.now().toString().slice(-6)}`,
+      error: apiErr?.message || 'Network timeout connecting to Delhivery API',
+    };
+  }
+}
+
+/**
+ * 3. Test Delhivery Token Validity
+ */
+export async function testDelhiveryToken(tokenToTest?: string): Promise<{ valid: boolean; message: string; raw?: any }> {
+  const token = tokenToTest || DELHIVERY_CONFIG.token;
+  if (!token || token === '6SQOQUTNWO35ZPD8HM8WUM5H0QDVLSRB') {
+    return {
+      valid: false,
+      message: 'Token is unset or using default placeholder. Please enter your live Delhivery API token from Delhivery One > Settings > API Setup.',
+    };
   }
 
-  // Guaranteed verified manifest output with Delhivery AWB format
-  return {
-    success: true,
-    waybill: assignedAwb,
-    courier: 'Delhivery One Express',
-    trackingUrl,
-    status: isCod
-      ? 'COD Manifested — Scheduled for Delhi Fulfillment Dispatch'
-      : 'Prepaid Priority Manifested — Scheduled for Delhi Fulfillment Dispatch',
-    pickupLocation: pickupLocationName,
-    expectedDelivery: '2–4 Business Days (Express Pan-India)',
-    bookedAt,
-    manifestId: `MAN-${Date.now().toString().slice(-6)}`,
+  const url = `${DELHIVERY_CONFIG.baseUrl}/c/api/pin-codes/json/?filter_codes=110001`;
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Token ${token}`,
+        Accept: 'application/json',
+      },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    const text = await res.text();
+    let data: any = {};
+    try { data = JSON.parse(text); } catch {}
+
+    if (res.ok && (data.delivery_codes || Array.isArray(data))) {
+      return {
+        valid: true,
+        message: 'Delhivery API Token verified successfully! Connected to ' + DELHIVERY_CONFIG.baseUrl,
+        raw: data,
+      };
+    } else {
+      const err = data.detail || data.rmk || data.error || text || `HTTP ${res.status}`;
+      return {
+        valid: false,
+        message: `Delhivery authentication rejected: ${err}`,
+        raw: data,
+      };
+    }
+  } catch (err: any) {
+    return {
+      valid: false,
+      message: `Failed to reach Delhivery API (${DELHIVERY_CONFIG.baseUrl}): ${err?.message || 'Network error'}`,
+    };
+  }
+}
+
+/**
+ * 4. Register Warehouse / Pickup Location on Delhivery
+ */
+export async function registerDelhiveryWarehouse(details: {
+  name: string;
+  phone: string;
+  city: string;
+  pin: string;
+  address: string;
+  country?: string;
+}): Promise<{ success: boolean; message: string; raw?: any }> {
+  const token = DELHIVERY_CONFIG.token;
+  const url = `${DELHIVERY_CONFIG.baseUrl}/api/backend/clientwarehouse/create/`;
+
+  const payload = {
+    name: details.name,
+    phone: details.phone || '9958474229',
+    city: details.city || 'New Delhi',
+    pin: details.pin || '110020',
+    address: details.address || 'Plot 48, Okhla Industrial Area Phase III',
+    country: details.country || 'India',
   };
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Token ${token}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(6000),
+    });
+
+    const text = await res.text();
+    let data: any = {};
+    try { data = JSON.parse(text); } catch {}
+
+    if (res.ok || data?.success) {
+      // Update local and runtime pickup location
+      updateDelhiveryRuntimeConfig({ pickupLocation: details.name });
+      return {
+        success: true,
+        message: `Warehouse "${details.name}" successfully registered and linked with Delhivery!`,
+        raw: data,
+      };
+    } else {
+      return {
+        success: false,
+        message: data?.detail || data?.rmk || data?.error || `HTTP ${res.status}: ${text.slice(0, 150)}`,
+        raw: data,
+      };
+    }
+  } catch (err: any) {
+    return {
+      success: false,
+      message: `Failed to contact Delhivery warehouse API: ${err?.message || 'Network error'}`,
+    };
+  }
 }

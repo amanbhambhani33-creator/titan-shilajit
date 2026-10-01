@@ -4,24 +4,55 @@ import crypto from 'crypto';
 import dotenv from 'dotenv';
 import Razorpay from 'razorpay';
 import { GoogleGenAI, Type } from '@google/genai';
-import { createServer as createViteServer } from 'vite';
 import {
   createDelhiveryShipment,
   checkDelhiveryPincodeServiceability,
   DELHIVERY_CONFIG,
+  updateDelhiveryRuntimeConfig,
+  testDelhiveryToken,
+  registerDelhiveryWarehouse,
 } from './server/delhivery';
 import {
   pushOrderToFirestore,
   fetchOrdersFromFirestore,
   checkCustomerPriorOrders,
+  saveDelhiveryConfigToFirestore,
+  getDelhiveryConfigFromFirestore,
 } from './server/firestore';
 
 dotenv.config();
 
 const app = express();
 const PORT = 3000;
+const apiRouter = express.Router();
+
+// Universal CORS & Pre-flight Support for Vercel and External Clients
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 app.use(express.json());
+
+// Helper to keep Delhivery runtime config synchronized with Firestore
+async function syncDelhiveryConfig() {
+  try {
+    const fsConfig = await getDelhiveryConfigFromFirestore();
+    if (fsConfig) {
+      updateDelhiveryRuntimeConfig(fsConfig);
+    }
+  } catch {}
+}
+
+// Initialize Delhivery settings from Firestore cache asynchronously
+syncDelhiveryConfig().then(() => {
+  console.log('[Delhivery] Loaded credentials & hub config from Firestore.');
+}).catch(() => {});
 
 // Lazy-initialized Gemini client with telemetry header
 let aiClient: GoogleGenAI | null = null;
@@ -89,7 +120,7 @@ const CLIENT_APPROVED_GUIDANCE = {
 };
 
 // API: Health check
-app.get('/api/health', (req, res) => {
+apiRouter.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     brand: 'Titan Shilajit',
@@ -114,7 +145,7 @@ function getRazorpayClient(): Razorpay {
 }
 
 // STEP 1: BACKEND - Create Razorpay Order
-app.post('/api/create-order', async (req, res) => {
+apiRouter.post('/create-order', async (req, res) => {
   try {
     const { amount, currency = 'INR', receipt, notes = {} } = req.body;
 
@@ -148,7 +179,7 @@ app.post('/api/create-order', async (req, res) => {
   } catch (error: any) {
     console.error('Razorpay create-order error:', error);
     // Handle auth failure
-    if (error?.statusCode === 401 || error?.error?.code === 'BAD_REQUEST_ERROR' && error?.error?.description?.includes('auth')) {
+    if (error?.statusCode === 401 || (error?.error?.code === 'BAD_REQUEST_ERROR' && error?.error?.description?.includes('auth'))) {
       return res.status(401).json({ error: 'Razorpay authentication failed. Verify API credentials.' });
     }
     return res.status(500).json({
@@ -158,7 +189,7 @@ app.post('/api/create-order', async (req, res) => {
 });
 
 // STEP 3: BACKEND - Verify Payment Signature & Dispatch Delhivery Shipment
-app.post('/api/verify-payment', async (req, res) => {
+apiRouter.post('/verify-payment', async (req, res) => {
   try {
     const {
       razorpay_order_id,
@@ -198,6 +229,8 @@ app.post('/api/verify-payment', async (req, res) => {
     let invoiceData = null;
 
     if (order_data) {
+      await syncDelhiveryConfig();
+
       // Automatic order dispatch to Delhivery One
       shipmentResult = await createDelhiveryShipment({
         orderNumber: order_data.orderNumber || `TITAN-${Date.now().toString().slice(-6)}`,
@@ -249,9 +282,13 @@ app.post('/api/verify-payment', async (req, res) => {
             courier: shipmentResult.courier,
             trackingNumber: shipmentResult.waybill,
             trackingUrl: shipmentResult.trackingUrl,
-            status: shipmentResult.status || 'Prepaid Priority Manifested — Scheduled for Delhi Fulfillment Dispatch',
+            status: shipmentResult.status,
             pickupLocation: shipmentResult.pickupLocation,
             expectedDelivery: shipmentResult.expectedDelivery,
+            delhiverySynced: shipmentResult.delhiverySynced,
+            delhiveryError: shipmentResult.error,
+            manifestId: shipmentResult.manifestId,
+            rawResponse: shipmentResult.rawResponse,
           },
           invoiceNumber: invoiceData.invoiceNumber,
           invoiceDate: invoiceData.invoiceDate,
@@ -281,7 +318,9 @@ app.post('/api/verify-payment', async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'Payment verified successfully, order recorded in Firestore, and manifested with Delhivery.',
+      message: shipmentResult?.delhiverySynced
+        ? 'Payment verified successfully, order recorded in Firestore, and booked on Delhivery dashboard.'
+        : 'Payment verified and saved to Firestore. Delhivery booking pending verification.',
       payment_id: razorpay_payment_id,
       order_id: razorpay_order_id,
       shipment: shipmentResult,
@@ -297,7 +336,7 @@ app.post('/api/verify-payment', async (req, res) => {
 });
 
 // Endpoint: Confirm COD or Verified Order with Delhivery Shipment & Invoice Generation
-app.post('/api/orders/confirm', async (req, res) => {
+apiRouter.post('/orders/confirm', async (req, res) => {
   try {
     const {
       orderNumber = `TITAN-${Date.now().toString().slice(-6)}`,
@@ -320,6 +359,8 @@ app.post('/api/orders/confirm', async (req, res) => {
         error: 'Customer name, mobile number, street address, and PIN code are required.',
       });
     }
+
+    await syncDelhiveryConfig();
 
     const isCod = paymentMethod === 'cash_on_delivery';
 
@@ -363,11 +404,13 @@ app.post('/api/orders/confirm', async (req, res) => {
         courier: shipmentResult.courier,
         trackingNumber: shipmentResult.waybill,
         trackingUrl: shipmentResult.trackingUrl,
-        status: isCod
-          ? 'COD Manifested — Scheduled for Delhi Fulfillment Dispatch'
-          : 'Prepaid Priority Manifested — Scheduled for Delhi Fulfillment Dispatch',
+        status: shipmentResult.status,
         pickupLocation: shipmentResult.pickupLocation,
         expectedDelivery: shipmentResult.expectedDelivery,
+        delhiverySynced: shipmentResult.delhiverySynced,
+        delhiveryError: shipmentResult.error,
+        manifestId: shipmentResult.manifestId,
+        rawResponse: shipmentResult.rawResponse,
       },
       invoiceNumber,
       invoiceDate,
@@ -405,11 +448,12 @@ app.post('/api/orders/confirm', async (req, res) => {
         courier: shipmentResult.courier,
         trackingNumber: shipmentResult.waybill,
         trackingUrl: shipmentResult.trackingUrl,
-        status: isCod
-          ? 'COD Manifested — Scheduled for Delhi Fulfillment Dispatch'
-          : 'Prepaid Priority Manifested — Scheduled for Delhi Fulfillment Dispatch',
+        status: shipmentResult.status,
         pickupLocation: shipmentResult.pickupLocation,
         expectedDelivery: shipmentResult.expectedDelivery,
+        delhiverySynced: shipmentResult.delhiverySynced,
+        delhiveryError: shipmentResult.error,
+        manifestId: shipmentResult.manifestId,
       },
       summary: {
         subtotal,
@@ -431,7 +475,7 @@ app.post('/api/orders/confirm', async (req, res) => {
 });
 
 // Endpoint: Explicitly Push Order to Firestore from client or webhook
-app.post('/api/orders/push-firestore', async (req, res) => {
+apiRouter.post('/orders/push-firestore', async (req, res) => {
   try {
     const orderData = req.body;
     if (!orderData || !orderData.orderNumber) {
@@ -446,7 +490,7 @@ app.post('/api/orders/push-firestore', async (req, res) => {
 });
 
 // Endpoint: Fetch All Orders from Firestore
-app.get('/api/orders', async (req, res) => {
+apiRouter.get('/orders', async (req, res) => {
   try {
     const orders = await fetchOrdersFromFirestore();
     return res.json({ success: true, orders });
@@ -456,7 +500,7 @@ app.get('/api/orders', async (req, res) => {
 });
 
 // Endpoint: Check customer prior orders (for coupons)
-app.get('/api/orders/check-customer', async (req, res) => {
+apiRouter.get('/orders/check-customer', async (req, res) => {
   try {
     const query = (req.query.query as string) || '';
     const result = await checkCustomerPriorOrders(query);
@@ -470,12 +514,13 @@ app.get('/api/orders/check-customer', async (req, res) => {
 
 // 1. B2C Pincode Serviceability Check
 // Spec: GET https://staging-express.delhivery.com/c/api/pin-codes/json/?filter_codes={pincode}
-app.get('/api/delhivery/serviceability', async (req, res) => {
+apiRouter.get('/delhivery/serviceability', async (req, res) => {
   try {
     const pincode = (req.query.pincode as string) || '';
     if (!pincode) {
       return res.status(400).json({ success: false, error: 'Pincode is required.' });
     }
+    await syncDelhiveryConfig();
     const result = await checkDelhiveryPincodeServiceability(pincode);
     return res.json(result);
   } catch (err: any) {
@@ -487,9 +532,10 @@ app.get('/api/delhivery/serviceability', async (req, res) => {
   }
 });
 
-app.get('/api/delhivery/pincode/:pincode', async (req, res) => {
+apiRouter.get('/delhivery/pincode/:pincode', async (req, res) => {
   try {
     const { pincode } = req.params;
+    await syncDelhiveryConfig();
     const result = await checkDelhiveryPincodeServiceability(pincode);
     return res.json(result);
   } catch (err: any) {
@@ -499,7 +545,7 @@ app.get('/api/delhivery/pincode/:pincode', async (req, res) => {
 
 // 2. Direct Shipment Creation (CMU)
 // Spec: POST https://staging-express.delhivery.com/api/cmu/create.json
-app.post('/api/delhivery/create-shipment', async (req, res) => {
+apiRouter.post('/delhivery/create-shipment', async (req, res) => {
   try {
     const shipmentData = req.body;
     if (!shipmentData || !shipmentData.orderNumber || !shipmentData.consignee) {
@@ -508,6 +554,7 @@ app.post('/api/delhivery/create-shipment', async (req, res) => {
         error: 'Order number and consignee information are required.',
       });
     }
+    await syncDelhiveryConfig();
     const result = await createDelhiveryShipment(shipmentData);
     return res.json(result);
   } catch (err: any) {
@@ -519,32 +566,150 @@ app.post('/api/delhivery/create-shipment', async (req, res) => {
   }
 });
 
-// 3. Delhivery Status & Configuration
-app.get('/api/delhivery/config', (req, res) => {
+// 3. Dispatch / Re-sync an Existing Order with Delhivery CMU
+apiRouter.post('/delhivery/sync-order', async (req, res) => {
+  try {
+    const { orderNumber } = req.body;
+    if (!orderNumber) {
+      return res.status(400).json({ success: false, error: 'Order number is required.' });
+    }
+    await syncDelhiveryConfig();
+    const orders = await fetchOrdersFromFirestore();
+    const order = orders.find((o: any) => o.orderNumber === orderNumber);
+    if (!order) {
+      return res.status(404).json({ success: false, error: 'Order not found in Firestore.' });
+    }
+
+    const isCod = order.paymentMethod === 'cash_on_delivery';
+    const shipmentResult = await createDelhiveryShipment({
+      orderNumber: order.orderNumber,
+      consignee: {
+        name: order.customerName,
+        phone: order.customerPhone,
+        email: order.customerEmail,
+        address: order.shippingAddressDetails?.address || order.shippingAddress || '',
+        city: order.shippingAddressDetails?.city || 'Delhi',
+        state: order.shippingAddressDetails?.state || 'Delhi',
+        pincode: order.shippingAddressDetails?.pincode || '110001',
+      },
+      items: (order.items || []).map((it: any) => ({
+        name: `${it.productName} (${it.packName || 'Standard'})`,
+        quantity: it.quantity,
+        price: it.price,
+      })),
+      totalAmount: order.total,
+      paymentMode: isCod ? 'COD' : 'Prepaid',
+      codAmount: isCod ? order.total : 0,
+      invoiceNumber: order.invoiceNumber,
+    });
+
+    const updatedDelivery = {
+      courier: shipmentResult.courier,
+      trackingNumber: shipmentResult.waybill,
+      trackingUrl: shipmentResult.trackingUrl,
+      status: shipmentResult.status,
+      pickupLocation: shipmentResult.pickupLocation,
+      expectedDelivery: shipmentResult.expectedDelivery,
+      delhiverySynced: shipmentResult.delhiverySynced,
+      delhiveryError: shipmentResult.error,
+      manifestId: shipmentResult.manifestId,
+      rawResponse: shipmentResult.rawResponse,
+    };
+
+    const updatedOrder = {
+      ...order,
+      deliveryDetails: updatedDelivery,
+      updatedAt: new Date().toISOString(),
+    };
+
+    await pushOrderToFirestore(updatedOrder);
+
+    return res.json({
+      success: shipmentResult.delhiverySynced,
+      shipment: shipmentResult,
+      order: updatedOrder,
+      message: shipmentResult.delhiverySynced
+        ? `Successfully manifested on Delhivery dashboard! Waybill / AWB: ${shipmentResult.waybill}`
+        : `Delhivery API notice: ${shipmentResult.error || 'Check Delhivery credentials or warehouse'}. Please verify token & registered warehouse in Delhivery Settings.`,
+    });
+  } catch (err: any) {
+    console.error('Delhivery sync-order error:', err);
+    return res.status(500).json({ success: false, error: err?.message || 'Failed to sync with Delhivery.' });
+  }
+});
+
+// 4. Delhivery Status & Configuration (Stored permanently in Firestore & Server Runtime)
+apiRouter.get('/delhivery/config', async (req, res) => {
+  try {
+    const fsConfig = await getDelhiveryConfigFromFirestore();
+    if (fsConfig) {
+      updateDelhiveryRuntimeConfig(fsConfig);
+    }
+  } catch {}
+
   res.json({
     success: true,
-    configured: Boolean(process.env.DELHIVERY_TOKEN || process.env.DELHIVERY_CLIENT_SECRET),
+    configured: Boolean(DELHIVERY_CONFIG.token && DELHIVERY_CONFIG.token !== '6SQOQUTNWO35ZPD8HM8WUM5H0QDVLSRB'),
+    token: DELHIVERY_CONFIG.token,
     baseUrl: DELHIVERY_CONFIG.baseUrl,
     pickupLocation: DELHIVERY_CONFIG.pickupLocation,
     warehouse: DELHIVERY_CONFIG.warehouse,
   });
 });
 
-app.post('/api/delhivery/config', (req, res) => {
+apiRouter.post('/delhivery/config', async (req, res) => {
   const { token, baseUrl, pickupLocation } = req.body;
+  updateDelhiveryRuntimeConfig({ token, baseUrl, pickupLocation });
   if (token) process.env.DELHIVERY_TOKEN = token;
   if (baseUrl) process.env.DELHIVERY_API_URL = baseUrl;
   if (pickupLocation) process.env.DELHIVERY_PICKUP_LOCATION = pickupLocation;
+
+  try {
+    await saveDelhiveryConfigToFirestore({ token, baseUrl, pickupLocation });
+  } catch (err) {
+    console.warn('Notice saving Delhivery config to Firestore:', err);
+  }
+
   res.json({
     success: true,
-    message: 'Delhivery settings updated successfully.',
+    message: 'Delhivery settings updated and saved to Firestore permanently.',
     baseUrl: DELHIVERY_CONFIG.baseUrl,
     pickupLocation: DELHIVERY_CONFIG.pickupLocation,
   });
 });
 
+// 5. Test Delhivery Token
+apiRouter.all('/delhivery/test-token', async (req, res) => {
+  try {
+    await syncDelhiveryConfig();
+    const token = (req.query.token as string) || req.body?.token;
+    const result = await testDelhiveryToken(token);
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({ valid: false, message: err?.message || 'Error testing token.' });
+  }
+});
+
+// 6. Register Warehouse on Delhivery
+apiRouter.post('/delhivery/register-warehouse', async (req, res) => {
+  try {
+    await syncDelhiveryConfig();
+    const details = req.body;
+    if (!details || !details.name || !details.pin || !details.address) {
+      return res.status(400).json({ success: false, message: 'Warehouse name, address, and PIN code are required.' });
+    }
+    const result = await registerDelhiveryWarehouse(details);
+    if (result.success) {
+      await saveDelhiveryConfigToFirestore({ pickupLocation: details.name });
+    }
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err?.message || 'Error registering warehouse.' });
+  }
+});
+
 // API: Wellness Assessment Submission
-app.post('/api/assessment', async (req, res) => {
+apiRouter.post('/assessment', async (req, res) => {
   try {
     const data = req.body;
 
@@ -716,7 +881,7 @@ function getDomainFallbackReply(message: string): string {
 }
 
 // API: Wellness AI Advisor Chat Endpoint
-app.post('/api/wellness-chat', async (req, res) => {
+apiRouter.post('/wellness-chat', async (req, res) => {
   try {
     const { message, conversationHistory = [] } = req.body;
     if (!message) {
@@ -784,8 +949,13 @@ Brand Info:
   }
 });
 
+// Mount the API Router for both /api/* and /* paths so Vercel serverless rewrites and direct client calls succeed identically
+app.use('/api', apiRouter);
+app.use('/', apiRouter);
+
 async function startServer() {
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
@@ -804,4 +974,11 @@ async function startServer() {
   });
 }
 
-startServer();
+// In local dev and standard Node runtime, start the server
+// On Vercel, the exported app is invoked as a serverless function
+if (!process.env.VERCEL) {
+  startServer();
+}
+
+export default app;
+

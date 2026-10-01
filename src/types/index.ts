@@ -210,6 +210,10 @@ export interface DeliveryDetails {
   status: string;
   pickupLocation?: string;
   expectedDelivery?: string;
+  delhiverySynced?: boolean;
+  delhiveryError?: string;
+  manifestId?: string;
+  rawResponse?: any;
 }
 
 export interface OrderRecord {
@@ -235,6 +239,7 @@ export interface OrderRecord {
     packName?: string;
     quantity: number;
     price: number;
+    image?: string;
   }[];
   subtotal: number;
   discount: number;
@@ -243,6 +248,7 @@ export interface OrderRecord {
   status: 'pending' | 'confirmed' | 'dispatched' | 'delivered' | 'cancelled';
   paymentMethod: 'whatsapp_prepaid' | 'cash_on_delivery' | 'online';
   createdAt: string;
+  updatedAt?: string;
 }
 
 declare global {

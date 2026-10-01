@@ -199,3 +199,50 @@ export async function checkCustomerPriorOrders(query: string): Promise<{ isFirst
     return { isFirstOrder: true, count: 0 };
   }
 }
+
+/**
+ * Save Delhivery logistics settings to Firestore so it persists permanently
+ */
+export async function saveDelhiveryConfigToFirestore(config: {
+  token?: string;
+  baseUrl?: string;
+  pickupLocation?: string;
+  clientName?: string;
+}): Promise<boolean> {
+  try {
+    const url = `${FIRESTORE_BASE_URL}/settings/delhivery?key=${API_KEY}`;
+    const fields = toFirestoreFields({
+      ...config,
+      updatedAt: new Date().toISOString(),
+    });
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error('[Firestore Server] saveDelhiveryConfigToFirestore error:', err);
+    return false;
+  }
+}
+
+/**
+ * Get Delhivery logistics settings from Firestore
+ */
+export async function getDelhiveryConfigFromFirestore(): Promise<{
+  token?: string;
+  baseUrl?: string;
+  pickupLocation?: string;
+  clientName?: string;
+} | null> {
+  try {
+    const url = `${FIRESTORE_BASE_URL}/settings/delhivery?key=${API_KEY}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const doc = await res.json();
+    return fromFirestoreDoc(doc);
+  } catch {
+    return null;
+  }
+}
