@@ -246,3 +246,46 @@ export async function getDelhiveryConfigFromFirestore(): Promise<{
     return null;
   }
 }
+
+/**
+ * Save Razorpay gateway credentials to Firestore
+ */
+export async function saveRazorpayConfigToFirestore(config: {
+  keyId?: string;
+  keySecret?: string;
+}): Promise<boolean> {
+  try {
+    const url = `${FIRESTORE_BASE_URL}/settings/razorpay?key=${API_KEY}`;
+    const fields = toFirestoreFields({
+      ...config,
+      updatedAt: new Date().toISOString(),
+    });
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error('[Firestore Server] saveRazorpayConfigToFirestore error:', err);
+    return false;
+  }
+}
+
+/**
+ * Get Razorpay gateway credentials from Firestore
+ */
+export async function getRazorpayConfigFromFirestore(): Promise<{
+  keyId?: string;
+  keySecret?: string;
+} | null> {
+  try {
+    const url = `${FIRESTORE_BASE_URL}/settings/razorpay?key=${API_KEY}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const doc = await res.json();
+    return fromFirestoreDoc(doc);
+  } catch {
+    return null;
+  }
+}

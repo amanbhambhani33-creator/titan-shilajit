@@ -79,16 +79,37 @@ export function updateDelhiveryRuntimeConfig(cfg: { token?: string; baseUrl?: st
 // Configurable credentials & endpoints
 export const DELHIVERY_CONFIG = {
   get token(): string {
-    return runtimeConfig.token || process.env.DELHIVERY_TOKEN || process.env.DELHIVERY_API_KEY || '6SQOQUTNWO35ZPD8HM8WUM5H0QDVLSRB';
+    return (
+      runtimeConfig.token ||
+      process.env.DELHIVERY_TOKEN ||
+      process.env.DELHIVERY_CLIENT_SECRET ||
+      process.env.DELHIVERY_API_KEY ||
+      '6SQOQUTNWO35ZPD8HM8WUM5H0QDVLSRB'
+    ).trim();
   },
   get baseUrl(): string {
-    return (runtimeConfig.baseUrl || process.env.DELHIVERY_API_URL || 'https://staging-express.delhivery.com').replace(/\/+$/, '');
+    const raw = (
+      runtimeConfig.baseUrl ||
+      process.env.DELHIVERY_API_URL ||
+      'https://track.delhivery.com'
+    ).trim();
+
+    try {
+      const u = new URL(raw.startsWith('http') ? raw : `https://${raw}`);
+      return u.origin;
+    } catch {
+      return 'https://track.delhivery.com';
+    }
   },
   get pickupLocation(): string {
-    return runtimeConfig.pickupLocation || process.env.DELHIVERY_PICKUP_LOCATION || 'Titan Delhi Central Fulfillment Hub';
+    return (
+      runtimeConfig.pickupLocation ||
+      process.env.DELHIVERY_PICKUP_LOCATION ||
+      'SHRI RAM TRADERS 1 B2B'
+    ).trim();
   },
   warehouse: {
-    name: 'Titan Delhi Central Fulfillment Hub',
+    name: 'SHRI RAM TRADERS 1 B2B',
     address: 'Plot 48, Okhla Industrial Area Phase III',
     city: 'New Delhi',
     state: 'Delhi',
@@ -271,7 +292,7 @@ export async function createDelhiveryShipment(
   const bookedAt = new Date().toISOString();
   const assignedAwb = generateDelhiveryAwb(req.orderNumber);
   const trackingUrl = `https://www.delhivery.com/track/package/${assignedAwb}`;
-  const pickupLocationName = req.pickupLocationName || DELHIVERY_CONFIG.warehouse.name;
+  const pickupLocationName = (req.pickupLocationName || DELHIVERY_CONFIG.pickupLocation || 'SHRI RAM TRADERS 1 B2B').trim();
   const isCod = req.paymentMode === 'COD';
   const totalAmountStr = String(req.totalAmount || 0);
   const codAmountStr = isCod ? String(req.codAmount ?? req.totalAmount) : '0';
@@ -419,11 +440,11 @@ export async function createDelhiveryShipment(
  * 3. Test Delhivery Token Validity
  */
 export async function testDelhiveryToken(tokenToTest?: string): Promise<{ valid: boolean; message: string; raw?: any }> {
-  const token = tokenToTest || DELHIVERY_CONFIG.token;
-  if (!token || token === '6SQOQUTNWO35ZPD8HM8WUM5H0QDVLSRB') {
+  const token = (tokenToTest || DELHIVERY_CONFIG.token || '').trim();
+  if (!token) {
     return {
       valid: false,
-      message: 'Token is unset or using default placeholder. Please enter your live Delhivery API token from Delhivery One > Settings > API Setup.',
+      message: 'Token is unset. Please enter your active Delhivery API token from Delhivery One > Settings > API Setup.',
     };
   }
 
@@ -485,6 +506,11 @@ export async function registerDelhiveryWarehouse(details: {
     pin: details.pin || '110020',
     address: details.address || 'Plot 48, Okhla Industrial Area Phase III',
     country: details.country || 'India',
+    return_address: details.address || 'Plot 48, Okhla Industrial Area Phase III',
+    return_pin: details.pin || '110020',
+    return_city: details.city || 'New Delhi',
+    return_state: 'Delhi',
+    return_country: details.country || 'India',
   };
 
   try {

@@ -101,6 +101,9 @@ export const ProductDetailPage: React.FC = () => {
 
   const handleBuyNow = () => {
     if (isOutOfStock || !product) return;
+    try {
+      sessionStorage.removeItem('titan_last_confirmed_order');
+    } catch {}
     addToCart(product, quantity, currentPack, 'set');
     navigate('/checkout');
   };

@@ -18,6 +18,8 @@ import {
   checkCustomerPriorOrders,
   saveDelhiveryConfigToFirestore,
   getDelhiveryConfigFromFirestore,
+  saveRazorpayConfigToFirestore,
+  getRazorpayConfigFromFirestore,
 } from './server/firestore';
 
 dotenv.config();
@@ -129,16 +131,36 @@ apiRouter.get('/health', (req, res) => {
   });
 });
 
-// Razorpay Client Setup
-const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_ThmUmFsVr0BVgV';
-const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || '56ulscVqmmcmGUt0G1sPoqW9';
+// Razorpay Dynamic Client Setup (Configurable via Firestore & Admin)
+let dynamicRazorpayConfig = {
+  keyId: (process.env.RAZORPAY_KEY_ID || 'rzp_test_ThmxATMBoq6ZuU').trim(),
+  keySecret: (process.env.RAZORPAY_KEY_SECRET || 'g6iwTKVfDhWpWhw0qLZCov0y').trim(),
+};
 
 let razorpayClient: Razorpay | null = null;
+
+async function syncRazorpayConfig() {
+  try {
+    const fsConfig = await getRazorpayConfigFromFirestore();
+    if (fsConfig && fsConfig.keyId) {
+      dynamicRazorpayConfig.keyId = (fsConfig.keyId || '').trim();
+      if (fsConfig.keySecret) {
+        dynamicRazorpayConfig.keySecret = (fsConfig.keySecret || '').trim();
+      }
+      process.env.RAZORPAY_KEY_ID = dynamicRazorpayConfig.keyId;
+      if (fsConfig.keySecret) process.env.RAZORPAY_KEY_SECRET = dynamicRazorpayConfig.keySecret;
+      razorpayClient = null;
+    }
+  } catch (err) {
+    console.warn('Notice syncing Razorpay config from Firestore:', err);
+  }
+}
+
 function getRazorpayClient(): Razorpay {
   if (!razorpayClient) {
     razorpayClient = new Razorpay({
-      key_id: RAZORPAY_KEY_ID,
-      key_secret: RAZORPAY_KEY_SECRET,
+      key_id: dynamicRazorpayConfig.keyId,
+      key_secret: dynamicRazorpayConfig.keySecret,
     });
   }
   return razorpayClient;
@@ -153,10 +175,12 @@ apiRouter.post('/create-order', async (req, res) => {
     const parsedAmount = Math.round(Number(amount));
     if (isNaN(parsedAmount) || parsedAmount < 100) {
       return res.status(400).json({
+        success: false,
         error: 'Amount must be a valid number of at least 100 paise (₹1.00).',
       });
     }
 
+    await syncRazorpayConfig();
     const razorpay = getRazorpayClient();
     const orderOptions = {
       amount: parsedAmount,
@@ -171,19 +195,108 @@ apiRouter.post('/create-order', async (req, res) => {
     const order = await razorpay.orders.create(orderOptions);
 
     return res.json({
+      success: true,
       order_id: order.id,
       amount: order.amount,
       currency: order.currency,
-      key_id: RAZORPAY_KEY_ID,
+      key_id: dynamicRazorpayConfig.keyId,
     });
   } catch (error: any) {
     console.error('Razorpay create-order error:', error);
-    // Handle auth failure
-    if (error?.statusCode === 401 || (error?.error?.code === 'BAD_REQUEST_ERROR' && error?.error?.description?.includes('auth'))) {
-      return res.status(401).json({ error: 'Razorpay authentication failed. Verify API credentials.' });
+    const isAuthError =
+      error?.statusCode === 401 ||
+      (error?.error?.code === 'BAD_REQUEST_ERROR' &&
+        (error?.error?.description?.toLowerCase().includes('auth') ||
+          error?.error?.description?.toLowerCase().includes('key')));
+
+    return res.status(isAuthError ? 401 : 500).json({
+      success: false,
+      authFailed: isAuthError,
+      error: isAuthError
+        ? 'Razorpay credentials not authorized. Please update Razorpay API Key ID & Secret in Admin Settings or choose Cash on Delivery.'
+        : error?.error?.description || error?.message || 'Failed to create Razorpay order.',
+      key_id: dynamicRazorpayConfig.keyId,
+    });
+  }
+});
+
+// Razorpay Gateway Config & Diagnostics Endpoints
+apiRouter.get('/razorpay/config', async (req, res) => {
+  await syncRazorpayConfig();
+  res.json({
+    success: true,
+    configured: Boolean(dynamicRazorpayConfig.keyId && dynamicRazorpayConfig.keySecret),
+    keyId: dynamicRazorpayConfig.keyId,
+    isTest: dynamicRazorpayConfig.keyId.startsWith('rzp_test_'),
+    hasSecret: Boolean(dynamicRazorpayConfig.keySecret),
+  });
+});
+
+apiRouter.post('/razorpay/config', async (req, res) => {
+  try {
+    const { keyId, keySecret } = req.body;
+    if (!keyId) {
+      return res.status(400).json({ success: false, error: 'Razorpay Key ID is required.' });
     }
-    return res.status(500).json({
-      error: error?.error?.description || error?.message || 'Failed to create Razorpay order.',
+    dynamicRazorpayConfig.keyId = keyId.trim();
+    if (keySecret) {
+      dynamicRazorpayConfig.keySecret = keySecret.trim();
+    }
+    process.env.RAZORPAY_KEY_ID = dynamicRazorpayConfig.keyId;
+    if (keySecret) process.env.RAZORPAY_KEY_SECRET = dynamicRazorpayConfig.keySecret;
+    razorpayClient = null;
+
+    await saveRazorpayConfigToFirestore({
+      keyId: dynamicRazorpayConfig.keyId,
+      keySecret: dynamicRazorpayConfig.keySecret,
+    });
+
+    res.json({
+      success: true,
+      message: 'Razorpay gateway settings saved permanently!',
+      keyId: dynamicRazorpayConfig.keyId,
+      isTest: dynamicRazorpayConfig.keyId.startsWith('rzp_test_'),
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message || 'Failed to save Razorpay configuration.' });
+  }
+});
+
+apiRouter.post('/razorpay/test-keys', async (req, res) => {
+  try {
+    const testKeyId = (req.body.keyId || dynamicRazorpayConfig.keyId).trim();
+    const testKeySecret = (req.body.keySecret || dynamicRazorpayConfig.keySecret).trim();
+
+    if (!testKeyId || !testKeySecret) {
+      return res.json({
+        valid: false,
+        message: 'Both Key ID and Key Secret are required to test Razorpay.',
+      });
+    }
+
+    const testClient = new Razorpay({
+      key_id: testKeyId,
+      key_secret: testKeySecret,
+    });
+
+    const testOrder = await testClient.orders.create({
+      amount: 100, // 100 paise = 1 INR
+      currency: 'INR',
+      receipt: `test_${Date.now().toString().slice(-6)}`,
+      notes: { test: 'Titan verification test' },
+    });
+
+    return res.json({
+      valid: true,
+      message: `Razorpay connection verified! Successfully created order ${testOrder.id}.`,
+      orderId: testOrder.id,
+    });
+  } catch (err: any) {
+    console.error('Razorpay test error:', err);
+    const desc = err?.error?.description || err?.message || 'Authentication failed';
+    return res.json({
+      valid: false,
+      message: `Razorpay test failed: ${desc}. Please verify your Key ID & Key Secret from the Razorpay Dashboard.`,
     });
   }
 });
@@ -198,6 +311,8 @@ apiRouter.post('/verify-payment', async (req, res) => {
       order_data,
     } = req.body;
 
+    await syncRazorpayConfig();
+
     // Missing fields validation
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return res.status(400).json({
@@ -208,7 +323,7 @@ apiRouter.post('/verify-payment', async (req, res) => {
 
     // Algorithm: HMAC-SHA256(order_id + "|" + payment_id, KEY_SECRET)
     const expectedSignature = crypto
-      .createHmac('sha256', RAZORPAY_KEY_SECRET)
+      .createHmac('sha256', dynamicRazorpayConfig.keySecret)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest('hex');
 
@@ -569,13 +684,17 @@ apiRouter.post('/delhivery/create-shipment', async (req, res) => {
 // 3. Dispatch / Re-sync an Existing Order with Delhivery CMU
 apiRouter.post('/delhivery/sync-order', async (req, res) => {
   try {
-    const { orderNumber } = req.body;
-    if (!orderNumber) {
+    const { orderNumber, order: providedOrder } = req.body;
+    const targetOrderNumber = orderNumber || providedOrder?.orderNumber;
+    if (!targetOrderNumber) {
       return res.status(400).json({ success: false, error: 'Order number is required.' });
     }
     await syncDelhiveryConfig();
-    const orders = await fetchOrdersFromFirestore();
-    const order = orders.find((o: any) => o.orderNumber === orderNumber);
+    let order = providedOrder;
+    if (!order) {
+      const orders = await fetchOrdersFromFirestore();
+      order = orders.find((o: any) => o.orderNumber === targetOrderNumber);
+    }
     if (!order) {
       return res.status(404).json({ success: false, error: 'Order not found in Firestore.' });
     }

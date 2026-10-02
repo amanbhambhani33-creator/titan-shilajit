@@ -71,6 +71,9 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, 
 
   const handleBuyNow = () => {
     if (isOutOfStock) return;
+    try {
+      sessionStorage.removeItem('titan_last_confirmed_order');
+    } catch {}
     addToCart(product, quantity, currentPack, 'set');
     onClose();
     navigate('/checkout');

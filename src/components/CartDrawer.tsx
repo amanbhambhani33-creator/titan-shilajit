@@ -478,6 +478,7 @@ Please confirm order dispatch and share payment details. Thank you!`;
                   if (customerName) localStorage.setItem('titan_checkout_name', customerName);
                   if (customerPhone) localStorage.setItem('titan_checkout_phone', customerPhone);
                   if (customerEmail) localStorage.setItem('titan_checkout_email', customerEmail);
+                  sessionStorage.removeItem('titan_last_confirmed_order');
                 } catch {}
                 closeCart();
                 navigate('/checkout');

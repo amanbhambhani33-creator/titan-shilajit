@@ -46,7 +46,7 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
 
   // Delhivery B2C Gateway Console State
   const [isDelhiveryConsoleOpen, setIsDelhiveryConsoleOpen] = useState(true);
-  const [activeDelhiveryTab, setActiveDelhiveryTab] = useState<'pincode' | 'shipment' | 'credentials'>('pincode');
+  const [activeDelhiveryTab, setActiveDelhiveryTab] = useState<'pincode' | 'shipment' | 'credentials' | 'razorpay'>('pincode');
 
   // Pincode Tester State (spec: GET /c/api/pin-codes/json/?filter_codes=194103)
   const [testPin, setTestPin] = useState('194103');
@@ -85,7 +85,18 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
   const [isRegisteringWarehouse, setIsRegisteringWarehouse] = useState(false);
   const [warehouseRegResult, setWarehouseRegResult] = useState<{ success: boolean; message: string } | null>(null);
 
-  // Load existing Delhivery config on mount
+  // Razorpay Gateway Settings State
+  const [razorpaySettings, setRazorpaySettings] = useState({
+    keyId: 'rzp_test_ThmxATMBoq6ZuU',
+    keySecret: '',
+    isTest: true,
+    configured: false,
+  });
+  const [isSavingRazorpay, setIsSavingRazorpay] = useState(false);
+  const [isTestingRazorpay, setIsTestingRazorpay] = useState(false);
+  const [razorpayTestResult, setRazorpayTestResult] = useState<{ valid: boolean; message: string } | null>(null);
+
+  // Load existing Delhivery & Razorpay configs on mount
   useEffect(() => {
     fetch('/api/delhivery/config')
       .then((r) => r.json())
@@ -96,6 +107,20 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
             token: d.token || prev.token,
             baseUrl: d.baseUrl || prev.baseUrl,
             pickupLocation: d.pickupLocation || prev.pickupLocation,
+          }));
+        }
+      })
+      .catch(() => {});
+
+    fetch('/api/razorpay/config')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d && d.success) {
+          setRazorpaySettings((prev) => ({
+            ...prev,
+            keyId: d.keyId || prev.keyId,
+            isTest: d.isTest ?? true,
+            configured: d.configured ?? false,
           }));
         }
       })
@@ -247,6 +272,63 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
       onToast('Failed to update Delhivery settings.');
     } finally {
       setIsSavingSettings(false);
+    }
+  };
+
+  const handleTestRazorpay = async () => {
+    setIsTestingRazorpay(true);
+    setRazorpayTestResult(null);
+    try {
+      const res = await fetch('/api/razorpay/test-keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          keyId: razorpaySettings.keyId,
+          keySecret: razorpaySettings.keySecret,
+        }),
+      });
+      const data = await res.json();
+      setRazorpayTestResult(data);
+      if (data.valid) {
+        onToast('Razorpay API keys verified successfully!');
+      } else {
+        onToast(data.message || 'Razorpay test failed.');
+      }
+    } catch (err: any) {
+      setRazorpayTestResult({ valid: false, message: err?.message || 'Connection failed' });
+      onToast('Error reaching Razorpay test API.');
+    } finally {
+      setIsTestingRazorpay(false);
+    }
+  };
+
+  const handleSaveRazorpay = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingRazorpay(true);
+    try {
+      const res = await fetch('/api/razorpay/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          keyId: razorpaySettings.keyId,
+          keySecret: razorpaySettings.keySecret,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRazorpaySettings((prev) => ({
+          ...prev,
+          configured: true,
+          isTest: razorpaySettings.keyId.startsWith('rzp_test_'),
+        }));
+        onToast('Razorpay gateway settings saved permanently to Firestore!');
+      } else {
+        onToast(data.error || 'Failed to save Razorpay settings.');
+      }
+    } catch (err: any) {
+      onToast('Failed to save Razorpay settings.');
+    } finally {
+      setIsSavingRazorpay(false);
     }
   };
 
@@ -542,7 +624,18 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
                   : 'text-[#66704B] hover:text-[#10110F]'
               }`}
             >
-              3. API & Hub Config
+              3. Delhivery API & Warehouse
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveDelhiveryTab('razorpay')}
+              className={`px-3 py-1.5 rounded-xs transition-colors cursor-pointer ${
+                activeDelhiveryTab === 'razorpay'
+                  ? 'bg-[#183D27] text-[#D4B66A] shadow-xs'
+                  : 'text-[#66704B] hover:text-[#10110F]'
+              }`}
+            >
+              4. Razorpay Gateway Setup
             </button>
           </div>
         </div>
@@ -1051,10 +1144,22 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
                   type="text"
                   required
                   value={delhiverySettings.baseUrl}
-                  onChange={(e) => setDelhiverySettings({ ...delhiverySettings, baseUrl: e.target.value })}
+                  onChange={(e) => {
+                    let val = e.target.value.trim();
+                    try {
+                      if (val.startsWith('http')) {
+                        const u = new URL(val);
+                        val = u.origin;
+                      }
+                    } catch {}
+                    setDelhiverySettings({ ...delhiverySettings, baseUrl: val });
+                  }}
                   placeholder="https://track.delhivery.com"
-                  className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs font-mono"
+                  className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs font-mono font-bold"
                 />
+                <span className="text-[10px] text-[#66704B] mt-0.5 block">
+                  Root domain only: <code>https://track.delhivery.com</code> (auto-cleaned).
+                </span>
               </div>
 
               <div>
@@ -1117,6 +1222,129 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
               >
                 {isSavingSettings ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5 text-[#D4B66A]" />}
                 <span>{isSavingSettings ? 'Saving Settings...' : 'Save Delhivery Settings'}</span>
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* TAB 4: RAZORPAY PAYMENT GATEWAY SETTINGS */}
+        {activeDelhiveryTab === 'razorpay' && (
+          <form onSubmit={handleSaveRazorpay} className="space-y-4 animate-in fade-in duration-150">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 bg-white rounded-xs border border-[#10110F]/10">
+              <div>
+                <span className="font-bold text-xs text-[#10110F] block">Razorpay Gateway Environment</span>
+                <span className="text-[11px] text-[#66704B]">
+                  {razorpaySettings.isTest
+                    ? 'Currently in Sandbox / Test Mode (rzp_test_...)'
+                    : 'Currently in Live Production Mode (rzp_live_...)'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`px-2.5 py-1 rounded-full text-[10.5px] font-bold uppercase tracking-wider ${
+                    razorpaySettings.isTest
+                      ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                      : 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                  }`}
+                >
+                  {razorpaySettings.isTest ? 'Sandbox Test' : 'Live Production'}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[11px] font-bold uppercase text-[#10110F]">
+                    Razorpay Key ID
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleTestRazorpay}
+                    disabled={isTestingRazorpay}
+                    className="text-[10px] text-[#183D27] hover:underline font-bold inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                  >
+                    {isTestingRazorpay ? <RefreshCw className="w-2.5 h-2.5 animate-spin" /> : <Play className="w-2.5 h-2.5" />}
+                    <span>{isTestingRazorpay ? 'Testing...' : 'Test Keys'}</span>
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={razorpaySettings.keyId}
+                  onChange={(e) => {
+                    const newKey = e.target.value.trim();
+                    setRazorpaySettings({
+                      ...razorpaySettings,
+                      keyId: newKey,
+                      isTest: newKey.startsWith('rzp_test_'),
+                    });
+                    setRazorpayTestResult(null);
+                  }}
+                  placeholder="rzp_test_... or rzp_live_..."
+                  className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs font-mono font-bold"
+                />
+                {razorpayTestResult && (
+                  <p
+                    className={`text-[10.5px] mt-1 font-medium ${
+                      razorpayTestResult.valid ? 'text-emerald-700' : 'text-amber-700'
+                    }`}
+                  >
+                    {razorpayTestResult.valid ? '✓ ' : '⚠ '}
+                    {razorpayTestResult.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase text-[#10110F] mb-1">
+                  Razorpay Key Secret
+                </label>
+                <input
+                  type="password"
+                  value={razorpaySettings.keySecret}
+                  onChange={(e) => {
+                    setRazorpaySettings({ ...razorpaySettings, keySecret: e.target.value.trim() });
+                    setRazorpayTestResult(null);
+                  }}
+                  placeholder="Enter Key Secret from Razorpay Dashboard"
+                  className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs font-mono"
+                />
+                <span className="text-[10px] text-[#66704B] mt-0.5 block">
+                  Required for HMAC-SHA256 signature verification & automated order creation.
+                </span>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10 space-y-2 text-xs text-[#66704B]">
+              <div className="flex items-start gap-2 text-[#10110F]">
+                <Info className="w-4 h-4 text-[#183D27] shrink-0 mt-0.5" />
+                <span className="font-bold">Where to find your Razorpay API Credentials:</span>
+              </div>
+              <ul className="list-disc pl-5 space-y-1 text-[11px]">
+                <li>
+                  Log in to your <strong>Razorpay Dashboard</strong> (https://dashboard.razorpay.com).
+                </li>
+                <li>
+                  Go to <strong>Settings &gt; API Keys</strong>.
+                </li>
+                <li>
+                  Generate or copy your <strong>Key ID</strong> and <strong>Key Secret</strong>.
+                </li>
+                <li>
+                  Click &ldquo;Test Keys&rdquo; above to verify connectivity, then click &ldquo;Save Razorpay Settings&rdquo;. The keys will be securely persisted in Firestore and used for all future UPI, Card, and NetBanking payments.
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="submit"
+                disabled={isSavingRazorpay}
+                className="px-6 py-2.5 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors cursor-pointer"
+              >
+                {isSavingRazorpay ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5 text-[#D4B66A]" />}
+                <span>{isSavingRazorpay ? 'Saving Settings...' : 'Save Razorpay Settings'}</span>
               </button>
             </div>
           </form>
