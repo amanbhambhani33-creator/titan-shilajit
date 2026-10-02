@@ -39,7 +39,14 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json());
+app.use((req, res, next) => {
+  // If req.body is already an object (e.g. parsed upstream by Vercel serverless runtime), skip body parser
+  if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
+    return next();
+  }
+  express.json()(req, res, next);
+});
+app.use(express.urlencoded({ extended: true }));
 
 // Helper to keep Delhivery runtime config synchronized with Firestore
 async function syncDelhiveryConfig() {
@@ -1095,7 +1102,14 @@ async function startServer() {
 
 // In local dev and standard Node runtime, start the server
 // On Vercel, the exported app is invoked as a serverless function
-if (!process.env.VERCEL) {
+const isMain = Boolean(
+  process.argv[1] &&
+    (process.argv[1].endsWith('server.ts') ||
+      process.argv[1].endsWith('server.cjs') ||
+      process.argv[1].endsWith('server.js'))
+);
+
+if (isMain && !process.env.VERCEL) {
   startServer();
 }
 

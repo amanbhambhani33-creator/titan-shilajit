@@ -82,9 +82,8 @@ export const DELHIVERY_CONFIG = {
     return (
       runtimeConfig.token ||
       process.env.DELHIVERY_TOKEN ||
-      process.env.DELHIVERY_CLIENT_SECRET ||
       process.env.DELHIVERY_API_KEY ||
-      '6SQOQUTNWO35ZPD8HM8WUM5H0QDVLSRB'
+      'a6b0c403ff9862f2736c43477df76d318bfd6809'
     ).trim();
   },
   get baseUrl(): string {

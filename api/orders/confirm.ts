@@ -1,4 +1,4 @@
-import app from '../server';
+import app from '../../server';
 
 export const config = {
   api: {
@@ -8,7 +8,6 @@ export const config = {
 };
 
 export default function handler(req: any, res: any) {
-  // 1. Universal CORS for Vercel
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
@@ -16,18 +15,6 @@ export default function handler(req: any, res: any) {
     res.statusCode = 200;
     return res.end();
   }
-
-  // 2. Normalize rewritten paths on Vercel
-  const vercelOriginal =
-    req.headers['x-matched-path'] ||
-    req.headers['x-vercel-original-url'] ||
-    req.headers['x-forwarded-url'];
-
-  if (vercelOriginal && typeof vercelOriginal === 'string') {
-    if (req.url === '/api' || req.url === '/api/' || req.url === '/') {
-      req.url = vercelOriginal;
-    }
-  }
-
+  req.url = '/api/orders/confirm';
   return app(req, res);
 }
