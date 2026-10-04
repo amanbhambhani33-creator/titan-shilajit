@@ -145,6 +145,22 @@ export const CheckoutPage: React.FC = () => {
     }
   });
 
+  const [activeRazorpayKeyId, setActiveRazorpayKeyId] = useState<string>(
+    (import.meta as any).env?.VITE_RAZORPAY_KEY_ID || 'rzp_test_ThmxATMBoq6ZuU'
+  );
+
+  // Load verified Razorpay Gateway credentials dynamically from backend/Firestore
+  useEffect(() => {
+    fetch('/api/razorpay/config')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && data.keyId) {
+          setActiveRazorpayKeyId(data.keyId.trim());
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // CRITICAL FIX: If user has items in cart, they are placing a new order.
   // Never trap them on a past billed/invoice screen!
   useEffect(() => {
@@ -471,7 +487,7 @@ export const CheckoutPage: React.FC = () => {
     try {
       // 1. Call Backend to Create Razorpay Order
       let razorpayOrderId: string | undefined;
-      let razorpayKeyId = (import.meta as any).env?.VITE_RAZORPAY_KEY_ID || 'rzp_test_ThmxATMBoq6ZuU';
+      let razorpayKeyId = activeRazorpayKeyId || (import.meta as any).env?.VITE_RAZORPAY_KEY_ID || 'rzp_test_ThmxATMBoq6ZuU';
 
       try {
         const createRes = await fetch('/api/create-order', {
@@ -490,27 +506,17 @@ export const CheckoutPage: React.FC = () => {
           }),
         });
 
-        const orderData = await createRes.json();
-
-        if (createRes.ok && orderData.success !== false && orderData.order_id) {
-          razorpayOrderId = orderData.order_id;
-          if (orderData.key_id) razorpayKeyId = orderData.key_id;
-        } else {
-          const errDetail =
-            orderData?.error || 'Razorpay order creation could not be initialized.';
-          setIsProcessing(false);
-          setErrorMessage(
-            `${errDetail} You can switch to Cash on Delivery (COD) below to complete your order immediately with free express shipping.`
-          );
-          return;
+        if (createRes.ok) {
+          const orderData = await createRes.json();
+          if (orderData && orderData.success !== false && orderData.order_id) {
+            razorpayOrderId = orderData.order_id;
+          }
+          if (orderData?.key_id) {
+            razorpayKeyId = orderData.key_id.trim();
+          }
         }
       } catch (createErr) {
-        console.warn('Backend order-create network notice:', createErr);
-        setIsProcessing(false);
-        setErrorMessage(
-          'Unable to reach payment gateway. Please choose Cash on Delivery (COD) or check your connection.'
-        );
-        return;
+        console.warn('Backend order-create network notice (proceeding with standard direct checkout):', createErr);
       }
 
       // 2. Ensure Razorpay Checkout script is loaded
@@ -854,15 +860,24 @@ export const CheckoutPage: React.FC = () => {
                 </p>
               </div>
 
-              <a
-                href={confirmedOrder.delivery.trackingUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full md:w-auto px-5 py-2.5 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all"
-              >
-                <span>Track on Delhivery</span>
-                <ExternalLink className="w-3.5 h-3.5 text-[#D4B66A]" />
-              </a>
+              <div className="w-full md:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <a
+                  href={confirmedOrder.delivery.trackingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-5 py-2.5 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all"
+                >
+                  <span>Track on Delhivery</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-[#D4B66A]" />
+                </a>
+                <Link
+                  to="/admin-desk?tab=orders"
+                  className="px-4 py-2.5 rounded-xs bg-[#10110F]/10 hover:bg-[#10110F]/20 text-[#10110F] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border border-[#10110F]/20 transition-all"
+                >
+                  <span>Delivery Dashboard</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-[#183D27]" />
+                </Link>
+              </div>
             </div>
           </div>
 

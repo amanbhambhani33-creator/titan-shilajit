@@ -28,6 +28,7 @@ import {
   AlertCircle,
   Info,
   Save,
+  Globe,
 } from 'lucide-react';
 import { OrderRecord } from '../types';
 
@@ -46,7 +47,18 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
 
   // Delhivery B2C Gateway Console State
   const [isDelhiveryConsoleOpen, setIsDelhiveryConsoleOpen] = useState(true);
-  const [activeDelhiveryTab, setActiveDelhiveryTab] = useState<'pincode' | 'shipment' | 'credentials' | 'razorpay'>('pincode');
+  const [activeDelhiveryTab, setActiveDelhiveryTab] = useState<'pincode' | 'shipment' | 'credentials' | 'razorpay' | 'domain'>('pincode');
+
+  // Custom Domain & DNS State
+  const [customDomainInput, setCustomDomainInput] = useState('titanshilajit.in');
+  const [isCheckingDns, setIsCheckingDns] = useState(false);
+  const [dnsCheckResult, setDnsCheckResult] = useState<{
+    testedDomain: string;
+    resolvedIps: string[];
+    isVercelConfigured: boolean;
+    statusText: string;
+  } | null>(null);
+  const [copiedRecord, setCopiedRecord] = useState<string | null>(null);
 
   // Pincode Tester State (spec: GET /c/api/pin-codes/json/?filter_codes=194103)
   const [testPin, setTestPin] = useState('194103');
@@ -329,6 +341,50 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
       onToast('Failed to save Razorpay settings.');
     } finally {
       setIsSavingRazorpay(false);
+    }
+  };
+
+  const handleCheckDns = async (domainToCheck?: string) => {
+    const raw = (domainToCheck || customDomainInput)
+      .trim()
+      .toLowerCase()
+      .replace(/^https?:\/\//, '')
+      .replace(/\/.*$/, '');
+    if (!raw) {
+      onToast('Please enter a domain name to check.');
+      return;
+    }
+    setIsCheckingDns(true);
+    setDnsCheckResult(null);
+
+    try {
+      const res = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(raw)}&type=A`);
+      const data = await res.json();
+      const answers: string[] = (data.Answer || [])
+        .filter((a: any) => a.type === 1)
+        .map((a: any) => a.data);
+
+      const isVercel = answers.includes('76.76.21.21');
+
+      setDnsCheckResult({
+        testedDomain: raw,
+        resolvedIps: answers,
+        isVercelConfigured: isVercel,
+        statusText: isVercel
+          ? 'Connected to Vercel IP (76.76.21.21). DNS propagation verified!'
+          : answers.length > 0
+          ? `Currently pointing to ${answers.join(', ')}. Update your A record to 76.76.21.21 in your domain registrar.`
+          : 'No A record detected yet. Please add the A record in your DNS settings (can take 5–30 mins to propagate).',
+      });
+    } catch {
+      setDnsCheckResult({
+        testedDomain: raw,
+        resolvedIps: [],
+        isVercelConfigured: false,
+        statusText: 'Unable to query DNS. Please check your network or verify via whatsmydns.net.',
+      });
+    } finally {
+      setIsCheckingDns(false);
     }
   };
 
@@ -636,6 +692,18 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
               }`}
             >
               4. Razorpay Gateway Setup
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveDelhiveryTab('domain')}
+              className={`px-3 py-1.5 rounded-xs transition-colors cursor-pointer flex items-center gap-1.5 ${
+                activeDelhiveryTab === 'domain'
+                  ? 'bg-[#183D27] text-[#D4B66A] shadow-xs'
+                  : 'text-[#66704B] hover:text-[#10110F]'
+              }`}
+            >
+              <Globe className="w-3 h-3" />
+              <span>5. Custom Domain & DNS</span>
             </button>
           </div>
         </div>
@@ -1348,6 +1416,170 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
               </button>
             </div>
           </form>
+        )}
+
+        {/* TAB 5: CUSTOM DOMAIN & DNS SETUP */}
+        {activeDelhiveryTab === 'domain' && (
+          <div className="space-y-5 animate-in fade-in duration-150">
+            {/* Header Card */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-white rounded-xs border border-[#10110F]/10">
+              <div>
+                <span className="font-bold text-sm text-[#10110F] flex items-center gap-1.5">
+                  <Globe className="w-4 h-4 text-[#183D27]" />
+                  <span>Connect Custom Domain (e.g. titanshilajit.in)</span>
+                </span>
+                <p className="text-xs text-[#66704B] mt-0.5">
+                  Point your purchased domain name to your live store with automated SSL/HTTPS encryption.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 rounded-full text-[10.5px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-300">
+                  Zero-Config SSL / HTTPS
+                </span>
+              </div>
+            </div>
+
+            {/* Live DNS Checker & Domain Input */}
+            <div className="p-4 bg-white rounded-xs border border-[#10110F]/10 space-y-3">
+              <label className="block text-[11px] font-bold uppercase text-[#10110F]">
+                Your Domain Name to Verify
+              </label>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <input
+                  type="text"
+                  value={customDomainInput}
+                  onChange={(e) => {
+                    setCustomDomainInput(e.target.value);
+                    setDnsCheckResult(null);
+                  }}
+                  placeholder="e.g. titanshilajit.in or www.titanshilajit.in"
+                  className="flex-1 px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs font-mono font-bold"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleCheckDns()}
+                  disabled={isCheckingDns}
+                  className="px-4 py-2 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {isCheckingDns ? <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#D4B66A]" /> : <Search className="w-3.5 h-3.5 text-[#D4B66A]" />}
+                  <span>{isCheckingDns ? 'Querying DNS...' : 'Check DNS Propagation'}</span>
+                </button>
+              </div>
+
+              {dnsCheckResult && (
+                <div
+                  className={`p-3 rounded-xs border text-xs flex items-start gap-2.5 ${
+                    dnsCheckResult.isVercelConfigured
+                      ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                      : 'bg-amber-50 border-amber-300 text-amber-950'
+                  }`}
+                >
+                  {dnsCheckResult.isVercelConfigured ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                  )}
+                  <div className="space-y-0.5 flex-1">
+                    <strong className="block font-bold">
+                      {dnsCheckResult.isVercelConfigured ? 'DNS Connected Successfully' : 'DNS Propagation Status'}
+                    </strong>
+                    <p className="leading-relaxed">{dnsCheckResult.statusText}</p>
+                    {dnsCheckResult.resolvedIps.length > 0 && (
+                      <p className="text-[11px] font-mono text-[#66704B]">
+                        Resolved IP(s): {dnsCheckResult.resolvedIps.join(', ')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* DNS Records to Configure */}
+            <div className="p-4 bg-white rounded-xs border border-[#10110F]/10 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-xs text-[#10110F] uppercase tracking-wider">
+                  Required DNS Records (Add at your Registrar: GoDaddy / Hostinger / Namecheap / Cloudflare)
+                </span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="bg-[#F7F3E8] border border-[#10110F]/10 text-[10px] uppercase font-bold text-[#66704B]">
+                      <th className="p-2.5">Type</th>
+                      <th className="p-2.5">Name / Host</th>
+                      <th className="p-2.5">Value / Target Destination</th>
+                      <th className="p-2.5">TTL</th>
+                      <th className="p-2.5 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#10110F]/10 border border-[#10110F]/10 font-mono text-xs">
+                    <tr className="hover:bg-[#F7F3E8]/50">
+                      <td className="p-2.5 font-bold text-[#183D27]">A</td>
+                      <td className="p-2.5 font-bold">@ (or root)</td>
+                      <td className="p-2.5 font-bold text-[#10110F]">76.76.21.21</td>
+                      <td className="p-2.5 text-[#66704B]">Auto / 3600</td>
+                      <td className="p-2.5 text-right">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText('76.76.21.21');
+                            setCopiedRecord('A');
+                            setTimeout(() => setCopiedRecord(null), 2000);
+                            onToast('Copied A Record IP (76.76.21.21)');
+                          }}
+                          className="px-2.5 py-1 rounded-xs bg-[#183D27] text-[#F7F3E8] text-[10px] font-bold uppercase inline-flex items-center gap-1 cursor-pointer hover:bg-[#10110F]"
+                        >
+                          {copiedRecord === 'A' ? <Check className="w-3 h-3 text-[#D4B66A]" /> : <Copy className="w-3 h-3" />}
+                          <span>{copiedRecord === 'A' ? 'Copied' : 'Copy'}</span>
+                        </button>
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-[#F7F3E8]/50">
+                      <td className="p-2.5 font-bold text-[#183D27]">CNAME</td>
+                      <td className="p-2.5 font-bold">www</td>
+                      <td className="p-2.5 font-bold text-[#10110F]">cname.vercel-dns.com</td>
+                      <td className="p-2.5 text-[#66704B]">Auto / 3600</td>
+                      <td className="p-2.5 text-right">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText('cname.vercel-dns.com');
+                            setCopiedRecord('CNAME');
+                            setTimeout(() => setCopiedRecord(null), 2000);
+                            onToast('Copied CNAME value (cname.vercel-dns.com)');
+                          }}
+                          className="px-2.5 py-1 rounded-xs bg-[#183D27] text-[#F7F3E8] text-[10px] font-bold uppercase inline-flex items-center gap-1 cursor-pointer hover:bg-[#10110F]"
+                        >
+                          {copiedRecord === 'CNAME' ? <Check className="w-3 h-3 text-[#D4B66A]" /> : <Copy className="w-3 h-3" />}
+                          <span>{copiedRecord === 'CNAME' ? 'Copied' : 'Copy'}</span>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Step-by-Step Registrar Connection Instructions */}
+            <div className="p-4 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10 space-y-3 text-xs text-[#66704B]">
+              <div className="flex items-center gap-2 text-[#10110F]">
+                <Info className="w-4 h-4 text-[#183D27] shrink-0" />
+                <span className="font-bold text-sm">3 Simple Steps to Connect on Vercel:</span>
+              </div>
+              <ol className="list-decimal pl-5 space-y-2 text-xs text-[#10110F]">
+                <li>
+                  <strong>Add Domain in Vercel:</strong> Go to <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-[#183D27] underline font-bold">Vercel Dashboard</a> &gt; Select your Project &gt; <strong>Settings &gt; Domains</strong>. Enter your custom domain (e.g. <code>{customDomainInput || 'yourdomain.in'}</code>) and click &ldquo;Add&rdquo;.
+                </li>
+                <li>
+                  <strong>Add DNS Records at your Registrar:</strong> Open the DNS Management portal where you bought your domain (GoDaddy, Hostinger, Namecheap, Cloudflare, BigRock, etc.). Add the <strong>A Record</strong> pointing to <code>76.76.21.21</code> and <strong>CNAME Record</strong> pointing to <code>cname.vercel-dns.com</code>.
+                </li>
+                <li>
+                  <strong>Automatic SSL Verification:</strong> Vercel will automatically detect the DNS records, provision an SSL/HTTPS certificate within 1–5 minutes, and your live Titan Shilajit store will immediately be accessible on your custom domain!
+                </li>
+              </ol>
+            </div>
+          </div>
         )}
       </div>
 
