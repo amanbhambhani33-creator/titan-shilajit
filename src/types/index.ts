@@ -203,6 +203,18 @@ export interface ShippingAddressData {
   landmark?: string;
 }
 
+export interface BillingAddressData {
+  name?: string;
+  phone?: string;
+  email?: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  landmark?: string;
+  gstin?: string;
+}
+
 export interface DeliveryDetails {
   courier: string;
   trackingNumber: string;
@@ -224,6 +236,13 @@ export interface OrderRecord {
   customerEmail: string;
   shippingAddress?: string;
   shippingAddressDetails?: ShippingAddressData;
+  billingAddress?: string;
+  billingAddressDetails?: BillingAddressData;
+  billingSameAsShipping?: boolean;
+  billingName?: string;
+  billingPhone?: string;
+  billingEmail?: string;
+  billingGstin?: string;
   deliveryDetails?: DeliveryDetails;
   invoiceNumber?: string;
   invoiceDate?: string;

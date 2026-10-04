@@ -27,7 +27,7 @@ import {
 import { useCart } from '../context/CartContext';
 import { useStoreContent } from '../context/StoreContentContext';
 import { BRAND_CONTACT } from '../data/content';
-import { OrderRecord, ShippingAddressData } from '../types';
+import { OrderRecord, ShippingAddressData, BillingAddressData } from '../types';
 
 interface OrderConfirmationData {
   orderNumber: string;
@@ -59,6 +59,12 @@ interface OrderConfirmationData {
     phone: string;
     email: string;
     shippingAddress: ShippingAddressData;
+    billingAddress?: BillingAddressData;
+    billingSameAsShipping?: boolean;
+    billingName?: string;
+    billingPhone?: string;
+    billingEmail?: string;
+    billingGstin?: string;
   };
   items: {
     productId: string;
@@ -100,6 +106,43 @@ export const CheckoutPage: React.FC = () => {
   });
   const [pincode, setPincode] = useState(() => {
     try { return localStorage.getItem('titan_checkout_pincode') || '110001'; } catch { return '110001'; }
+  });
+
+  // Billing Address State (defaults to same as shipping address)
+  const [billingSameAsShipping, setBillingSameAsShipping] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('titan_billing_same_as_shipping');
+      return saved !== null ? saved === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+  const [billingName, setBillingName] = useState(() => {
+    try { return localStorage.getItem('titan_billing_name') || ''; } catch { return ''; }
+  });
+  const [billingPhone, setBillingPhone] = useState(() => {
+    try { return localStorage.getItem('titan_billing_phone') || ''; } catch { return ''; }
+  });
+  const [billingEmail, setBillingEmail] = useState(() => {
+    try { return localStorage.getItem('titan_billing_email') || ''; } catch { return ''; }
+  });
+  const [billingStreetAddress, setBillingStreetAddress] = useState(() => {
+    try { return localStorage.getItem('titan_billing_address') || ''; } catch { return ''; }
+  });
+  const [billingLandmark, setBillingLandmark] = useState(() => {
+    try { return localStorage.getItem('titan_billing_landmark') || ''; } catch { return ''; }
+  });
+  const [billingCity, setBillingCity] = useState(() => {
+    try { return localStorage.getItem('titan_billing_city') || ''; } catch { return ''; }
+  });
+  const [billingState, setBillingState] = useState(() => {
+    try { return localStorage.getItem('titan_billing_state') || ''; } catch { return ''; }
+  });
+  const [billingPincode, setBillingPincode] = useState(() => {
+    try { return localStorage.getItem('titan_billing_pincode') || ''; } catch { return ''; }
+  });
+  const [billingGstin, setBillingGstin] = useState(() => {
+    try { return localStorage.getItem('titan_billing_gstin') || ''; } catch { return ''; }
   });
 
   // Delhivery Real-Time Pincode Serviceability State
@@ -183,8 +226,37 @@ export const CheckoutPage: React.FC = () => {
       if (city) localStorage.setItem('titan_checkout_city', city);
       if (state) localStorage.setItem('titan_checkout_state', state);
       if (pincode) localStorage.setItem('titan_checkout_pincode', pincode);
+      localStorage.setItem('titan_billing_same_as_shipping', String(billingSameAsShipping));
+      if (billingName) localStorage.setItem('titan_billing_name', billingName);
+      if (billingPhone) localStorage.setItem('titan_billing_phone', billingPhone);
+      if (billingEmail) localStorage.setItem('titan_billing_email', billingEmail);
+      if (billingStreetAddress) localStorage.setItem('titan_billing_address', billingStreetAddress);
+      if (billingLandmark) localStorage.setItem('titan_billing_landmark', billingLandmark);
+      if (billingCity) localStorage.setItem('titan_billing_city', billingCity);
+      if (billingState) localStorage.setItem('titan_billing_state', billingState);
+      if (billingPincode) localStorage.setItem('titan_billing_pincode', billingPincode);
+      if (billingGstin) localStorage.setItem('titan_billing_gstin', billingGstin);
     } catch {}
-  }, [customerName, customerPhone, customerEmail, streetAddress, landmark, city, state, pincode]);
+  }, [
+    customerName,
+    customerPhone,
+    customerEmail,
+    streetAddress,
+    landmark,
+    city,
+    state,
+    pincode,
+    billingSameAsShipping,
+    billingName,
+    billingPhone,
+    billingEmail,
+    billingStreetAddress,
+    billingLandmark,
+    billingCity,
+    billingState,
+    billingPincode,
+    billingGstin,
+  ]);
 
   // Real-Time Delhivery B2C Pincode Serviceability Check
   useEffect(() => {
@@ -345,6 +417,19 @@ export const CheckoutPage: React.FC = () => {
       setErrorMessage('Please enter a valid 6-digit postal PIN code.');
       return false;
     }
+
+    if (!billingSameAsShipping) {
+      if (!billingStreetAddress.trim() || billingStreetAddress.trim().length < 5) {
+        setErrorMessage('Please enter the complete Street Address for your Billing Address.');
+        return false;
+      }
+      const cleanBillPin = billingPincode.replace(/\D/g, '');
+      if (cleanBillPin.length !== 6) {
+        setErrorMessage('Please enter a valid 6-digit PIN code for your Billing Address.');
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -358,6 +443,30 @@ export const CheckoutPage: React.FC = () => {
     shipmentDetails: any,
     razorpayInfo?: { orderId?: string; paymentId?: string; signature?: string }
   ) => {
+    const effectiveBilling = billingSameAsShipping
+      ? {
+          name: customerName,
+          phone: customerPhone,
+          email: customerEmail,
+          address: streetAddress,
+          city,
+          state,
+          pincode,
+          landmark,
+          gstin: '',
+        }
+      : {
+          name: billingName || customerName,
+          phone: billingPhone || customerPhone,
+          email: billingEmail || customerEmail,
+          address: billingStreetAddress,
+          city: billingCity || city,
+          state: billingState || state,
+          pincode: billingPincode || pincode,
+          landmark: billingLandmark,
+          gstin: billingGstin,
+        };
+
     const confirmationData: OrderConfirmationData = {
       orderNumber: orderNum,
       invoiceNumber: invoiceNum,
@@ -394,6 +503,12 @@ export const CheckoutPage: React.FC = () => {
           pincode,
           landmark,
         },
+        billingAddress: effectiveBilling,
+        billingSameAsShipping,
+        billingName: effectiveBilling.name,
+        billingPhone: effectiveBilling.phone,
+        billingEmail: effectiveBilling.email,
+        billingGstin: effectiveBilling.gstin,
       },
       items: items.map((i) => ({
         productId: i.product.id,
@@ -420,6 +535,15 @@ export const CheckoutPage: React.FC = () => {
           pincode,
           landmark,
         },
+        billingAddress: billingSameAsShipping
+          ? `${streetAddress}${landmark ? `, Near ${landmark}` : ''}, ${city}, ${state} - ${pincode}`
+          : `${effectiveBilling.address}${effectiveBilling.landmark ? `, Near ${effectiveBilling.landmark}` : ''}, ${effectiveBilling.city}, ${effectiveBilling.state} - ${effectiveBilling.pincode}`,
+        billingAddressDetails: effectiveBilling,
+        billingSameAsShipping,
+        billingName: effectiveBilling.name,
+        billingPhone: effectiveBilling.phone,
+        billingEmail: effectiveBilling.email,
+        billingGstin: effectiveBilling.gstin,
         deliveryDetails: {
           courier: confirmationData.delivery.courier,
           trackingNumber: confirmationData.delivery.trackingNumber,
@@ -563,6 +687,30 @@ export const CheckoutPage: React.FC = () => {
           try {
             // STEP 3: Verify Payment Signature on Backend & Manifest Delhivery
             let verifyData: any = null;
+            const effectiveBilling = billingSameAsShipping
+              ? {
+                  name: customerName.trim(),
+                  phone: customerPhone.trim(),
+                  email: customerEmail.trim(),
+                  address: streetAddress.trim(),
+                  landmark: landmark.trim(),
+                  city: city.trim(),
+                  state: state.trim(),
+                  pincode: pincode.trim(),
+                  gstin: '',
+                }
+              : {
+                  name: (billingName || customerName).trim(),
+                  phone: (billingPhone || customerPhone).trim(),
+                  email: (billingEmail || customerEmail).trim(),
+                  address: billingStreetAddress.trim(),
+                  landmark: billingLandmark.trim(),
+                  city: (billingCity || city).trim(),
+                  state: (billingState || state).trim(),
+                  pincode: (billingPincode || pincode).trim(),
+                  gstin: billingGstin.trim(),
+                };
+
             try {
               const verifyRes = await fetch('/api/verify-payment', {
                 method: 'POST',
@@ -573,23 +721,28 @@ export const CheckoutPage: React.FC = () => {
                   razorpay_signature: response.razorpay_signature,
                   order_data: {
                     orderNumber,
-                    customerName,
-                    customerPhone,
-                    customerEmail,
+                    customerName: customerName.trim(),
+                    customerPhone: customerPhone.trim(),
+                    customerEmail: customerEmail.trim(),
                     shippingAddress: {
-                      address: streetAddress,
-                      landmark,
-                      city,
-                      state,
-                      pincode,
+                      address: streetAddress.trim(),
+                      landmark: landmark.trim(),
+                      city: city.trim(),
+                      state: state.trim(),
+                      pincode: pincode.trim(),
                     },
+                    billingAddress: effectiveBilling,
+                    billingSameAsShipping,
                     items: items.map((i) => ({
+                      productId: i.product.id,
                       productName: i.product.name,
                       packName: i.selectedPack?.name || i.product.size,
                       quantity: i.quantity,
                       price: i.selectedPack ? i.selectedPack.price : i.product.price,
                     })),
                     total: finalTotal,
+                    discount: discountAmount,
+                    couponCode: appliedCoupon || undefined,
                   },
                 }),
               });
@@ -676,6 +829,29 @@ export const CheckoutPage: React.FC = () => {
     setErrorMessage(null);
 
     const orderNumber = `TITAN-${Date.now().toString().slice(-6)}`;
+    const effectiveBilling = billingSameAsShipping
+      ? {
+          name: customerName.trim(),
+          phone: customerPhone.trim(),
+          email: customerEmail.trim(),
+          address: streetAddress.trim(),
+          landmark: landmark.trim(),
+          city: city.trim(),
+          state: state.trim(),
+          pincode: pincode.trim(),
+          gstin: '',
+        }
+      : {
+          name: (billingName || customerName).trim(),
+          phone: (billingPhone || customerPhone).trim(),
+          email: (billingEmail || customerEmail).trim(),
+          address: billingStreetAddress.trim(),
+          landmark: billingLandmark.trim(),
+          city: (billingCity || city).trim(),
+          state: (billingState || state).trim(),
+          pincode: (billingPincode || pincode).trim(),
+          gstin: billingGstin.trim(),
+        };
 
     try {
       let confirmData: any = null;
@@ -685,16 +861,18 @@ export const CheckoutPage: React.FC = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             orderNumber,
-            customerName,
-            customerPhone,
-            customerEmail,
+            customerName: customerName.trim(),
+            customerPhone: customerPhone.trim(),
+            customerEmail: customerEmail.trim(),
             shippingAddress: {
-              address: streetAddress,
-              landmark,
-              city,
-              state,
-              pincode,
+              address: streetAddress.trim(),
+              landmark: landmark.trim(),
+              city: city.trim(),
+              state: state.trim(),
+              pincode: pincode.trim(),
             },
+            billingAddress: effectiveBilling,
+            billingSameAsShipping,
             items: items.map((i) => ({
               productId: i.product.id,
               productName: i.product.name,
@@ -923,11 +1101,52 @@ export const CheckoutPage: React.FC = () => {
             </div>
 
             {/* Billed To & Shipping Details Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-6 border-b border-[#10110F]/10 text-xs">
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-[#66704B] uppercase tracking-wider block mb-1">
-                  BILLED & SHIPPED TO:
-                </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-[#10110F]/10 text-xs">
+              {/* Column 1: Billed To */}
+              <div className="space-y-1.5 p-4 rounded-xs bg-[#F7F3E8]/50 border border-[#10110F]/10">
+                <div className="flex items-center justify-between border-b border-[#10110F]/10 pb-1.5 mb-1.5">
+                  <span className="text-[10px] font-bold text-[#183D27] uppercase tracking-wider block">
+                    BILLED TO (TAX INVOICE):
+                  </span>
+                  <span className="px-2 py-0.5 rounded-xs bg-[#183D27]/10 text-[#183D27] text-[9.5px] font-bold uppercase tracking-wider">
+                    {confirmedOrder.customer.billingSameAsShipping !== false ? 'Same as Shipping' : 'Custom Billing'}
+                  </span>
+                </div>
+                <p className="font-bold text-sm text-[#10110F]">
+                  {confirmedOrder.customer.billingName || confirmedOrder.customer.name}
+                </p>
+                <p className="text-[#66704B]">
+                  {confirmedOrder.customer.billingAddress?.address || confirmedOrder.customer.shippingAddress.address}
+                </p>
+                {(confirmedOrder.customer.billingAddress?.landmark || confirmedOrder.customer.shippingAddress.landmark) && (
+                  <p className="text-[#66704B]">
+                    Landmark: {confirmedOrder.customer.billingAddress?.landmark || confirmedOrder.customer.shippingAddress.landmark}
+                  </p>
+                )}
+                <p className="text-[#66704B]">
+                  {(confirmedOrder.customer.billingAddress?.city || confirmedOrder.customer.shippingAddress.city)}, {(confirmedOrder.customer.billingAddress?.state || confirmedOrder.customer.shippingAddress.state)} — {(confirmedOrder.customer.billingAddress?.pincode || confirmedOrder.customer.shippingAddress.pincode)}
+                </p>
+                <p className="text-[#10110F] pt-1">
+                  Mobile: <strong>{confirmedOrder.customer.billingPhone || confirmedOrder.customer.phone}</strong> | Email: <strong>{confirmedOrder.customer.billingEmail || confirmedOrder.customer.email}</strong>
+                </p>
+                {confirmedOrder.customer.billingGstin && (
+                  <p className="text-[11px] font-mono text-[#183D27] pt-0.5">
+                    GSTIN: <strong>{confirmedOrder.customer.billingGstin}</strong>
+                  </p>
+                )}
+              </div>
+
+              {/* Column 2: Shipped To */}
+              <div className="space-y-1.5 p-4 rounded-xs bg-white border border-[#10110F]/10">
+                <div className="flex items-center justify-between border-b border-[#10110F]/10 pb-1.5 mb-1.5">
+                  <span className="text-[10px] font-bold text-[#66704B] uppercase tracking-wider block">
+                    SHIPPED TO (DELHIVERY DISPATCH):
+                  </span>
+                  <span className="px-2 py-0.5 rounded-xs bg-emerald-100 text-emerald-900 text-[9.5px] font-bold uppercase tracking-wider flex items-center gap-1">
+                    <Truck className="w-3 h-3 text-[#183D27]" />
+                    <span>Delhivery Express</span>
+                  </span>
+                </div>
                 <p className="font-bold text-sm text-[#10110F]">{confirmedOrder.customer.name}</p>
                 <p className="text-[#66704B]">{confirmedOrder.customer.shippingAddress.address}</p>
                 {confirmedOrder.customer.shippingAddress.landmark && (
@@ -937,36 +1156,43 @@ export const CheckoutPage: React.FC = () => {
                   {confirmedOrder.customer.shippingAddress.city}, {confirmedOrder.customer.shippingAddress.state} — {confirmedOrder.customer.shippingAddress.pincode}
                 </p>
                 <p className="text-[#10110F] pt-1">
-                  Mobile: <strong>{confirmedOrder.customer.phone}</strong> | Email: <strong>{confirmedOrder.customer.email}</strong>
+                  Delivery Mobile (SMS/OTP): <strong>{confirmedOrder.customer.phone}</strong>
+                </p>
+                <p className="text-[11px] text-[#66704B] pt-0.5">
+                  Assigned Waybill: <strong className="font-mono text-[#183D27]">{confirmedOrder.delivery.trackingNumber}</strong>
                 </p>
               </div>
+            </div>
 
-              <div className="space-y-1 bg-[#F7F3E8] p-4 rounded-xs border border-[#10110F]/10">
-                <span className="text-[10px] font-bold text-[#183D27] uppercase tracking-wider block mb-1">
-                  PAYMENT & LOGISTICS SUMMARY:
+            {/* Payment & Logistics Summary Bar */}
+            <div className="bg-[#F7F3E8] p-4 rounded-xs border border-[#10110F]/10 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-bold text-[#66704B] uppercase tracking-wider block">Payment Method</span>
+                <strong className="text-[#10110F] text-xs sm:text-sm block">{confirmedOrder.paymentMethod}</strong>
+                <span className={`inline-block font-bold px-1.5 py-0.5 rounded-xs text-[9.5px] ${
+                  isCod ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                }`}>
+                  {isCod ? 'COD (PAY UPON DELIVERY)' : 'PAID IN FULL (RAZORPAY)'}
                 </span>
-                <div className="flex justify-between py-0.5 border-b border-[#10110F]/10">
-                  <span className="text-[#66704B]">Payment Method:</span>
-                  <strong className="text-[#10110F]">{confirmedOrder.paymentMethod}</strong>
-                </div>
-                <div className="flex justify-between py-0.5 border-b border-[#10110F]/10">
-                  <span className="text-[#66704B]">Payment Status:</span>
-                  <span className={`font-bold px-1.5 py-0.2 rounded-xs text-[10px] ${
-                    isCod ? 'bg-amber-100 text-amber-900' : 'bg-emerald-100 text-emerald-900'
-                  }`}>
-                    {isCod ? 'CASH ON DELIVERY (PENDING)' : 'PAID IN FULL'}
-                  </span>
-                </div>
                 {confirmedOrder.razorpayPaymentId && (
-                  <div className="flex justify-between py-0.5 border-b border-[#10110F]/10">
-                    <span className="text-[#66704B]">Razorpay Payment ID:</span>
-                    <strong className="font-mono text-[11px] text-[#183D27]">{confirmedOrder.razorpayPaymentId}</strong>
+                  <div className="text-[10px] text-[#66704B] pt-1">
+                    Payment ID: <strong className="font-mono text-[#183D27]">{confirmedOrder.razorpayPaymentId}</strong>
                   </div>
                 )}
-                <div className="flex justify-between py-0.5">
-                  <span className="text-[#66704B]">Delhivery Tracking AWB:</span>
-                  <strong className="font-mono text-[#10110F]">{confirmedOrder.delivery.trackingNumber}</strong>
-                </div>
+              </div>
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-bold text-[#66704B] uppercase tracking-wider block">Logistics Partner</span>
+                <strong className="text-[#183D27] text-xs sm:text-sm block">{confirmedOrder.delivery.courier}</strong>
+                <span className="text-[11px] text-[#66704B]">
+                  AWB: <strong className="font-mono text-[#10110F]">{confirmedOrder.delivery.trackingNumber}</strong>
+                </span>
+              </div>
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-bold text-[#66704B] uppercase tracking-wider block">Fulfillment Hub</span>
+                <strong className="text-[#10110F] text-xs sm:text-sm block">{confirmedOrder.delivery.pickupLocation || 'Delhi Central Fulfillment Hub'}</strong>
+                <span className="text-[11px] text-[#66704B]">
+                  ETA: <strong>{confirmedOrder.delivery.expectedDelivery || '2–4 Business Days'}</strong>
+                </span>
               </div>
             </div>
 
@@ -1366,6 +1592,206 @@ export const CheckoutPage: React.FC = () => {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Step 1.2: Billing Address & Tax Invoice Details */}
+            <div className="bg-white p-6 sm:p-7 rounded-sm border border-[#10110F]/10 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-[#10110F]/10 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-6 h-6 rounded-full bg-[#183D27] text-[#D4B66A] font-bold text-xs flex items-center justify-center">
+                    <FileText className="w-3.5 h-3.5 text-[#D4B66A]" />
+                  </span>
+                  <div>
+                    <h2 className="font-serif font-bold text-lg text-[#10110F]">
+                      Billing Address & Tax Invoice Particulars
+                    </h2>
+                    <p className="text-[11px] text-[#66704B]">
+                      Official GST tax invoice will be generated and emailed with these details.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Checkbox: Same as shipping address */}
+              <label className="flex items-start gap-3 p-3.5 rounded-xs bg-[#F7F3E8] border border-[#10110F]/15 cursor-pointer hover:border-[#183D27] transition-all">
+                <input
+                  type="checkbox"
+                  checked={billingSameAsShipping}
+                  onChange={(e) => setBillingSameAsShipping(e.target.checked)}
+                  className="mt-0.5 rounded text-[#183D27] focus:ring-[#183D27] w-4 h-4"
+                />
+                <div className="flex-1">
+                  <span className="font-bold text-xs text-[#10110F] block">
+                    Billing address is the same as shipping & delivery address
+                  </span>
+                  <span className="text-[11px] text-[#66704B] block mt-0.5">
+                    Your Tax Invoice and Delhivery shipping consignment will use identical customer and address details.
+                  </span>
+                </div>
+              </label>
+
+              {/* Live Preview when Same as Shipping */}
+              {billingSameAsShipping ? (
+                <div className="p-3.5 rounded-xs bg-[#183D27]/5 border border-[#183D27]/20 text-xs space-y-1">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#183D27]">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#183D27]" />
+                    <span>Active Billing & Invoice Profile (Mirrored from Delivery Address)</span>
+                  </div>
+                  <p className="font-bold text-[#10110F]">
+                    {customerName || 'Customer Name'} • +91 {customerPhone || 'Phone'}
+                  </p>
+                  <p className="text-[#66704B]">
+                    {streetAddress ? `${streetAddress}${landmark ? `, Near ${landmark}` : ''}, ${city}, ${state} - ${pincode}` : 'Complete your shipping address above to preview your tax invoice address.'}
+                  </p>
+                  {customerEmail && (
+                    <p className="text-[11px] text-[#66704B]">
+                      Invoice Dispatch Email: <strong className="text-[#10110F]">{customerEmail}</strong>
+                    </p>
+                  )}
+                </div>
+              ) : (
+                /* Distinct Billing Address Form */
+                <div className="space-y-4 pt-2 border-t border-[#10110F]/10 animate-in fade-in duration-200">
+                  <div className="p-2.5 rounded-xs bg-amber-50 border border-amber-200 text-amber-900 text-xs">
+                    <strong>Custom Billing Enabled:</strong> Your physical parcel will be dispatched to the delivery address via Delhivery One, while your official Tax Invoice will be issued to this billing profile.
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="sm:col-span-2">
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-[#10110F] mb-1">
+                        Billing Name / Company Name *
+                      </label>
+                      <input
+                        type="text"
+                        required={!billingSameAsShipping}
+                        placeholder="e.g. Vikramaditya Sharma or Titan Enterprises Ltd."
+                        value={billingName}
+                        onChange={(e) => setBillingName(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm focus:border-[#183D27] focus:ring-1 focus:ring-[#183D27] outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-[#10110F] mb-1">
+                        Billing Mobile Number
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2.5 text-xs text-[#66704B] font-bold">
+                          +91
+                        </span>
+                        <input
+                          type="tel"
+                          maxLength={10}
+                          placeholder={customerPhone || '9876543210'}
+                          value={billingPhone}
+                          onChange={(e) => setBillingPhone(e.target.value.replace(/\D/g, ''))}
+                          className="w-full pl-11 pr-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm focus:border-[#183D27] focus:ring-1 focus:ring-[#183D27] outline-none font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-[#10110F] mb-1">
+                        Billing Email
+                      </label>
+                      <input
+                        type="email"
+                        placeholder={customerEmail || 'billing@example.com'}
+                        value={billingEmail}
+                        onChange={(e) => setBillingEmail(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm focus:border-[#183D27] focus:ring-1 focus:ring-[#183D27] outline-none"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-[#10110F] mb-1">
+                        Complete Billing Address (Street / Office / Building) *
+                      </label>
+                      <textarea
+                        rows={2}
+                        required={!billingSameAsShipping}
+                        placeholder="e.g. Office 501, Corporate Tower, MG Road"
+                        value={billingStreetAddress}
+                        onChange={(e) => setBillingStreetAddress(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm focus:border-[#183D27] focus:ring-1 focus:ring-[#183D27] outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-[#10110F] mb-1">
+                        Landmark (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Near Metro Gate 2"
+                        value={billingLandmark}
+                        onChange={(e) => setBillingLandmark(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm focus:border-[#183D27] focus:ring-1 focus:ring-[#183D27] outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-[#10110F] mb-1">
+                        PIN Code (6 digits) *
+                      </label>
+                      <input
+                        type="text"
+                        required={!billingSameAsShipping}
+                        maxLength={6}
+                        placeholder="110001"
+                        value={billingPincode}
+                        onChange={(e) => setBillingPincode(e.target.value.replace(/\D/g, ''))}
+                        className="w-full px-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm focus:border-[#183D27] focus:ring-1 focus:ring-[#183D27] outline-none font-bold"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-[#10110F] mb-1">
+                        City *
+                      </label>
+                      <input
+                        type="text"
+                        required={!billingSameAsShipping}
+                        placeholder="City"
+                        value={billingCity}
+                        onChange={(e) => setBillingCity(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm focus:border-[#183D27] focus:ring-1 focus:ring-[#183D27] outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-[#10110F] mb-1">
+                        State *
+                      </label>
+                      <input
+                        type="text"
+                        required={!billingSameAsShipping}
+                        placeholder="State"
+                        value={billingState}
+                        onChange={(e) => setBillingState(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm focus:border-[#183D27] focus:ring-1 focus:ring-[#183D27] outline-none"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-[#10110F] mb-1">
+                        GSTIN Number (Optional - for Business Tax Input Credit)
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={15}
+                        placeholder="e.g. 07AAAAA0000A1Z5"
+                        value={billingGstin}
+                        onChange={(e) => setBillingGstin(e.target.value.toUpperCase().trim())}
+                        className="w-full px-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm focus:border-[#183D27] focus:ring-1 focus:ring-[#183D27] outline-none font-mono uppercase"
+                      />
+                      <span className="text-[10px] text-[#66704B] mt-0.5 block">
+                        If you have a GST registration number, enter it here to claim B2B input tax credit.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Step 2: Payment Gateway Selection */}

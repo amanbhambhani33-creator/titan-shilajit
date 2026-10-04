@@ -77,7 +77,7 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
     phone: '9999999999',
     order: 'Test Order 01',
     payment_mode: 'Prepaid' as 'Prepaid' | 'COD',
-    pickup_location: 'Titan Delhi Central Fulfillment Hub',
+    pickup_location: 'SHRI RAM TRADERS 1 B2B',
     shipping_mode: 'Surface' as 'Surface' | 'Express',
     total_amount: 1499,
   });
@@ -87,9 +87,9 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
 
   // Delhivery Settings State
   const [delhiverySettings, setDelhiverySettings] = useState({
-    token: '6SQOQUTNWO35ZPD8HM8WUM5H0QDVLSRB',
-    baseUrl: 'https://staging-express.delhivery.com',
-    pickupLocation: 'warehouse_name',
+    token: 'a6b0c403ff9862f2736c43477df76d318bfd6809',
+    baseUrl: 'https://track.delhivery.com',
+    pickupLocation: 'SHRI RAM TRADERS 1 B2B',
   });
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isTestingToken, setIsTestingToken] = useState(false);
@@ -1802,19 +1802,52 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
                         </div>
                       )}
 
-                      {/* Details Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                        {/* Shipping Address */}
+                      {/* Details Grid: Billing & Delivery Addresses */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        {/* Billing Address */}
+                        <div className="p-4 rounded-xs bg-[#F7F3E8]/60 border border-[#10110F]/10 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#183D27] block">
+                              Billing Particulars (Tax Invoice)
+                            </span>
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-xs bg-[#183D27]/10 text-[#183D27]">
+                              {order.billingSameAsShipping !== false ? 'Same as Shipping' : 'Custom Billing'}
+                            </span>
+                          </div>
+                          <p className="font-bold text-[#10110F]">{order.billingName || order.customerName}</p>
+                          <p className="text-[#66704B]">{order.billingAddress || order.shippingAddress || 'Address on file'}</p>
+                          <p className="text-[#10110F] pt-0.5">
+                            Phone: <strong>{order.billingPhone || order.customerPhone}</strong>
+                            {(order.billingEmail || order.customerEmail) && ` • Email: ${order.billingEmail || order.customerEmail}`}
+                          </p>
+                          {order.billingGstin && (
+                            <p className="text-[10.5px] font-mono text-[#183D27] pt-0.5">
+                              GSTIN: <strong>{order.billingGstin}</strong>
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Shipping / Delivery Address */}
                         <div className="p-4 rounded-xs bg-white border border-[#10110F]/10 space-y-1.5">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#66704B] block">
-                            Customer & Delivery Address
-                          </span>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#66704B] block">
+                              Shipping & Delhivery Destination
+                            </span>
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-xs bg-emerald-50 text-emerald-800 border border-emerald-200">
+                              Delhivery One
+                            </span>
+                          </div>
                           <p className="font-bold text-[#10110F]">{order.customerName}</p>
                           <p className="text-[#66704B]">{order.shippingAddress || 'Address on file'}</p>
-                          <p className="text-[#10110F] pt-1">
-                            Phone: <strong>{order.customerPhone}</strong>
+                          <p className="text-[#10110F] pt-0.5">
+                            Delivery Phone: <strong>{order.customerPhone}</strong>
                             {order.customerEmail && ` • Email: ${order.customerEmail}`}
                           </p>
+                          {trackingNumber && (
+                            <p className="text-[10.5px] font-mono text-[#183D27] pt-0.5">
+                              Waybill: <strong>{trackingNumber}</strong>
+                            </p>
+                          )}
                         </div>
 
                         {/* Payment Verification Info */}
@@ -1846,6 +1879,10 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
                               <strong className="text-emerald-800">{order.couponCode} (-₹{order.discount})</strong>
                             </div>
                           )}
+                          <div className="flex justify-between pt-1 border-t border-[#10110F]/10">
+                            <span className="text-[#66704B]">Invoice Number:</span>
+                            <strong className="font-mono text-[#10110F]">{order.invoiceNumber || `INV-${order.orderNumber}`}</strong>
+                          </div>
                         </div>
                       </div>
 
