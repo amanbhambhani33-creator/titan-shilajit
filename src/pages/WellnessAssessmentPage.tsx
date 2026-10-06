@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   ShieldCheck,
   AlertTriangle,
@@ -13,9 +14,9 @@ import {
   Coffee,
   RotateCcw,
   Award,
+  ShoppingBag,
 } from 'lucide-react';
 import { AssessmentFormData, AssessmentResultData } from '../types';
-import { getAssessmentRoutineWhatsAppUrl } from '../utils/whatsapp';
 
 export const WellnessAssessmentPage: React.FC = () => {
   const [step, setStep] = useState(1);
@@ -542,20 +543,17 @@ export const WellnessAssessmentPage: React.FC = () => {
 
                 {/* Action Buttons */}
                 <div className="pt-4 border-t border-[#10110F]/10 flex flex-col sm:flex-row gap-3">
-                  <a
-                    id="assessment-order-whatsapp-btn"
-                    href={getAssessmentRoutineWhatsAppUrl(formData.name, result.suggestedProduct, result.primaryGoal)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 py-4 rounded-xs bg-[#25D366] hover:bg-[#1EBE5D] text-[#10110F] font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-md transition-all"
+                  <Link
+                    to="/shop"
+                    className="flex-1 py-4 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-md transition-all"
                   >
-                    <MessageCircle className="w-4 h-4 text-[#10110F]" />
-                    <span>ORDER MY ROUTINE ON WHATSAPP</span>
-                  </a>
+                    <ShoppingBag className="w-4 h-4 text-[#D4B66A]" />
+                    <span>GET MY ROUTINE IN SHOP</span>
+                  </Link>
 
                   <button
                     onClick={handleReset}
-                    className="px-5 py-3.5 rounded-xs border border-[#10110F]/20 text-[#10110F] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 hover:bg-black/5"
+                    className="px-5 py-3.5 rounded-xs border border-[#10110F]/20 text-[#10110F] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 hover:bg-black/5 cursor-pointer"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     <span>Retake</span>

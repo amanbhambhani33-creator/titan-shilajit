@@ -22,6 +22,15 @@ import {
   getDelhiveryConfigFromFirestore,
   saveRazorpayConfigToFirestore,
   getRazorpayConfigFromFirestore,
+  getNextContinuousInvoiceNumber,
+  saveStoreContentToFirestore,
+  getStoreContentFromFirestore,
+  saveProductsToFirestore,
+  getProductsFromFirestore,
+  saveReviewsToFirestore,
+  getReviewsFromFirestore,
+  saveReturnRequestToFirestore,
+  getReturnRequestsFromFirestore,
 } from './server/firestore';
 
 dotenv.config();
@@ -386,7 +395,7 @@ apiRouter.post('/verify-payment', async (req, res) => {
         ? fullShippingAddressStr
         : `${billingAddress.address || ''}${billingAddress.landmark ? `, Near ${billingAddress.landmark}` : ''}, ${billingAddress.city || 'Delhi'}, ${billingAddress.state || 'Delhi'} - ${billingAddress.pincode || '110001'}`;
 
-      const invoiceNumber = `INV-TITAN-${Date.now().toString().slice(-6)}`;
+      const invoiceNumber = await getNextContinuousInvoiceNumber();
       const invoiceDate = new Date().toLocaleDateString('en-IN', {
         day: '2-digit',
         month: 'short',
@@ -551,7 +560,7 @@ apiRouter.post('/orders/confirm', async (req, res) => {
 
     const isCod = paymentMethod === 'cash_on_delivery';
     const effectiveBilling = billingAddress || shippingAddress;
-    const invoiceNumber = `INV-TITAN-${Date.now().toString().slice(-6)}`;
+    const invoiceNumber = await getNextContinuousInvoiceNumber();
     const invoiceDate = new Date().toLocaleDateString('en-IN', {
       day: '2-digit',
       month: 'short',
@@ -968,6 +977,91 @@ apiRouter.post('/delhivery/register-warehouse', async (req, res) => {
     return res.json(result);
   } catch (err: any) {
     return res.status(500).json({ success: false, message: err?.message || 'Error registering warehouse.' });
+  }
+});
+
+// RESILIENT MULTI-HOST STORE CONTENT & RETURNS SYNC (Never Fails on Vercel / Hostinger / Custom Domains)
+
+// Fetch all store content, products, and reviews directly from Firestore via server
+apiRouter.get('/store-content', async (req, res) => {
+  try {
+    const [mainContent, products, reviews] = await Promise.all([
+      getStoreContentFromFirestore(),
+      getProductsFromFirestore(),
+      getReviewsFromFirestore(),
+    ]);
+    return res.json({
+      success: true,
+      content: mainContent,
+      products: products || [],
+      reviews: reviews || [],
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// Resilient save for page content to Firestore
+apiRouter.post('/store-content/save', async (req, res) => {
+  try {
+    const { content } = req.body;
+    if (!content) return res.status(400).json({ success: false, error: 'Content payload is required.' });
+    const ok = await saveStoreContentToFirestore(content);
+    return res.json({ success: ok, message: ok ? 'Saved to Firestore.' : 'Failed to save to Firestore.' });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// Resilient save for products catalog to Firestore
+apiRouter.post('/store-content/products', async (req, res) => {
+  try {
+    const { products } = req.body;
+    if (!Array.isArray(products)) return res.status(400).json({ success: false, error: 'Products array is required.' });
+    const ok = await saveProductsToFirestore(products);
+    return res.json({ success: ok, message: ok ? 'Products catalog updated in Firestore.' : 'Failed to save products.' });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// Resilient save for reviews to Firestore
+apiRouter.post('/store-content/reviews', async (req, res) => {
+  try {
+    const { reviews } = req.body;
+    if (!Array.isArray(reviews)) return res.status(400).json({ success: false, error: 'Reviews array is required.' });
+    const ok = await saveReviewsToFirestore(reviews);
+    return res.json({ success: ok, message: ok ? 'Customer reviews synced to Firestore.' : 'Failed to save reviews.' });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// Customer Product Return Request Submission (Redirects to WhatsApp + Logs to Firestore)
+apiRouter.post('/returns/submit', async (req, res) => {
+  try {
+    const returnData = req.body;
+    if (!returnData || !returnData.invoiceNumber || !returnData.customerPhone) {
+      return res.status(400).json({ success: false, error: 'Invoice number and mobile number are required.' });
+    }
+    const result = await saveReturnRequestToFirestore(returnData);
+    return res.json({
+      success: result.success,
+      id: result.id,
+      message: 'Return request successfully recorded in Firestore database.',
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// Admin endpoint to view product returns
+apiRouter.get('/returns', async (req, res) => {
+  try {
+    const returns = await getReturnRequestsFromFirestore();
+    return res.json({ success: true, returns });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, returns: [], error: err?.message });
   }
 });
 

@@ -205,8 +205,8 @@ export const FAQS = [
     answer: 'Yes. Every single batch is independently tested in NABL-accredited laboratories for heavy metals (Lead, Arsenic, Mercury, Cadmium) and microbial purity to ensure safety standards well within international guidelines.'
   },
   {
-    question: 'How do I place an order via WhatsApp?',
-    answer: 'Click any "BUY ON WHATSAPP" button on our website. It will instantly launch a pre-formatted chat with our official Delhi concierge (+91 99584 74229) with your selected product and quantity. We will confirm your delivery address and provide secure payment options (UPI, NetBanking, Cards, COD).'
+    question: 'How do I place an order?',
+    answer: 'Select your preferred Shilajit resin or honey sticks pack on our store, click "ADD TO CART" or "BUY NOW", and proceed through our fast 1-page checkout. We provide instant Cash on Delivery (COD) as well as secure prepaid options (UPI, Cards, NetBanking via Razorpay) with complimentary Pan-India Delhivery express dispatch.'
   },
   {
     question: 'Can women take Titan Shilajit?',

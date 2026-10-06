@@ -18,6 +18,7 @@ import { Product, ProductPack } from '../types';
 import { getProductWhatsAppUrl } from '../utils/whatsapp';
 import { useCart } from '../context/CartContext';
 import { getProductPacks, getPackShortBadge, getPackShortName, getPackShortQuantity } from '../utils/productPacks';
+import { AmazonFlipkartBadge } from './AmazonFlipkartBadge';
 
 interface QuickViewModalProps {
   product: Product | null;
@@ -343,6 +344,10 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, 
                     <span>FULL PAGE</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
+                </div>
+
+                <div className="pt-1">
+                  <AmazonFlipkartBadge variant="compact" className="w-full justify-center bg-white/80" />
                 </div>
               </>
             )}

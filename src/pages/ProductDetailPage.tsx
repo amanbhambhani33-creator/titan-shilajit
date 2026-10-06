@@ -18,10 +18,11 @@ import {
 import { useStoreContent } from '../context/StoreContentContext';
 import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
-import { getProductWhatsAppUrl } from '../utils/whatsapp';
+import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
 import { useCart } from '../context/CartContext';
 import { Product, ProductPack } from '../types';
 import { getProductPacks, getPackShortBadge, getPackShortName, getPackShortQuantity } from '../utils/productPacks';
+import { AmazonFlipkartBadge } from '../components/AmazonFlipkartBadge';
 
 export const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -81,7 +82,7 @@ export const ProductDetailPage: React.FC = () => {
   const displayPrice = currentPack ? currentPack.price : product.price;
   const displayMrp = currentPack ? currentPack.mrp : product.mrp;
 
-  const whatsappUrl = getProductWhatsAppUrl(product, quantity, currentPack);
+  const conciergeHelpUrl = getGeneralConciergeWhatsAppUrl();
   const relatedProducts = products.filter((p) => p.id !== product.id).slice(0, 3);
   const matchedReviews = (reviews || []).filter(
     (r) => r.productId === product.id || (r.productName && r.productName.toLowerCase().includes(product.name.toLowerCase()))
@@ -400,7 +401,7 @@ export const ProductDetailPage: React.FC = () => {
               <div className="mt-0.5 text-center text-[11px] text-[#66704B]">
                 Need custom advice?{' '}
                 <a
-                  href={whatsappUrl}
+                  href={conciergeHelpUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[#183D27] font-bold hover:underline inline-flex items-center gap-1"
@@ -409,6 +410,9 @@ export const ProductDetailPage: React.FC = () => {
                   <span>Chat with Delhi Concierge</span>
                 </a>
               </div>
+
+              {/* Authorized Pan-India Platforms (Amazon & Flipkart) */}
+              <AmazonFlipkartBadge variant="full" className="mt-2" />
             </div>
           </div>
         </div>

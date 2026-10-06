@@ -9,10 +9,8 @@ import {
   Check,
   X,
   ArrowRight,
-  MessageCircle,
 } from 'lucide-react';
 import { SOURCING_STEPS } from '../data/content';
-import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
 
 export const WhyTitanPage: React.FC = () => {
   return (
@@ -237,15 +235,12 @@ export const WhyTitanPage: React.FC = () => {
               SHOP THE COLLECTION
             </Link>
 
-            <a
-              href={getGeneralConciergeWhatsAppUrl()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-6 py-3.5 rounded-xs bg-[#25D366] hover:bg-[#1EBE5D] text-[#10110F] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors"
+            <Link
+              to="/wellness-assessment"
+              className="px-6 py-3.5 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors border border-[#B88A32]/30"
             >
-              <MessageCircle className="w-4 h-4" />
-              <span>WHATSAPP CONCIERGE</span>
-            </a>
+              <span>WELLNESS ASSESSMENT</span>
+            </Link>
           </div>
         </div>
       </div>

@@ -100,7 +100,7 @@ export const AboutPage: React.FC = () => {
             className="px-6 py-3.5 rounded-xs bg-[#25D366] hover:bg-[#1EBE5D] text-[#10110F] font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-md transition-all shrink-0"
           >
             <MessageCircle className="w-4 h-4" />
-            <span>ORDER ON WHATSAPP</span>
+            <span>CONTACT SUPPORT</span>
           </a>
         </div>
       </div>

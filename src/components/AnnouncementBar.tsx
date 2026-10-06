@@ -18,7 +18,7 @@ export const AnnouncementBar: React.FC<AnnouncementBarProps> = ({
     { text: 'EXTRA Rs.50 OFF ON PREPAID ORDERS', highlight: true },
     { text: 'EXTRA Rs.50 OFF ON FIRST ORDER', highlight: true, code: 'FIRST50' },
     { text: 'FREE EXPRESS PAN-INDIA DELIVERY', highlight: false },
-    { text: 'DIRECT WHATSAPP CONCIERGE DISPATCH', highlight: false },
+    { text: 'SAME DAY DELHIVERY EXPRESS DISPATCH', highlight: false },
   ];
 
   if (variant === 'checkout') {

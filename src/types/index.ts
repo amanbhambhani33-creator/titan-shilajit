@@ -14,6 +14,31 @@ export interface ProductPack {
   isPopular?: boolean;
 }
 
+export interface ProductSizeVariant {
+  id: string;
+  name: string;
+  size: string;
+  price: number;
+  mrp?: number;
+  discount?: string;
+  image: string; // Distinct picture for this specific size
+  inStock?: boolean;
+  stockQty?: number;
+}
+
+export interface ReturnRequest {
+  id: string;
+  invoiceNumber: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string;
+  productName: string;
+  reason: string;
+  details?: string;
+  createdAt: string;
+  status: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -31,6 +56,7 @@ export interface Product {
   stockQty?: number;
   images: string[];
   packs?: ProductPack[];
+  sizeVariants?: ProductSizeVariant[];
   shortDescription: string;
   description: string;
   origin: string;

@@ -34,20 +34,20 @@ export const FloatingWhatsApp: React.FC = () => {
         </button>
       )}
 
-      {/* Sleek WhatsApp Button */}
+      {/* Sleek WhatsApp Support Button */}
       <a
         id="floating-whatsapp-trigger"
         href={getGeneralConciergeWhatsAppUrl()}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="Chat directly on WhatsApp with Titan Shilajit concierge"
+        aria-label="Chat directly on WhatsApp with Titan Shilajit helpdesk"
         className="w-12 h-12 sm:w-14 sm:h-14 bg-[#183D27] rounded-full flex items-center justify-center text-white shadow-2xl border-2 border-[#B88A32] hover:scale-105 hover:bg-[#10110F] transition-all group relative"
       >
         <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-[#F7F3E8] group-hover:text-[#25D366] transition-colors" />
 
         {/* Tooltip */}
         <span className="hidden sm:block absolute right-16 px-3 py-1.5 rounded-sm bg-[#10110F] text-[#F7F3E8] text-[10px] font-bold tracking-widest uppercase border border-[#B88A32]/30 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Order on WhatsApp
+          Help & Support
         </span>
       </a>
     </div>

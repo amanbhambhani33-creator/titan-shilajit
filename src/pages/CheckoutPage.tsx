@@ -1066,6 +1066,25 @@ export const CheckoutPage: React.FC = () => {
             id="titan-tax-invoice"
             className="bg-white rounded-sm border border-[#10110F]/15 p-6 sm:p-10 shadow-sm text-[#10110F] space-y-6"
           >
+            {/* Friendly Greeting Card on Bill */}
+            <div className="bg-[#183D27]/5 border-2 border-[#183D27]/25 rounded-xs p-4 sm:p-5 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl sm:text-4xl select-none" role="img" aria-label="smiling face">😊</span>
+                <div>
+                  <h3 className="font-serif font-bold text-lg sm:text-xl text-[#183D27]">
+                    Thank you for shopping with us! 😊
+                  </h3>
+                  <p className="text-xs text-[#66704B]">
+                    We truly appreciate your trust in pure Himalayan wellness. Your parcel is being packed and handed over to Delhivery Express.
+                  </p>
+                </div>
+              </div>
+              <div className="hidden sm:block text-right shrink-0">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-[#66704B] block">Official Invoice</span>
+                <span className="font-mono text-sm font-bold text-[#183D27]">{confirmedOrder.invoiceNumber}</span>
+              </div>
+            </div>
+
             {/* Invoice Top Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b-2 border-[#10110F] gap-4">
               <div>

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, Search, Menu, X, MessageCircle, ShieldCheck } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, ShieldCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { BRAND_CONTACT } from '../data/content';
-import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
 import { AnnouncementBar } from './AnnouncementBar';
+import { AmazonFlipkartBadge } from './AmazonFlipkartBadge';
 
 interface HeaderProps {
   onOpenSearch: () => void;
@@ -65,14 +65,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch }) => {
           <span className="text-[#F7F3E8] font-bold truncate">100% PURE HIMALAYAN RESIN</span>
           <span className="text-[#D4B66A] font-semibold hidden xs:inline">• 16,000+ FT •</span>
           <span className="text-[#F7F3E8] font-light hidden md:inline">FREE EXPRESS PAN-INDIA DELIVERY</span>
-          <a
-            href={getGeneralConciergeWhatsAppUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to="/shop"
             className="ml-1 text-[#D4B66A] hover:text-[#FFFFFF] underline font-bold tracking-wider transition-colors inline-flex items-center gap-1 shrink-0"
           >
-            <span>ORDER DIRECT</span>
-          </a>
+            <span>SHOP CATALOG</span>
+          </Link>
         </div>
 
         <div className="h-16 sm:h-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 flex items-center justify-between">
@@ -147,17 +145,14 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch }) => {
               )}
             </button>
 
-            {/* WhatsApp Order Button */}
-            <a
-              id="header-whatsapp-order-btn"
-              href={getGeneralConciergeWhatsAppUrl()}
-              target="_blank"
-              rel="noopener noreferrer"
+            {/* Shop Catalog Action Button */}
+            <Link
+              to="/shop"
               className="hidden sm:flex bg-[#183D27] text-[#F7F3E8] px-4 py-2 text-[10px] font-bold tracking-widest uppercase rounded-sm hover:bg-[#10110F] transition-all shadow-xs items-center gap-1.5 min-h-[38px]"
             >
-              <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
-              <span>Order on WhatsApp</span>
-            </a>
+              <ShoppingBag className="w-3.5 h-3.5 text-[#D4B66A]" />
+              <span>SHOP NOW</span>
+            </Link>
 
             {/* Mobile Hamburger */}
             <button
@@ -218,15 +213,14 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch }) => {
           </div>
 
           <div className="flex flex-col gap-3 pt-6 mt-6 border-t border-white/15">
-            <a
-              href={getGeneralConciergeWhatsAppUrl()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-3.5 rounded-sm bg-[#25D366] text-[#10110F] font-sans text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2 shadow-lg min-h-[44px]"
+            <Link
+              to="/shop"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full py-3.5 rounded-sm bg-[#B88A32] text-[#10110F] font-sans text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2 shadow-lg min-h-[44px]"
             >
-              <MessageCircle className="w-4 h-4" />
-              <span>Order via WhatsApp ({BRAND_CONTACT.phoneDisplay})</span>
-            </a>
+              <ShoppingBag className="w-4 h-4" />
+              <span>SHOP THE CATALOG</span>
+            </Link>
 
             <div className="text-center text-[11px] text-[#EEE8D7]/60 pt-2 font-sans">
               Delhi, India • 100% Pure Himalayan Shilajit

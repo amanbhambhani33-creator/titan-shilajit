@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { MessageCircle, Eye, Star, ShoppingBag, Check, Plus, Minus, Ban } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Eye, Star, ShoppingBag, Check, Plus, Minus, Ban, Zap } from 'lucide-react';
 import { Product, ProductPack } from '../types';
-import { getProductWhatsAppUrl } from '../utils/whatsapp';
 import { useCart } from '../context/CartContext';
 import { getProductPacks, getPackShortBadge, getPackShortName, getPackShortQuantity } from '../utils/productPacks';
 
@@ -17,6 +16,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onQuickView,
   isHomeScreen = false,
 }) => {
+  const navigate = useNavigate();
   const { addToCart, getItemQuantity } = useCart();
   const packs = getProductPacks(product);
 
@@ -56,8 +56,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     setIsAddedToast(true);
     setTimeout(() => setIsAddedToast(false), 2000);
   };
-
-  const whatsappUrl = getProductWhatsAppUrl(product, quantity, currentPack);
 
   return (
     <div
@@ -375,17 +373,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   )}
                 </button>
 
-                <a
-                  id={`buy-whatsapp-${product.slug}-${currentPack.id}`}
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`Order ${product.name} on WhatsApp`}
-                  className="py-2.5 px-2 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] text-[10px] sm:text-[11px] font-bold tracking-wider uppercase flex items-center justify-center gap-1.5 shadow-xs transition-all min-h-[42px]"
+                <button
+                  type="button"
+                  onClick={() => {
+                    addToCart(product, quantity, currentPack, 'set');
+                    navigate('/checkout');
+                  }}
+                  aria-label={`Buy ${product.name} ${currentPack.name} now`}
+                  className="py-2.5 px-2 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] text-[10px] sm:text-[11px] font-bold tracking-wider uppercase flex items-center justify-center gap-1.5 shadow-xs transition-all min-h-[42px] cursor-pointer"
                 >
-                  <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
-                  <span>WHATSAPP</span>
-                </a>
+                  <Zap className="w-3.5 h-3.5 text-[#D4B66A]" />
+                  <span>BUY NOW</span>
+                </button>
               </>
             )}
           </div>

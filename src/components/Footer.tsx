@@ -1,18 +1,43 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle, Instagram, MapPin, Phone, Mail, ShieldCheck, Settings } from 'lucide-react';
+import { MessageCircle, Instagram, MapPin, Phone, Mail, ShieldCheck, Settings, RotateCcw } from 'lucide-react';
 import { BRAND_CONTACT } from '../data/content';
 import { useStoreContent } from '../context/StoreContentContext';
 import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
+import { ReturnProductModal } from './ReturnProductModal';
+import { AmazonFlipkartBadge } from './AmazonFlipkartBadge';
 
 export const Footer: React.FC = () => {
   const { content } = useStoreContent();
   const footerConfig = content.footer;
+  const [returnModalOpen, setReturnModalOpen] = useState(false);
 
   return (
-    <footer id="main-footer" className="bg-[#10110F] text-[#F7F3E8] border-t border-[#B88A32]/20 pt-16 pb-12">
-      <div className="max-w-7xl mx-auto px-6 lg:px-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-16 border-b border-white/10">
+    <>
+      <footer id="main-footer" className="bg-[#10110F] text-[#F7F3E8] border-t border-[#B88A32]/20 pt-16 pb-12">
+        <div className="max-w-7xl mx-auto px-6 lg:px-10">
+          {/* We are on Amazon and Flipkart as well Trust Banner */}
+          <div className="mb-14 p-5 rounded-sm bg-white/5 border border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-full bg-[#183D27] text-[#D4B66A] flex items-center justify-center shrink-0 border border-[#B88A32]/40">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#D4B66A]">
+                  AUTHORIZED PAN-INDIA PLATFORMS
+                </span>
+                <h4 className="font-serif text-base sm:text-lg font-bold text-[#F7F3E8] mt-0.5">
+                  We are on Amazon and Flipkart as well
+                </h4>
+                <p className="text-xs text-[#EEE8D7]/70 font-light">
+                  Order directly here with Free Delivery & live Delhivery tracking, or find Titan Shilajit on leading marketplaces.
+                </p>
+              </div>
+            </div>
+            <AmazonFlipkartBadge variant="compact" className="bg-white/95 text-[#10110F]" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-16 border-b border-white/10">
           {/* Brand Col */}
           <div className="lg:col-span-2 flex flex-col gap-5">
             <Link to="/" className="flex items-center gap-2.5">
@@ -162,6 +187,16 @@ export const Footer: React.FC = () => {
                 </a>
               </li>
               <li>
+                <button
+                  type="button"
+                  onClick={() => setReturnModalOpen(true)}
+                  className="hover:text-[#D4B66A] transition-colors flex items-center gap-1.5 text-[#D4B66A] font-medium cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-[#D4B66A]" />
+                  <span>Want to Return Product?</span>
+                </button>
+              </li>
+              <li>
                 <Link to="/shipping-policy" className="hover:text-[#D4B66A] transition-colors">
                   Shipping Policy
                 </Link>
@@ -225,10 +260,17 @@ export const Footer: React.FC = () => {
             <span>•</span>
             <span>Lab Verified Purity</span>
             <span>•</span>
-            <span>Direct WhatsApp Delivery</span>
+            <span>Delhivery Express Pan-India</span>
           </p>
         </div>
       </div>
     </footer>
+
+    {/* Return Product Request Modal */}
+    <ReturnProductModal
+      isOpen={returnModalOpen}
+      onClose={() => setReturnModalOpen(false)}
+    />
+  </>
   );
 };

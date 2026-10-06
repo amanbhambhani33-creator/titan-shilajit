@@ -1,8 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle, ArrowRight, ShieldCheck, Zap, Award } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Zap, Award } from 'lucide-react';
 import { useStoreContent } from '../context/StoreContentContext';
-import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
 
 export const LaunchProductBanner: React.FC = () => {
   const { content } = useStoreContent();
@@ -78,23 +77,20 @@ export const LaunchProductBanner: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-                  <a
-                    id="launch-banner-whatsapp-cta"
-                    href={getGeneralConciergeWhatsAppUrl()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-6 sm:px-8 py-3.5 rounded-sm bg-[#25D366] hover:bg-[#1EBE5D] text-[#10110F] font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg transition-all min-h-[44px]"
+                  <Link
+                    id="launch-banner-shop-cta"
+                    to="/shop"
+                    className="px-6 sm:px-8 py-3.5 rounded-sm bg-[#B88A32] hover:bg-[#D4B66A] text-[#10110F] font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg transition-all min-h-[44px]"
                   >
-                    <MessageCircle className="w-4 h-4 shrink-0" />
-                    <span>{banner.buttonText || 'Order via WhatsApp'}</span>
-                  </a>
+                    <span>ACQUIRE LIMITED RESERVE</span>
+                    <ArrowRight className="w-4 h-4 shrink-0" />
+                  </Link>
 
                   <Link
-                    to="/shop"
+                    to="/product/titan-shilajit-resin"
                     className="px-6 py-3.5 rounded-sm border border-[#F7F3E8]/30 hover:bg-white/10 text-[#F7F3E8] font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all min-h-[44px]"
                   >
-                    <span>View Shop</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <span>Product Details</span>
                   </Link>
                 </div>
               </div>

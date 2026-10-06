@@ -2,7 +2,6 @@ import React, { useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Zap, ShoppingBag, Star, ShieldCheck } from 'lucide-react';
 import { useStoreContent, DEFAULT_PRODUCT_BENEFITS } from '../context/StoreContentContext';
 import { useCart } from '../context/CartContext';
-import { getProductWhatsAppUrl } from '../utils/whatsapp';
 
 export const BenefitsSection: React.FC = () => {
   const { content, products } = useStoreContent();
@@ -202,19 +201,11 @@ export const BenefitsSection: React.FC = () => {
                   addToCart(primaryProduct, 1);
                   openCart();
                 }}
-                className="flex-1 md:flex-initial px-5 py-3 rounded-xl bg-[#183D27] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider hover:bg-[#10110F] transition-colors flex items-center justify-center gap-2 shadow-sm"
+                className="w-full md:w-auto px-7 py-3 rounded-xl bg-[#183D27] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider hover:bg-[#10110F] transition-colors flex items-center justify-center gap-2 shadow-sm"
               >
                 <ShoppingBag className="w-4 h-4 text-[#D4B66A]" />
                 <span>Add To Cart</span>
               </button>
-              <a
-                href={getProductWhatsAppUrl(primaryProduct, 1)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 md:flex-initial px-5 py-3 rounded-xl bg-[#25D366] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#1EBE5D] transition-colors flex items-center justify-center gap-2 shadow-sm text-center"
-              >
-                <span>Order on WhatsApp</span>
-              </a>
             </div>
           </div>
         )}

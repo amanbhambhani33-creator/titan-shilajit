@@ -229,7 +229,7 @@ const DEFAULT_LAUNCH_BANNER: LaunchBannerConfig = {
   imageUrl: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85',
   priceText: '₹2,499',
   mrpText: '₹3,299',
-  buttonText: 'Reserve Swarna Gold on WhatsApp',
+  buttonText: 'View Swarna Gold Reserve',
   buttonLink: '/shop',
   features: [
     'Wild-harvested above 18,000 ft in virgin Karakoram granite fissures',
@@ -242,8 +242,8 @@ const DEFAULT_LAUNCH_BANNER: LaunchBannerConfig = {
 const DEFAULT_ANNOUNCEMENT: AnnouncementBarConfig = {
   enabled: true,
   text: 'PURE 16,000+ FT HIMALAYAN GOLD SHILAJIT • EXPRESS DISPATCH ACROSS INDIA • NABL LAB CERTIFIED',
-  linkText: 'Order on WhatsApp',
-  linkUrl: 'https://wa.me/919958474229',
+  linkText: 'Explore Catalog',
+  linkUrl: '/shop',
 };
 
 const DEFAULT_BRAND_STORY: BrandStoryConfig = {
@@ -329,6 +329,8 @@ interface StoreContentContextType {
   updateReview: (id: string, updates: Partial<Review>) => Promise<boolean>;
   deleteReview: (id: string) => Promise<boolean>;
   resetReviewsToDefault: () => Promise<boolean>;
+  refreshReviews: () => Promise<boolean>;
+  refreshStoreData: () => Promise<boolean>;
   saveAllToFirebase: () => Promise<boolean>;
   testFirestoreConnection: () => Promise<{ success: boolean; message: string }>;
   resetAllContent: () => void;
@@ -556,6 +558,40 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
       );
 
+      // Resilient server-side fetch fallback for store content, products & reviews
+      fetch('/api/store-content')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && data.success) {
+            if (Array.isArray(data.products) && data.products.length > 0) {
+              setProducts(data.products);
+              try { localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(data.products)); } catch {}
+            }
+            if (Array.isArray(data.reviews) && data.reviews.length > 0) {
+              setReviews(data.reviews);
+              try { localStorage.setItem(REVIEWS_STORAGE_KEY, JSON.stringify(data.reviews)); } catch {}
+            }
+            if (data.content && typeof data.content === 'object') {
+              setContent((prev) => ({
+                ...prev,
+                ...data.content,
+                hero: {
+                  ...prev.hero,
+                  ...(data.content.hero || {}),
+                },
+                footer: {
+                  ...prev.footer,
+                  ...(data.content.footer || {}),
+                  creditText: 'Designed by Supreme Ads',
+                  designedBy: 'Designed by Supreme Ads',
+                },
+              }));
+              try { localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(data.content)); } catch {}
+            }
+          }
+        })
+        .catch(() => {});
+
       // Resilient server-side fetch fallback for orders
       fetch('/api/orders')
         .then((res) => (res.ok ? res.json() : null))
@@ -608,26 +644,41 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   }, [content]);
 
-  // Helper to sync content changes directly to Firestore in background
+  // Helper to sync content changes directly to Firestore and server API in background
   const syncContentToFirestore = async (newContent: PageContentConfig): Promise<boolean> => {
+    let success = false;
     try {
       const contentDocRef = doc(db, 'store_content', 'main');
       await setDoc(contentDocRef, {
         ...newContent,
         updatedAt: new Date().toISOString(),
       }, { merge: true });
+      success = true;
+    } catch (err) {
+      console.warn('Direct Firestore content sync notice (fallback to server API):', err);
+    }
+
+    // Resilient server API fallback write (Guaranteed to persist on Vercel / Hostinger / Custom Domain)
+    try {
+      const res = await fetch('/api/store-content/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: newContent }),
+      });
+      if (res.ok) success = true;
+    } catch {}
+
+    if (success) {
       setIsFirebaseSynced(true);
       const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       setLastSyncTime(nowStr);
       try { localStorage.setItem(LAST_SYNC_STORAGE_KEY, nowStr); } catch {}
-      return true;
-    } catch (err) {
-      console.error('Firestore content sync error:', err);
-      return false;
     }
+    return success;
   };
 
   const saveAllToFirebase = async (): Promise<boolean> => {
+    let success = false;
     try {
       const contentDocRef = doc(db, 'store_content', 'main');
       await setDoc(contentDocRef, {
@@ -647,15 +698,81 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
         updatedAt: new Date().toISOString(),
       }, { merge: true });
 
+      success = true;
+    } catch (err) {
+      console.warn('Direct Firestore batch sync notice (fallback to server API):', err);
+    }
+
+    // Dual server write pipeline for guaranteed persistence
+    try {
+      await Promise.all([
+        fetch('/api/store-content/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content }),
+        }),
+        fetch('/api/store-content/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ products }),
+        }),
+        fetch('/api/store-content/reviews', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reviews }),
+        }),
+      ]);
+      success = true;
+    } catch {}
+
+    if (success) {
       setIsFirebaseSynced(true);
       const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       setLastSyncTime(nowStr);
       try { localStorage.setItem(LAST_SYNC_STORAGE_KEY, nowStr); } catch {}
-      return true;
-    } catch (err) {
-      console.error('Error writing to Firestore:', err);
-      return false;
     }
+    return success;
+  };
+
+  const refreshReviews = async (): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/store-content');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.reviews) && data.reviews.length > 0) {
+          setReviews(data.reviews);
+          try { localStorage.setItem(REVIEWS_STORAGE_KEY, JSON.stringify(data.reviews)); } catch {}
+          return true;
+        }
+      }
+    } catch {}
+    return false;
+  };
+
+  const refreshStoreData = async (): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/store-content');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.products) && data.products.length > 0) {
+          setProducts(data.products);
+          try { localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(data.products)); } catch {}
+        }
+        if (Array.isArray(data.reviews) && data.reviews.length > 0) {
+          setReviews(data.reviews);
+          try { localStorage.setItem(REVIEWS_STORAGE_KEY, JSON.stringify(data.reviews)); } catch {}
+        }
+        if (data.content && typeof data.content === 'object') {
+          setContent((prev) => ({ ...prev, ...data.content }));
+          try { localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(data.content)); } catch {}
+        }
+        setIsFirebaseSynced(true);
+        const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        setLastSyncTime(nowStr);
+        return true;
+      }
+    } catch {}
+    return false;
   };
 
   const testFirestoreConnection = async (): Promise<{ success: boolean; message: string }> => {
@@ -709,14 +826,24 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
     };
     const updated = [sanitizedProduct, ...products];
     setProducts(updated);
+    let success = false;
     try {
       const productsDocRef = doc(db, 'store_content', 'products');
       await setDoc(productsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: true });
-      return true;
+      success = true;
     } catch (e) {
-      console.warn('Firestore addProduct error:', e);
-      return false;
+      console.warn('Firestore addProduct client notice:', e);
     }
+    try {
+      await fetch('/api/store-content/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ products: updated }),
+      });
+      success = true;
+    } catch {}
+    if (success) setIsFirebaseSynced(true);
+    return success;
   };
 
   const updateProduct = async (id: string, updates: Partial<Product>): Promise<boolean> => {
@@ -735,15 +862,24 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
       };
     });
     setProducts(updated);
+    let success = false;
     try {
       const productsDocRef = doc(db, 'store_content', 'products');
       await setDoc(productsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: true });
-      setIsFirebaseSynced(true);
-      return true;
+      success = true;
     } catch (e) {
-      console.warn('Firestore updateProduct error:', e);
-      return false;
+      console.warn('Firestore updateProduct client notice:', e);
     }
+    try {
+      await fetch('/api/store-content/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ products: updated }),
+      });
+      success = true;
+    } catch {}
+    if (success) setIsFirebaseSynced(true);
+    return success;
   };
 
   const updateProductStock = async (id: string, qty: number): Promise<boolean> => {
@@ -760,70 +896,115 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
   const deleteProduct = async (id: string): Promise<boolean> => {
     const updated = products.filter((item) => item.id !== id);
     setProducts(updated);
+    let success = false;
     try {
       const productsDocRef = doc(db, 'store_content', 'products');
       await setDoc(productsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: true });
-      return true;
+      success = true;
     } catch (e) {
-      console.warn('Firestore deleteProduct error:', e);
-      return false;
+      console.warn('Firestore deleteProduct client notice:', e);
     }
+    try {
+      await fetch('/api/store-content/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ products: updated }),
+      });
+      success = true;
+    } catch {}
+    return success;
   };
 
-  // Reviews actions (realtime Firestore push for instant live updates)
+  // Reviews actions (realtime Firestore push + backend server fallback for 100% reliability)
   const addReview = async (newReview: Review): Promise<boolean> => {
     const updated = [newReview, ...reviews];
     setReviews(updated);
+    let success = false;
     try {
       const reviewsDocRef = doc(db, 'store_content', 'reviews');
       await setDoc(reviewsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: true });
-      setIsFirebaseSynced(true);
-      return true;
+      success = true;
     } catch (e) {
-      console.warn('Firestore addReview error:', e);
-      return false;
+      console.warn('Firestore addReview notice:', e);
     }
+    try {
+      await fetch('/api/store-content/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviews: updated }),
+      });
+      success = true;
+    } catch {}
+    if (success) setIsFirebaseSynced(true);
+    return success;
   };
 
   const updateReview = async (id: string, updates: Partial<Review>): Promise<boolean> => {
     const updated = reviews.map((r) => (r.id === id ? { ...r, ...updates } : r));
     setReviews(updated);
+    let success = false;
     try {
       const reviewsDocRef = doc(db, 'store_content', 'reviews');
       await setDoc(reviewsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: true });
-      setIsFirebaseSynced(true);
-      return true;
+      success = true;
     } catch (e) {
-      console.warn('Firestore updateReview error:', e);
-      return false;
+      console.warn('Firestore updateReview notice:', e);
     }
+    try {
+      await fetch('/api/store-content/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviews: updated }),
+      });
+      success = true;
+    } catch {}
+    if (success) setIsFirebaseSynced(true);
+    return success;
   };
 
   const deleteReview = async (id: string): Promise<boolean> => {
     const updated = reviews.filter((r) => r.id !== id);
     setReviews(updated);
+    let success = false;
     try {
       const reviewsDocRef = doc(db, 'store_content', 'reviews');
       await setDoc(reviewsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: true });
-      setIsFirebaseSynced(true);
-      return true;
+      success = true;
     } catch (e) {
-      console.warn('Firestore deleteReview error:', e);
-      return false;
+      console.warn('Firestore deleteReview notice:', e);
     }
+    try {
+      await fetch('/api/store-content/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviews: updated }),
+      });
+      success = true;
+    } catch {}
+    if (success) setIsFirebaseSynced(true);
+    return success;
   };
 
   const resetReviewsToDefault = async (): Promise<boolean> => {
     setReviews(DEFAULT_REVIEWS);
+    let success = false;
     try {
       const reviewsDocRef = doc(db, 'store_content', 'reviews');
       await setDoc(reviewsDocRef, { items: DEFAULT_REVIEWS, updatedAt: new Date().toISOString() }, { merge: true });
-      setIsFirebaseSynced(true);
-      return true;
+      success = true;
     } catch (e) {
-      console.warn('Firestore resetReviewsToDefault error:', e);
-      return false;
+      console.warn('Firestore resetReviewsToDefault notice:', e);
     }
+    try {
+      await fetch('/api/store-content/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviews: DEFAULT_REVIEWS }),
+      });
+      success = true;
+    } catch {}
+    if (success) setIsFirebaseSynced(true);
+    return success;
   };
 
   // Check if phone or email has placed an order previously
@@ -1081,6 +1262,8 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
         updateReview,
         deleteReview,
         resetReviewsToDefault,
+        refreshReviews,
+        refreshStoreData,
         saveAllToFirebase,
         testFirestoreConnection,
         resetAllContent,

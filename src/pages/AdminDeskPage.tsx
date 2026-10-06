@@ -37,7 +37,8 @@ import {
 } from 'lucide-react';
 import { useStoreContent, HeroBannerConfig, LaunchBannerConfig, BrandStoryConfig } from '../context/StoreContentContext';
 import { useAuth } from '../context/AuthContext';
-import { Product, Review } from '../types';
+import { Product, Review, ProductPack } from '../types';
+import { getProductPacks } from '../utils/productPacks';
 import { AdminLoginGate } from '../components/AdminLoginGate';
 import { AdminRBACSection } from '../components/AdminRBACSection';
 import { AdminQualityTrustSection } from '../components/AdminQualityTrustSection';
@@ -90,8 +91,11 @@ export const AdminDeskPage: React.FC = () => {
     triggerSplash,
     reviews,
     addReview,
+    updateReview,
     deleteReview,
     resetReviewsToDefault,
+    refreshReviews,
+    refreshStoreData,
   } = useStoreContent();
 
   const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'quality' | 'developer' | 'rbac' | 'settings' | 'orders' | 'reviews'>('products');
@@ -1199,8 +1203,10 @@ export const AdminDeskPage: React.FC = () => {
             reviews={reviews}
             products={products}
             addReview={addReview}
+            updateReview={updateReview}
             deleteReview={deleteReview}
             resetReviewsToDefault={resetReviewsToDefault}
+            refreshReviews={refreshReviews}
             showToast={showToast}
           />
         )}
@@ -1807,6 +1813,219 @@ export const AdminDeskPage: React.FC = () => {
                       In Stock (Visible for sale on storefront)
                     </span>
                   </label>
+                </div>
+              </div>
+
+              {/* SIZES, PRICES & DISTINCT PICTURE PER SIZE CUSTOMIZER */}
+              <div className="pt-4 border-t border-[#10110F]/15 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[#183D27] bg-[#183D27]/10 px-2 py-0.5 rounded-xs">
+                      SIZE &amp; VARIANT CONFIGURATION
+                    </span>
+                    <h4 className="font-serif text-sm font-bold text-[#10110F] mt-1">
+                      Custom Size, Price &amp; Distinct Photo for Each Size
+                    </h4>
+                    <p className="text-[11px] text-[#66704B]">
+                      Every size has its own price and photo. When customers pick a size on the store, the picture and price switch automatically.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const currentPacks = (editingProduct.packs && editingProduct.packs.length > 0)
+                        ? [...editingProduct.packs]
+                        : getProductPacks(editingProduct);
+                      const newPack: ProductPack = {
+                        id: `custom-pack-${Date.now()}` as any,
+                        name: `Pack (${currentPacks.length + 1})`,
+                        label: `Pack ${currentPacks.length + 1}`,
+                        quantityText: 'Custom Size',
+                        price: editingProduct.price,
+                        mrp: editingProduct.mrp || Math.round(editingProduct.price * 1.4),
+                        discount: '25% OFF',
+                        image: editingProduct.images[0] || 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85',
+                        badge: 'SPECIAL PACK',
+                        savings: 'Save ₹500',
+                      };
+                      setEditingProduct({ ...editingProduct, packs: [...currentPacks, newPack] });
+                    }}
+                    className="px-3 py-1.5 rounded-xs bg-[#183D27] text-[#D4B66A] text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 self-start sm:self-auto cursor-pointer shadow-xs"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Add Size Variant</span>
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {((editingProduct.packs && editingProduct.packs.length > 0) ? editingProduct.packs : getProductPacks(editingProduct)).map((pack, pIdx) => (
+                    <div key={pIdx} className="p-3.5 rounded-xs bg-[#F7F3E8] border border-[#10110F]/15 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-[#183D27] text-[#D4B66A] text-[10px] font-bold flex items-center justify-center">
+                            {pIdx + 1}
+                          </span>
+                          <span className="text-xs font-bold text-[#10110F] uppercase">
+                            {pack.name || `Size Variant ${pIdx + 1}`}
+                          </span>
+                        </div>
+                        {((editingProduct.packs || []).length > 1) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = (editingProduct.packs || []).filter((_, i) => i !== pIdx);
+                              setEditingProduct({ ...editingProduct, packs: updated });
+                            }}
+                            className="text-[10px] text-red-600 hover:text-red-800 font-bold uppercase flex items-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>Remove</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-[#66704B] mb-0.5">Size / Pack Name</label>
+                          <input
+                            type="text"
+                            value={pack.name}
+                            onChange={(e) => {
+                              const current = (editingProduct.packs && editingProduct.packs.length > 0) ? [...editingProduct.packs] : getProductPacks(editingProduct);
+                              current[pIdx] = { ...current[pIdx], name: e.target.value };
+                              setEditingProduct({ ...editingProduct, packs: current });
+                            }}
+                            className="w-full px-2 py-1.5 rounded-xs border border-[#10110F]/20 text-xs bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-[#66704B] mb-0.5">Quantity / Size Tag</label>
+                          <input
+                            type="text"
+                            value={pack.quantityText}
+                            onChange={(e) => {
+                              const current = (editingProduct.packs && editingProduct.packs.length > 0) ? [...editingProduct.packs] : getProductPacks(editingProduct);
+                              current[pIdx] = { ...current[pIdx], quantityText: e.target.value };
+                              setEditingProduct({ ...editingProduct, packs: current });
+                            }}
+                            className="w-full px-2 py-1.5 rounded-xs border border-[#10110F]/20 text-xs bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-[#66704B] mb-0.5">Badge Text</label>
+                          <input
+                            type="text"
+                            value={pack.badge || ''}
+                            onChange={(e) => {
+                              const current = (editingProduct.packs && editingProduct.packs.length > 0) ? [...editingProduct.packs] : getProductPacks(editingProduct);
+                              current[pIdx] = { ...current[pIdx], badge: e.target.value };
+                              setEditingProduct({ ...editingProduct, packs: current });
+                            }}
+                            className="w-full px-2 py-1.5 rounded-xs border border-[#10110F]/20 text-xs bg-white"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-[#66704B] mb-0.5">Price (₹)</label>
+                          <input
+                            type="number"
+                            value={pack.price}
+                            onChange={(e) => {
+                              const current = (editingProduct.packs && editingProduct.packs.length > 0) ? [...editingProduct.packs] : getProductPacks(editingProduct);
+                              current[pIdx] = { ...current[pIdx], price: Number(e.target.value) };
+                              setEditingProduct({ ...editingProduct, packs: current });
+                            }}
+                            className="w-full px-2 py-1.5 rounded-xs border border-[#10110F]/20 text-xs font-bold bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-[#66704B] mb-0.5">MRP (₹)</label>
+                          <input
+                            type="number"
+                            value={pack.mrp}
+                            onChange={(e) => {
+                              const current = (editingProduct.packs && editingProduct.packs.length > 0) ? [...editingProduct.packs] : getProductPacks(editingProduct);
+                              current[pIdx] = { ...current[pIdx], mrp: Number(e.target.value) };
+                              setEditingProduct({ ...editingProduct, packs: current });
+                            }}
+                            className="w-full px-2 py-1.5 rounded-xs border border-[#10110F]/20 text-xs bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-[#66704B] mb-0.5">Discount Tag</label>
+                          <input
+                            type="text"
+                            value={pack.discount || ''}
+                            onChange={(e) => {
+                              const current = (editingProduct.packs && editingProduct.packs.length > 0) ? [...editingProduct.packs] : getProductPacks(editingProduct);
+                              current[pIdx] = { ...current[pIdx], discount: e.target.value };
+                              setEditingProduct({ ...editingProduct, packs: current });
+                            }}
+                            className="w-full px-2 py-1.5 rounded-xs border border-[#10110F]/20 text-xs bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-[#66704B] mb-0.5">Savings Tag</label>
+                          <input
+                            type="text"
+                            value={pack.savings || ''}
+                            onChange={(e) => {
+                              const current = (editingProduct.packs && editingProduct.packs.length > 0) ? [...editingProduct.packs] : getProductPacks(editingProduct);
+                              current[pIdx] = { ...current[pIdx], savings: e.target.value };
+                              setEditingProduct({ ...editingProduct, packs: current });
+                            }}
+                            className="w-full px-2 py-1.5 rounded-xs border border-[#10110F]/20 text-xs bg-white"
+                          />
+                        </div>
+                      </div>
+
+                      {/* DISTINCT PHOTO FOR THIS SPECIFIC SIZE */}
+                      <div className="pt-2 border-t border-black/10">
+                        <label className="block text-[10px] font-bold uppercase text-[#183D27] mb-1">
+                          Distinct Photo For This Specific Size (URL)
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xs border border-black/20 overflow-hidden shrink-0 bg-black/10">
+                            <img
+                              src={pack.image || editingProduct.images[0]}
+                              alt={pack.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <input
+                            type="url"
+                            placeholder="https://..."
+                            value={pack.image}
+                            onChange={(e) => {
+                              const current = (editingProduct.packs && editingProduct.packs.length > 0) ? [...editingProduct.packs] : getProductPacks(editingProduct);
+                              current[pIdx] = { ...current[pIdx], image: e.target.value };
+                              setEditingProduct({ ...editingProduct, packs: current });
+                            }}
+                            className="flex-1 px-2.5 py-1.5 rounded-xs border border-[#10110F]/20 text-xs bg-white"
+                          />
+                          <div className="flex items-center gap-1 shrink-0">
+                            {editingProduct.images.slice(0, 3).map((img, iIdx) => (
+                              <button
+                                key={iIdx}
+                                type="button"
+                                title={`Use product gallery photo ${iIdx + 1}`}
+                                onClick={() => {
+                                  const current = (editingProduct.packs && editingProduct.packs.length > 0) ? [...editingProduct.packs] : getProductPacks(editingProduct);
+                                  current[pIdx] = { ...current[pIdx], image: img };
+                                  setEditingProduct({ ...editingProduct, packs: current });
+                                }}
+                                className="w-7 h-7 rounded-xs border overflow-hidden hover:border-[#183D27] cursor-pointer"
+                              >
+                                <img src={img} alt="" className="w-full h-full object-cover" />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 

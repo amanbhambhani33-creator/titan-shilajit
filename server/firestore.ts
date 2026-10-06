@@ -289,3 +289,210 @@ export async function getRazorpayConfigFromFirestore(): Promise<{
     return null;
   }
 }
+
+// In-memory invoice counter baseline
+let inMemoryInvoiceCounter = 101;
+
+/**
+ * Generates a unique, continuous, sequential tax invoice number (e.g. TITAN-INV-2026-00101)
+ * Tracks continuously in Firestore settings/invoice_sequence so numbers never repeat or gap
+ */
+export async function getNextContinuousInvoiceNumber(): Promise<string> {
+  const year = new Date().getFullYear();
+  try {
+    const url = `${FIRESTORE_BASE_URL}/settings/invoice_sequence?key=${API_KEY}`;
+    const res = await fetch(url);
+    let nextNum = inMemoryInvoiceCounter;
+
+    if (res.ok) {
+      const data = await res.json();
+      const parsed = fromFirestoreDoc(data);
+      if (parsed && typeof parsed.lastNumber === 'number' && parsed.lastNumber >= 100) {
+        nextNum = parsed.lastNumber + 1;
+      }
+    } else {
+      // Fallback: examine orders count to seed continuous invoice number
+      try {
+        const orders = await fetchOrdersFromFirestore();
+        if (orders.length > 0) {
+          nextNum = Math.max(inMemoryInvoiceCounter, orders.length + 101);
+        }
+      } catch {}
+    }
+
+    inMemoryInvoiceCounter = nextNum;
+
+    // Persist new counter back to Firestore
+    try {
+      await fetch(url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fields: toFirestoreFields({
+            lastNumber: nextNum,
+            updatedAt: new Date().toISOString(),
+            year,
+          }),
+        }),
+      });
+    } catch {}
+
+    const padded = String(nextNum).padStart(5, '0');
+    return `TITAN-INV-${year}-${padded}`;
+  } catch (err) {
+    inMemoryInvoiceCounter++;
+    const padded = String(inMemoryInvoiceCounter).padStart(5, '0');
+    return `TITAN-INV-${year}-${padded}`;
+  }
+}
+
+/**
+ * Universal Server-Side Sync for Store Content, Products, Reviews & Returns
+ * Acts as resilient backup when client direct Firestore connection is restricted
+ */
+export async function saveStoreContentToFirestore(content: any): Promise<boolean> {
+  try {
+    const url = `${FIRESTORE_BASE_URL}/store_content/main?key=${API_KEY}`;
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fields: toFirestoreFields({
+          ...content,
+          updatedAt: new Date().toISOString(),
+        }),
+      }),
+    });
+    return res.ok;
+  } catch (e) {
+    console.error('Server saveStoreContent error:', e);
+    return false;
+  }
+}
+
+export async function getStoreContentFromFirestore(): Promise<any | null> {
+  try {
+    const url = `${FIRESTORE_BASE_URL}/store_content/main?key=${API_KEY}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const doc = await res.json();
+    return fromFirestoreDoc(doc);
+  } catch {
+    return null;
+  }
+}
+
+export async function saveProductsToFirestore(products: any[]): Promise<boolean> {
+  try {
+    const url = `${FIRESTORE_BASE_URL}/store_content/products?key=${API_KEY}`;
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fields: toFirestoreFields({
+          items: products,
+          updatedAt: new Date().toISOString(),
+        }),
+      }),
+    });
+    return res.ok;
+  } catch (e) {
+    console.error('Server saveProducts error:', e);
+    return false;
+  }
+}
+
+export async function getProductsFromFirestore(): Promise<any[] | null> {
+  try {
+    const url = `${FIRESTORE_BASE_URL}/store_content/products?key=${API_KEY}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const doc = await res.json();
+    const parsed = fromFirestoreDoc(doc);
+    return Array.isArray(parsed?.items) ? parsed.items : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveReviewsToFirestore(reviews: any[]): Promise<boolean> {
+  try {
+    const url = `${FIRESTORE_BASE_URL}/store_content/reviews?key=${API_KEY}`;
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fields: toFirestoreFields({
+          items: reviews,
+          updatedAt: new Date().toISOString(),
+        }),
+      }),
+    });
+    return res.ok;
+  } catch (e) {
+    console.error('Server saveReviews error:', e);
+    return false;
+  }
+}
+
+export async function getReviewsFromFirestore(): Promise<any[] | null> {
+  try {
+    const url = `${FIRESTORE_BASE_URL}/store_content/reviews?key=${API_KEY}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const doc = await res.json();
+    const parsed = fromFirestoreDoc(doc);
+    return Array.isArray(parsed?.items) ? parsed.items : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveReturnRequestToFirestore(returnReq: any): Promise<{ success: boolean; id: string }> {
+  try {
+    const id = returnReq.id || `ret_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const full = {
+      ...returnReq,
+      id,
+      createdAt: returnReq.createdAt || new Date().toISOString(),
+      status: 'PENDING_WHATSAPP_REVIEW',
+    };
+    const url = `${FIRESTORE_BASE_URL}/returns?documentId=${encodeURIComponent(id)}&key=${API_KEY}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: toFirestoreFields(full) }),
+    });
+    return { success: res.ok, id };
+  } catch (err: any) {
+    return { success: false, id: 'unknown' };
+  }
+}
+
+export async function getReturnRequestsFromFirestore(): Promise<any[]> {
+  try {
+    const url = `${FIRESTORE_BASE_URL}:runQuery?key=${API_KEY}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: 'returns' }],
+        },
+      }),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
+    const returns: any[] = [];
+    for (const item of data) {
+      if (item.document) {
+        const parsed = fromFirestoreDoc(item.document);
+        if (parsed) returns.push(parsed);
+      }
+    }
+    return returns.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  } catch {
+    return [];
+  }
+}

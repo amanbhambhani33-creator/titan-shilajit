@@ -39,9 +39,22 @@ export default function handler(req: any, res: any) {
     subPath = Array.isArray(q.slug) ? q.slug.join('/') : String(q.slug);
   }
 
+  // Preserve all remaining query parameters (e.g. pincode, awb, query) so Express routes receive them
+  const remainingQuery = new URLSearchParams();
+  for (const [key, val] of Object.entries(q)) {
+    if (!['match', 'path', 'route', 'slug'].includes(key)) {
+      if (Array.isArray(val)) {
+        val.forEach((v) => remainingQuery.append(key, String(v)));
+      } else if (val !== undefined && val !== null) {
+        remainingQuery.append(key, String(val));
+      }
+    }
+  }
+  const querySuffix = remainingQuery.toString() ? `?${remainingQuery.toString()}` : '';
+
   if (subPath) {
     const cleanSub = subPath.replace(/^\/+/, '');
-    req.url = `/api/${cleanSub}`;
+    req.url = `/api/${cleanSub}${querySuffix}`;
     req.originalUrl = req.url;
   } else {
     // 3. Check Vercel original URL headers
@@ -56,6 +69,8 @@ export default function handler(req: any, res: any) {
         req.url = vercelOriginal.startsWith('/api') ? vercelOriginal : `/api${vercelOriginal}`;
         req.originalUrl = req.url;
       }
+    } else if (querySuffix) {
+      req.url = `${req.url.split('?')[0]}${querySuffix}`;
     }
   }
 

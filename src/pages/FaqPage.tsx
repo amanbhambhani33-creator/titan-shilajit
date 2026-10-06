@@ -76,9 +76,9 @@ const EXTENDED_FAQS: ExtendedFaq[] = [
     category: 'shipping',
   },
   {
-    question: 'Can I order directly through WhatsApp?',
+    question: 'How are orders placed and tracked?',
     answer:
-      'Yes! We maintain an active WhatsApp VIP Concierge desk (+91 99584 74229). You can place orders, ask dosage questions, request batch test reports, and track shipments directly via chat.',
+      'You can place your order directly through our secure online store with zero extra fees. We offer instant Cash on Delivery (COD) and encrypted Razorpay options. All orders are assigned an official continuous Tax Invoice and a Delhivery AWB number, allowing you to track your delivery in real time via SMS and online dashboard.',
     category: 'shipping',
   },
   {

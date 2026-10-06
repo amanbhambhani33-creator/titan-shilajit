@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle, ArrowRight } from 'lucide-react';
-import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
+import { ArrowRight } from 'lucide-react';
 
 export const CTASection: React.FC = () => {
   return (
@@ -37,16 +36,12 @@ export const CTASection: React.FC = () => {
             <ArrowRight className="w-4 h-4" />
           </Link>
 
-          <a
-            id="final-cta-whatsapp-btn"
-            href={getGeneralConciergeWhatsAppUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to="/wellness-assessment"
             className="px-8 py-4 rounded-sm bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] font-sans font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 border border-[#B88A32]/40 shadow-lg transition-all"
           >
-            <MessageCircle className="w-4 h-4 text-[#25D366]" />
-            <span>ORDER ON WHATSAPP</span>
-          </a>
+            <span>WELLNESS ASSESSMENT</span>
+          </Link>
         </div>
       </div>
     </section>

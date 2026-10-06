@@ -19,8 +19,10 @@ interface AdminReviewsSectionProps {
   reviews: Review[];
   products: Product[];
   addReview: (review: Review) => Promise<boolean>;
+  updateReview?: (id: string, updates: Partial<Review>) => Promise<boolean>;
   deleteReview: (id: string) => Promise<boolean>;
   resetReviewsToDefault: () => Promise<boolean>;
+  refreshReviews?: () => Promise<boolean>;
   showToast: (msg: string) => void;
 }
 
@@ -28,13 +30,16 @@ export const AdminReviewsSection: React.FC<AdminReviewsSectionProps> = ({
   reviews,
   products,
   addReview,
+  updateReview,
   deleteReview,
   resetReviewsToDefault,
+  refreshReviews,
   showToast,
 }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // New Review Form State
   const [authorName, setAuthorName] = useState('');
@@ -127,13 +132,24 @@ export const AdminReviewsSection: React.FC<AdminReviewsSectionProps> = ({
     );
   });
 
-  const averageRating =
-    reviews.length > 0
+  const genuineReviews = reviews.filter((r) => r.verifiedPurchase !== false);
+  const genuineCount = genuineReviews.length;
+  const genuineRating =
+    genuineCount > 0
       ? (
-          reviews.reduce((acc, curr) => acc + (curr.rating || 5), 0) /
-          reviews.length
+          genuineReviews.reduce((acc, curr) => acc + (curr.rating || 5), 0) /
+          genuineCount
         ).toFixed(1)
       : '5.0';
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    if (refreshReviews) {
+      await refreshReviews();
+    }
+    setIsRefreshing(false);
+    showToast('Reviews refreshed! Only genuine verified reviews are counted on the storefront.');
+  };
 
   return (
     <div id="admin-reviews-section" className="space-y-6">
@@ -142,27 +158,45 @@ export const AdminReviewsSection: React.FC<AdminReviewsSectionProps> = ({
         <div>
           <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#183D27]/10 text-[#183D27] text-[10px] font-bold uppercase tracking-widest mb-1.5 border border-[#183D27]/20">
             <Award className="w-3 h-3 text-[#B88A32]" />
-            <span>CUSTOMER TESTIMONIALS &amp; REVIEWS</span>
+            <span>GENUINE TESTIMONIALS &amp; REVIEWS</span>
           </div>
           <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#10110F]">
             Customer Review Manager
           </h2>
           <p className="text-xs text-[#66704B] max-w-xl mt-1">
-            Add authentic practitioner feedback, ratings, and verified buyer badges. All changes push directly to Firebase Firestore to go live hand-to-hand on the storefront.
+            Manage genuine practitioner feedback and verified buyer status. Storefront rating and counter dynamically count <strong>only genuinely verified reviews</strong>.
           </p>
         </div>
 
         {/* Stats & Actions */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="px-4 py-2 bg-[#F7F3E8] rounded-xs border border-[#10110F]/10 text-center">
+          <div className="px-4 py-2 bg-[#183D27]/10 rounded-xs border border-[#183D27]/20 text-center">
             <div className="flex items-center justify-center gap-1 text-[#B88A32]">
               <Star className="w-3.5 h-3.5 fill-[#B88A32]" />
-              <span className="font-bold text-sm text-[#10110F]">{averageRating}</span>
+              <span className="font-bold text-sm text-[#183D27]">{genuineRating}</span>
             </div>
-            <span className="text-[10px] text-[#66704B] uppercase font-bold tracking-wider">
-              {reviews.length} Total Reviews
+            <span className="text-[10px] text-[#183D27] uppercase font-bold tracking-wider">
+              {genuineCount} Genuine Verified
             </span>
           </div>
+
+          <div className="px-3.5 py-2 bg-[#F7F3E8] rounded-xs border border-[#10110F]/10 text-center">
+            <span className="font-mono font-bold text-sm text-[#10110F]">{reviews.length}</span>
+            <span className="text-[10px] text-[#66704B] uppercase font-bold tracking-wider block">
+              Total Recorded
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="px-3.5 py-2.5 rounded-xs bg-[#10110F] hover:bg-[#183D27] text-[#D4B66A] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+            title="Refresh customer reviews from Firestore & server database"
+          >
+            <RotateCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>{isRefreshing ? 'Refreshing...' : 'Refresh Reviews'}</span>
+          </button>
 
           <button
             type="button"
@@ -415,15 +449,28 @@ export const AdminReviewsSection: React.FC<AdminReviewsSectionProps> = ({
 
               {/* Product Badge & Verified Order */}
               <div className="flex flex-wrap items-center gap-1.5 mb-3">
-                <span className="text-[9.5px] uppercase font-bold text-[#183D27] bg-[#183D27]/10 px-2 py-0.5 rounded-xs truncate max-w-[200px]">
+                <span className="text-[9.5px] uppercase font-bold text-[#183D27] bg-[#183D27]/10 px-2 py-0.5 rounded-xs truncate max-w-[180px]">
                   {rev.productName}
                 </span>
-                {rev.verifiedPurchase && (
-                  <span className="text-[9.5px] uppercase font-bold text-[#D4B66A] bg-[#10110F] px-1.5 py-0.5 rounded-xs flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3 text-[#25D366]" />
-                    <span>Verified</span>
-                  </span>
-                )}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (updateReview) {
+                      const nextVal = rev.verifiedPurchase === false ? true : false;
+                      await updateReview(rev.id, { verifiedPurchase: nextVal });
+                      showToast(nextVal ? `Review by "${rev.name}" marked as Genuine Verified!` : `Review by "${rev.name}" marked as Unverified.`);
+                    }
+                  }}
+                  className={`text-[9.5px] uppercase font-bold px-2 py-0.5 rounded-xs flex items-center gap-1 transition-all cursor-pointer ${
+                    rev.verifiedPurchase !== false
+                      ? 'bg-[#183D27] text-[#D4B66A] border border-[#B88A32]/40'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-300'
+                  }`}
+                  title="Click to toggle genuine verified status"
+                >
+                  <ShieldCheck className={`w-3 h-3 ${rev.verifiedPurchase !== false ? 'text-[#25D366]' : 'text-gray-400'}`} />
+                  <span>{rev.verifiedPurchase !== false ? '✓ Genuine' : 'Unverified'}</span>
+                </button>
               </div>
 
               {/* Review Text */}

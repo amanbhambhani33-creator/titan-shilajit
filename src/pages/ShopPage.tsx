@@ -137,7 +137,7 @@ export const ShopPage: React.FC = () => {
             className="px-6 py-3.5 rounded-xs bg-[#25D366] hover:bg-[#1EBE5D] text-[#10110F] font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-md transition-all shrink-0"
           >
             <MessageCircle className="w-4 h-4" />
-            <span>ORDER VIA WHATSAPP (+91 99584 74229)</span>
+            <span>ASK WELLNESS TEAM</span>
           </a>
         </div>
       </div>
