@@ -5,7 +5,6 @@ import {
   Trash2,
   Plus,
   Minus,
-  MessageCircle,
   ArrowRight,
   ShieldCheck,
   Tag,
@@ -13,6 +12,7 @@ import {
   CheckCircle2,
   Lock,
   CreditCard,
+  ShoppingBag,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useStoreContent } from '../context/StoreContentContext';
@@ -132,76 +132,6 @@ export const CartDrawer: React.FC = () => {
 
   const finalTotal = Math.max(0, totalPrice - discountAmount);
 
-  // Generate WhatsApp Checkout URL with customer and coupon details
-  const handleConfirmOrderWhatsApp = async () => {
-    // Save contact info locally
-    try {
-      if (customerName) localStorage.setItem('titan_cart_name', customerName);
-      if (customerPhone) localStorage.setItem('titan_cart_phone', customerPhone);
-      if (customerEmail) localStorage.setItem('titan_cart_email', customerEmail);
-    } catch {}
-
-    // Record the order to Firestore so future repeat orders with same mobile/email cannot reuse FIRST50
-    try {
-      await recordOrder({
-        orderNumber: `TITAN-${Date.now().toString().slice(-6)}`,
-        customerName: customerName || 'Valued Guest',
-        customerPhone: customerPhone || 'Via WhatsApp',
-        customerEmail: customerEmail || 'N/A',
-        items: items.map((item) => ({
-          productId: item.product.id,
-          productName: item.product.name,
-          packName: item.selectedPack?.name || item.product.size,
-          quantity: item.quantity,
-          price: item.selectedPack ? item.selectedPack.price : item.product.price,
-        })),
-        subtotal: totalPrice,
-        discount: discountAmount,
-        couponCode: appliedCoupon || undefined,
-        total: finalTotal,
-        status: 'confirmed',
-        paymentMethod: 'whatsapp_prepaid',
-      });
-    } catch (err) {
-      console.warn('Order record log notice:', err);
-    }
-
-    // Build formatted WhatsApp Message
-    const itemsList = items
-      .map((item, index) => {
-        const packName = item.selectedPack ? ` (${item.selectedPack.name} - ${item.selectedPack.quantityText})` : ` (${item.product.size})`;
-        const price = item.selectedPack ? item.selectedPack.price : item.product.price;
-        return `${index + 1}. ${item.product.name}${packName} x ${item.quantity} = ₹${price * item.quantity}`;
-      })
-      .join('\n');
-
-    const customerDetails = [
-      customerName ? `Name: ${customerName}` : null,
-      customerPhone ? `Mobile: ${customerPhone}` : null,
-      customerEmail ? `Email: ${customerEmail}` : null,
-    ].filter(Boolean).join('\n');
-
-    const discountLine = appliedCoupon
-      ? `Coupon Code: ${appliedCoupon} (-₹${discountAmount} First Order Savings Applied)`
-      : 'No coupon code applied';
-
-    const message = `Hello Titan Shilajit Concierge,
-
-I would like to confirm my order:
-
-${itemsList}
-
-${customerDetails ? `CUSTOMER DETAILS:\n${customerDetails}\n` : ''}Subtotal: ₹${totalPrice}
-${appliedCoupon ? `${discountLine}\n` : ''}Final Total Payable: ₹${finalTotal}
-Shipping: Complimentary Express Across India Included
-
-Please confirm order dispatch and share payment details. Thank you!`;
-
-    const encoded = encodeURIComponent(message);
-    const url = `https://wa.me/${BRAND_CONTACT.phoneRaw}?text=${encoded}`;
-    window.open(url, '_blank');
-  };
-
   return (
     <div
       id="cart-drawer-backdrop"
@@ -237,7 +167,7 @@ Please confirm order dispatch and share payment details. Thank you!`;
           {items.length === 0 ? (
             <div className="py-16 text-center flex flex-col items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-[#EEE8D7] flex items-center justify-center text-[#B88A32]">
-                <MessageCircle className="w-8 h-8" />
+                <ShoppingBag className="w-8 h-8" />
               </div>
               <h3 className="font-serif text-2xl font-semibold text-[#10110F]">Your cart is empty</h3>
               <p className="text-sm text-[#66704B] max-w-xs">
@@ -500,18 +430,6 @@ Please confirm order dispatch and share payment details. Thank you!`;
               <span>Cash on Delivery</span>
               <span>•</span>
               <span>Delhivery One</span>
-            </div>
-
-            {/* Secondary WhatsApp Concierge Fallback */}
-            <div className="pt-1 text-center">
-              <button
-                type="button"
-                onClick={handleConfirmOrderWhatsApp}
-                className="text-[11px] text-[#183D27] hover:underline font-semibold inline-flex items-center gap-1.5 cursor-pointer"
-              >
-                <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
-                <span>Prefer ordering with Concierge on WhatsApp? Click here</span>
-              </button>
             </div>
           </div>
         )}

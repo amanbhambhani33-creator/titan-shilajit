@@ -344,6 +344,27 @@ const REVIEWS_STORAGE_KEY = 'titan_store_reviews_v2';
 const SPLASH_SEEN_KEY = 'titan_splash_seen_session';
 const LAST_SYNC_STORAGE_KEY = 'titan_last_firestore_sync';
 
+// Utility to sanitize and purge all generic unsplash images from memory and persistence
+function sanitizeProductsImages(items: Product[]): Product[] {
+  if (!Array.isArray(items)) return [];
+  return items.map((p) => {
+    const cleanImgs = (p.images || []).filter((img) => img && !img.includes('unsplash.com'));
+    const cleanPacks = (p.packs || []).map((pk, idx) => {
+      const isGeneric = !pk.image || pk.image.includes('unsplash.com');
+      const fallbackImg = cleanImgs[idx] || cleanImgs[0] || '';
+      return {
+        ...pk,
+        image: isGeneric ? fallbackImg : pk.image,
+      };
+    });
+    return {
+      ...p,
+      images: cleanImgs,
+      packs: cleanPacks,
+    };
+  });
+}
+
 export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isFirebaseSynced, setIsFirebaseSynced] = useState<boolean>(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(() => {
@@ -367,17 +388,18 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
     return DEFAULT_REVIEWS;
   });
 
-  // Load products with fallback
+  // Load products with fallback (strictly purging generic Unsplash images from memory)
   const [products, setProducts] = useState<Product[]>(() => {
     try {
       const saved = localStorage.getItem(PRODUCTS_STORAGE_KEY);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        return sanitizeProductsImages(parsed);
       }
     } catch (e) {
       console.warn('Failed to load products from storage:', e);
     }
-    return DEFAULT_PRODUCTS;
+    return sanitizeProductsImages(DEFAULT_PRODUCTS);
   });
 
   // Load content with fallback
@@ -513,7 +535,9 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
           if (snap.exists()) {
             const data = snap.data();
             if (data && Array.isArray(data.items) && data.items.length > 0) {
-              setProducts(data.items);
+              const clean = sanitizeProductsImages(data.items);
+              setProducts(clean);
+              try { localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(clean)); } catch {}
             }
           }
         },
@@ -564,8 +588,9 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
         .then((data) => {
           if (data && data.success) {
             if (Array.isArray(data.products) && data.products.length > 0) {
-              setProducts(data.products);
-              try { localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(data.products)); } catch {}
+              const clean = sanitizeProductsImages(data.products);
+              setProducts(clean);
+              try { localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(clean)); } catch {}
             }
             if (Array.isArray(data.reviews) && data.reviews.length > 0) {
               setReviews(data.reviews);
@@ -826,6 +851,7 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
     };
     const updated = [sanitizedProduct, ...products];
     setProducts(updated);
+    try { localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(updated)); } catch {}
     let success = false;
     try {
       const productsDocRef = doc(db, 'store_content', 'products');
@@ -854,14 +880,29 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
         ? updates.inStock 
         : (nextStock !== undefined ? nextStock > 0 : item.inStock);
 
+      const mergedImages = updates.images !== undefined ? updates.images : item.images;
+      const cleanImages = (mergedImages || []).filter((img) => img && !img.includes('unsplash.com'));
+
+      const mergedPacks = updates.packs !== undefined ? updates.packs : item.packs;
+      const cleanPacks = (mergedPacks || []).map((pk, idx) => {
+        const isGeneric = !pk.image || pk.image.includes('unsplash.com');
+        return {
+          ...pk,
+          image: isGeneric ? (cleanImages[idx] || cleanImages[0] || '') : pk.image,
+        };
+      });
+
       return {
         ...item,
         ...updates,
+        images: cleanImages,
+        packs: cleanPacks,
         stockQty: nextStock,
         inStock: (nextStock !== undefined && nextStock <= 0) ? false : nextInStock,
       };
     });
     setProducts(updated);
+    try { localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(updated)); } catch {}
     let success = false;
     try {
       const productsDocRef = doc(db, 'store_content', 'products');
@@ -871,12 +912,12 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
       console.warn('Firestore updateProduct client notice:', e);
     }
     try {
-      await fetch('/api/store-content/products', {
+      const res = await fetch('/api/store-content/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ products: updated }),
       });
-      success = true;
+      if (res.ok) success = true;
     } catch {}
     if (success) setIsFirebaseSynced(true);
     return success;
@@ -896,6 +937,7 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
   const deleteProduct = async (id: string): Promise<boolean> => {
     const updated = products.filter((item) => item.id !== id);
     setProducts(updated);
+    try { localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(updated)); } catch {}
     let success = false;
     try {
       const productsDocRef = doc(db, 'store_content', 'products');

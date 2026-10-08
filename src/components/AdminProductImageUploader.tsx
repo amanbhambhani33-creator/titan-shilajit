@@ -144,9 +144,35 @@ export const AdminProductImageUploader: React.FC<AdminProductImageUploaderProps>
         </span>
       </div>
 
-      <p className="text-[11px] text-[#66704B]">
-        Upload product photography from your computer or paste direct image URLs. Image #1 will act as the primary storefront catalog cover. All images push directly to Firebase upon saving.
-      </p>
+      {/* Detailed Image Size Guidelines for Proper Frontend Fitting */}
+      <div className="bg-[#183D27]/10 border border-[#183D27]/30 rounded-xs p-3 space-y-1.5">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-xs bg-[#183D27] text-[#D4B66A]">
+            📐 FRONTEND IMAGE SIZE &amp; FITTING SPECIFICATIONS
+          </span>
+          <span className="text-[10px] font-bold text-[#183D27]">1:1 Square Ratio</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px] text-[#10110F]">
+          <div className="bg-white/70 p-2 rounded-xs border border-black/5">
+            <span className="font-bold block text-[#183D27] text-[10px] uppercase">Recommended Dimensions</span>
+            <span className="font-mono font-bold">1000 × 1000 px</span> or <span className="font-mono font-bold">1200 × 1200 px</span>
+            <span className="text-[10px] text-[#66704B] block mt-0.5">Minimum: 800 × 800 px</span>
+          </div>
+          <div className="bg-white/70 p-2 rounded-xs border border-black/5">
+            <span className="font-bold block text-[#183D27] text-[10px] uppercase">Aspect Ratio &amp; Fitting</span>
+            <span className="font-bold">1:1 Square</span> with center product focus
+            <span className="text-[10px] text-[#66704B] block mt-0.5">Keeps bottles centered without cropping</span>
+          </div>
+          <div className="bg-white/70 p-2 rounded-xs border border-black/5">
+            <span className="font-bold block text-[#183D27] text-[10px] uppercase">Supported Formats</span>
+            <span>PNG, JPG, or WebP (under 5MB)</span>
+            <span className="text-[10px] text-[#66704B] block mt-0.5">Transparent or clean neutral background</span>
+          </div>
+        </div>
+        <p className="text-[10.5px] text-[#66704B] pt-0.5">
+          ℹ️ <strong>Auto-Pricing Sync:</strong> Image #1 automatically syncs to the primary storefront card and default pricing pack. Pictures uploaded or pasted here will override generic templates and be stored permanently in Firebase.
+        </p>
+      </div>
 
       {/* Upload Controls Bar */}
       <div className="flex flex-col sm:flex-row gap-2">
@@ -281,10 +307,10 @@ export const AdminProductImageUploader: React.FC<AdminProductImageUploaderProps>
             >
               <Plus className="w-4 h-4 text-[#66704B] group-hover:text-[#B88A32] group-hover:scale-110 transition-transform mb-1" />
               <span className="text-[10px] font-bold text-[#66704B] group-hover:text-[#10110F]">
-                Slot {index + 1}
+                Slot {index + 1} {index === 0 ? '• Cover' : ''}
               </span>
-              <span className="text-[8px] text-gray-400">
-                {index === 0 ? 'Primary' : 'Add Photo'}
+              <span className="text-[8px] font-mono text-[#183D27] font-semibold bg-[#183D27]/10 px-1 py-0.5 rounded-xs mt-0.5">
+                1:1 Square
               </span>
             </button>
           );

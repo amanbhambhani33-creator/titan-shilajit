@@ -1,11 +1,26 @@
 import { Product, ProductPack } from '../types';
 
-export function getProductPacks(product: Product): [ProductPack, ProductPack, ProductPack] {
-  if (product.packs && product.packs.length === 3) {
-    return product.packs as [ProductPack, ProductPack, ProductPack];
+export function getProductPacks(product: Product): ProductPack[] {
+  const cleanImages = (product.images || []).filter((img) => img && !img.includes('unsplash.com'));
+
+  // If product already has configured packs (e.g. from Admin Desk)
+  if (product.packs && product.packs.length > 0) {
+    return product.packs.map((p, idx) => {
+      // If pack image is empty or an old generic unsplash placeholder, automatically use the product's uploaded/active image
+      const isGeneric = !p.image || p.image.includes('unsplash.com');
+      const fallbackImg = cleanImages[idx] || cleanImages[0] || '';
+      return {
+        ...p,
+        image: isGeneric ? fallbackImg : (p.image || fallbackImg),
+      };
+    });
   }
 
-  // Pre-configured packs by slug
+  // Pre-configured packs by slug, strictly using the product's own images (user uploaded / pasted)
+  const getPackImg = (idx: number) => {
+    return cleanImages[idx] || cleanImages[0] || '';
+  };
+
   if (product.slug === 'titan-shilajit-resin') {
     return [
       {
@@ -16,7 +31,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 999,
         mrp: 1499,
         discount: '33% OFF',
-        image: product.images[0] || 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85',
+        image: getPackImg(0),
         badge: 'STARTER TRIAL',
         savings: 'Save ₹500',
       },
@@ -28,7 +43,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 1899,
         mrp: 2799,
         discount: '32% OFF',
-        image: product.images[1] || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=85',
+        image: getPackImg(1),
         badge: 'MOST POPULAR • BESTSELLER',
         savings: 'Save ₹900',
         isPopular: true,
@@ -41,7 +56,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 3299,
         mrp: 4999,
         discount: '34% OFF',
-        image: product.images[2] || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=85',
+        image: getPackImg(2),
         badge: 'SUPERSAVER • MAX SAVINGS',
         savings: 'Save ₹1,700',
       },
@@ -58,7 +73,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 699,
         mrp: 999,
         discount: '30% OFF',
-        image: product.images[0] || 'https://images.unsplash.com/photo-1587049352851-8d4e89133924?auto=format&fit=crop&w=1200&q=85',
+        image: getPackImg(0),
         badge: 'STARTER PACK',
         savings: 'Save ₹300',
       },
@@ -70,7 +85,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 1299,
         mrp: 1799,
         discount: '28% OFF',
-        image: product.images[1] || 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=85',
+        image: getPackImg(1),
         badge: 'MOST POPULAR',
         savings: 'Save ₹500',
         isPopular: true,
@@ -83,7 +98,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 2199,
         mrp: 3199,
         discount: '31% OFF',
-        image: product.images[2] || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=85',
+        image: getPackImg(2),
         badge: 'SUPERSAVER • 2 MONTHS',
         savings: 'Save ₹1,000',
       },
@@ -100,7 +115,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 749,
         mrp: 1099,
         discount: '32% OFF',
-        image: product.images[0] || 'https://images.unsplash.com/photo-1511381939415-e44015466834?auto=format&fit=crop&w=1200&q=85',
+        image: getPackImg(0),
         badge: 'TRIAL PACK',
         savings: 'Save ₹350',
       },
@@ -112,7 +127,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 1399,
         mrp: 1999,
         discount: '30% OFF',
-        image: product.images[1] || 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85',
+        image: getPackImg(1),
         badge: 'MOST POPULAR',
         savings: 'Save ₹600',
         isPopular: true,
@@ -125,7 +140,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 2399,
         mrp: 3499,
         discount: '31% OFF',
-        image: product.images[2] || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=85',
+        image: getPackImg(2),
         badge: 'SUPERSAVER',
         savings: 'Save ₹1,100',
       },
@@ -142,7 +157,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 749,
         mrp: 1099,
         discount: '32% OFF',
-        image: product.images[0] || 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=1200&q=85',
+        image: getPackImg(0),
         badge: 'TRIAL PACK',
         savings: 'Save ₹350',
       },
@@ -154,7 +169,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 1399,
         mrp: 1999,
         discount: '30% OFF',
-        image: product.images[1] || 'https://images.unsplash.com/photo-1587049352851-8d4e89133924?auto=format&fit=crop&w=1200&q=85',
+        image: getPackImg(1),
         badge: 'MOST POPULAR',
         savings: 'Save ₹600',
         isPopular: true,
@@ -167,7 +182,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 2399,
         mrp: 3499,
         discount: '31% OFF',
-        image: product.images[2] || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=85',
+        image: getPackImg(2),
         badge: 'SUPERSAVER',
         savings: 'Save ₹1,100',
       },
@@ -184,7 +199,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 1499,
         mrp: 1999,
         discount: '25% OFF',
-        image: product.images[0] || 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85',
+        image: getPackImg(0),
         badge: 'STARTER KIT',
         savings: 'Save ₹500',
       },
@@ -196,7 +211,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 2199,
         mrp: 2999,
         discount: '27% OFF',
-        image: product.images[1] || 'https://images.unsplash.com/photo-1587049352851-8d4e89133924?auto=format&fit=crop&w=1200&q=85',
+        image: getPackImg(1),
         badge: 'MOST POPULAR • SIGNATURE',
         savings: 'Save ₹800',
         isPopular: true,
@@ -209,7 +224,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 3499,
         mrp: 4999,
         discount: '30% OFF',
-        image: product.images[2] || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=85',
+        image: getPackImg(2),
         badge: 'SUPERSAVER • LUXURY',
         savings: 'Save ₹1,500',
       },
@@ -226,7 +241,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 999,
         mrp: 1399,
         discount: '28% OFF',
-        image: product.images[0] || 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=85',
+        image: getPackImg(0),
         badge: 'SAMPLER',
         savings: 'Save ₹400',
       },
@@ -238,7 +253,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 1999,
         mrp: 2699,
         discount: '26% OFF',
-        image: product.images[1] || 'https://images.unsplash.com/photo-1511381939415-e44015466834?auto=format&fit=crop&w=1200&q=85',
+        image: getPackImg(1),
         badge: 'MOST POPULAR',
         savings: 'Save ₹700',
         isPopular: true,
@@ -251,14 +266,14 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
         price: 3499,
         mrp: 4999,
         discount: '30% OFF',
-        image: product.images[2] || 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=1200&q=85',
+        image: getPackImg(2),
         badge: 'SUPERSAVER • BEST VALUE',
         savings: 'Save ₹1,500',
       },
     ];
   }
 
-  // Generic fallback for any other custom product
+  // Generic fallback for any other custom product created by admin
   const basePrice = product.price || 1299;
   const trialPrice = Math.round(basePrice * 0.7);
   const trialMrp = Math.round(trialPrice * 1.4);
@@ -276,7 +291,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
       price: trialPrice,
       mrp: trialMrp,
       discount: `${Math.round(((trialMrp - trialPrice) / trialMrp) * 100)}% OFF`,
-      image: product.images[0] || '',
+      image: getPackImg(0),
       badge: 'STARTER TRIAL',
       savings: `Save ₹${trialMrp - trialPrice}`,
     },
@@ -288,7 +303,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
       price: popularPrice,
       mrp: popularMrp,
       discount: product.discount || `${Math.round(((popularMrp - popularPrice) / popularMrp) * 100)}% OFF`,
-      image: product.images[1] || product.images[0] || '',
+      image: getPackImg(1),
       badge: 'MOST POPULAR',
       savings: `Save ₹${popularMrp - popularPrice}`,
       isPopular: true,
@@ -301,7 +316,7 @@ export function getProductPacks(product: Product): [ProductPack, ProductPack, Pr
       price: supersaverPrice,
       mrp: supersaverMrp,
       discount: `${Math.round(((supersaverMrp - supersaverPrice) / supersaverMrp) * 100)}% OFF`,
-      image: product.images[2] || product.images[0] || '',
+      image: getPackImg(2),
       badge: 'SUPERSAVER • MAX SAVINGS',
       savings: `Save ₹${supersaverMrp - supersaverPrice}`,
     },
@@ -318,7 +333,6 @@ export function getPackShortBadge(badge?: string, idx: number = 0): string {
     if (idx === 1) return 'POPULAR';
     return 'BEST VALUE';
   }
-  // Take first section before bullet if present
   const firstPart = badge.split('•')[0].trim();
   if (firstPart.includes('POPULAR')) return 'POPULAR';
   if (firstPart.includes('TRIAL') || firstPart.includes('STARTER') || firstPart.includes('SAMPLER')) return 'STARTER';
@@ -348,8 +362,6 @@ export function getPackShortQuantity(quantityText: string): string {
   if (quantityText.includes('30 Sticks')) return '30 Sticks';
   if (quantityText.includes('60 Sticks')) return '60 Sticks';
   if (quantityText.includes('2x') || quantityText.includes('Dual')) return 'Dual Pack';
-  // Strip parentheses and return short first segment
   const base = quantityText.split('(')[0].trim();
   return base.length > 16 ? base.slice(0, 15) : base;
 }
-

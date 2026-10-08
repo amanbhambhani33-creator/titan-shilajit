@@ -357,21 +357,26 @@ export const AdminPictureTransitionSection: React.FC<AdminPictureTransitionSecti
             onSubmit={handleAddNewSlide}
             className="bg-[#F7F3E8] p-4 sm:p-5 rounded-xs border-2 border-dashed border-[#B88A32] space-y-4 animate-in fade-in duration-200"
           >
-            <h5 className="font-serif text-sm font-bold text-[#183D27] uppercase tracking-wider">
-              Add New Picture to Transition
-            </h5>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <h5 className="font-serif text-sm font-bold text-[#183D27] uppercase tracking-wider">
+                Add New Picture to Transition
+              </h5>
+              <span className="text-[10px] font-mono text-[#66704B] bg-white/80 px-2 py-0.5 rounded-xs border border-black/5">
+                Recommended: 1920 × 1080 px (16:9 Landscape) • Min: 1280 × 720 px
+              </span>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="sm:col-span-2">
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-[#10110F] mb-1">
-                  Image URL *
+                  Image URL * (or paste direct image link)
                 </label>
                 <input
                   type="url"
                   required
                   value={newUrl}
                   onChange={(e) => setNewUrl(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
+                  placeholder="https://..."
                   className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs bg-white"
                 />
               </div>

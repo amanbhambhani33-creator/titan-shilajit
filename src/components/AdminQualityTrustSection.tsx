@@ -399,14 +399,19 @@ export const AdminQualityTrustSection: React.FC<AdminQualityTrustSectionProps> =
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-[11px] font-bold uppercase text-[#10110F] mb-1">
-                      Image URL
-                    </label>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
+                      <label className="block text-[11px] font-bold uppercase text-[#10110F]">
+                        Image URL
+                      </label>
+                      <span className="text-[10px] font-mono text-[#66704B]">
+                        Recommended: 800 × 800 px (1:1 Square) or 800 × 600 px
+                      </span>
+                    </div>
                     <input
                       type="text"
                       value={newCardForm.imageUrl}
                       onChange={(e) => setNewCardForm({ ...newCardForm, imageUrl: e.target.value })}
-                      placeholder="https://images.unsplash.com/..."
+                      placeholder="https://..."
                       className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs"
                     />
                   </div>

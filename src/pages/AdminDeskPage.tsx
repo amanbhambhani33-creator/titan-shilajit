@@ -194,13 +194,32 @@ export const AdminDeskPage: React.FC = () => {
     }
   };
 
-  // Handle saving product edits
+  // Handle saving product edits with automatic pricing pack image synchronization
   const handleSaveProductEdit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct) return;
-    updateProduct(editingProduct.id, editingProduct);
+
+    // Clean up packs so no generic images remain and pricing packs always have the right images
+    const currentPacks = (editingProduct.packs && editingProduct.packs.length > 0)
+      ? editingProduct.packs
+      : getProductPacks(editingProduct);
+
+    const cleanPacks = currentPacks.map((pack, pIdx) => {
+      const isGeneric = !pack.image || pack.image.includes('unsplash.com');
+      return {
+        ...pack,
+        image: isGeneric ? (editingProduct.images[pIdx] || editingProduct.images[0] || '') : pack.image,
+      };
+    });
+
+    const updatedProduct: Product = {
+      ...editingProduct,
+      packs: cleanPacks,
+    };
+
+    updateProduct(updatedProduct.id, updatedProduct);
     setEditingProduct(null);
-    showToast('Product updated successfully!');
+    showToast('Product updated successfully and synced with pricing!');
   };
 
   // Handle adding new product
@@ -215,6 +234,47 @@ export const AdminDeskPage: React.FC = () => {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
+
+    const primaryImg = newProductForm.images?.[0] || '';
+    const initialPacks: ProductPack[] = [
+      {
+        id: 'trial',
+        name: 'Trial Pack',
+        label: 'Trial Pack',
+        quantityText: `${newProductForm.size || 'Standard'} (Trial)`,
+        price: Math.round(Number(newProductForm.price) * 0.7),
+        mrp: Math.round(Number(newProductForm.price) * 0.7 * 1.4),
+        discount: '30% OFF',
+        image: primaryImg,
+        badge: 'STARTER TRIAL',
+        savings: 'Save ₹300',
+      },
+      {
+        id: 'popular',
+        name: 'Most Popular Pack',
+        label: 'Most Popular Pack',
+        quantityText: `${newProductForm.size || 'Standard'} (Most Popular)`,
+        price: Number(newProductForm.price),
+        mrp: Number(newProductForm.mrp) || Math.round(Number(newProductForm.price) * 1.35),
+        discount: newProductForm.discount || '25% OFF',
+        image: newProductForm.images?.[1] || primaryImg,
+        badge: 'MOST POPULAR',
+        savings: 'Save ₹500',
+        isPopular: true,
+      },
+      {
+        id: 'supersaver',
+        name: 'Supersaver Pack',
+        label: 'Supersaver Pack',
+        quantityText: `Dual Value Pack (2x ${newProductForm.size || 'Standard'})`,
+        price: Math.round(Number(newProductForm.price) * 1.75),
+        mrp: Math.round(Number(newProductForm.price) * 1.75 * 1.45),
+        discount: '35% OFF',
+        image: newProductForm.images?.[2] || primaryImg,
+        badge: 'SUPERSAVER',
+        savings: 'Save ₹1,000',
+      },
+    ];
 
     const productToAdd: Product = {
       id: `titan-custom-${Date.now()}`,
@@ -231,9 +291,8 @@ export const AdminDeskPage: React.FC = () => {
       reviewCount: Number(newProductForm.reviewCount) || 1,
       inStock: newProductForm.inStock !== false && (Number(newProductForm.stockQty) > 0 || newProductForm.stockQty === undefined),
       stockQty: newProductForm.stockQty !== undefined ? Number(newProductForm.stockQty) : 50,
-      images: newProductForm.images?.length ? newProductForm.images : [
-        'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85'
-      ],
+      images: newProductForm.images?.length ? newProductForm.images : [],
+      packs: initialPacks,
       shortDescription: newProductForm.shortDescription || 'Pure Himalayan Shilajit formulation.',
       description: newProductForm.description || 'Harvested from extreme Himalayan altitudes and purified using traditional Ayurvedic methods.',
       origin: newProductForm.origin || 'Himalayan Range (16,000+ ft)',
@@ -1112,9 +1171,14 @@ export const AdminDeskPage: React.FC = () => {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-[#10110F] mb-1">
-                      New Launch Image URL
-                    </label>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#10110F]">
+                        New Launch Image URL
+                      </label>
+                      <span className="text-[10px] font-mono text-[#66704B]">
+                        Recommended: 800 × 1000 px (4:5 Portrait) or 1000 × 1000 px (1:1 Square)
+                      </span>
+                    </div>
                     <input
                       type="text"
                       value={content.launchBanner.imageUrl}
@@ -1168,7 +1232,7 @@ export const AdminDeskPage: React.FC = () => {
                       type="text"
                       value={content.launchBanner.buttonText}
                       onChange={(e) => updateLaunchBanner({ buttonText: e.target.value })}
-                      placeholder="Order New Launch on WhatsApp"
+                      placeholder="Acquire Limited Reserve"
                       className="w-full px-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm"
                     />
                   </div>
@@ -1456,7 +1520,7 @@ export const AdminDeskPage: React.FC = () => {
 
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-[#10110F] mb-1">
-                      Concierge WhatsApp Display
+                      Customer Care Phone Display
                     </label>
                     <input
                       type="text"
@@ -1671,12 +1735,25 @@ export const AdminDeskPage: React.FC = () => {
               <div>
                 <AdminProductImageUploader
                   images={editingProduct.images || []}
-                  onChange={(imgs) =>
+                  onChange={(imgs) => {
+                    const currentPacks = (editingProduct.packs && editingProduct.packs.length > 0)
+                      ? editingProduct.packs
+                      : getProductPacks(editingProduct);
+                    
+                    const updatedPacks = currentPacks.map((pack, pIdx) => {
+                      const isGeneric = !pack.image || pack.image.includes('unsplash.com') || (editingProduct.images || []).includes(pack.image);
+                      return {
+                        ...pack,
+                        image: isGeneric ? (imgs[pIdx] || imgs[0] || '') : pack.image,
+                      };
+                    });
+
                     setEditingProduct({
                       ...editingProduct,
-                      images: imgs.length > 0 ? imgs : ['https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85'],
-                    })
-                  }
+                      images: imgs,
+                      packs: updatedPacks,
+                    });
+                  }}
                   maxImages={5}
                 />
               </div>
@@ -1844,7 +1921,7 @@ export const AdminDeskPage: React.FC = () => {
                         price: editingProduct.price,
                         mrp: editingProduct.mrp || Math.round(editingProduct.price * 1.4),
                         discount: '25% OFF',
-                        image: editingProduct.images[0] || 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85',
+                        image: editingProduct.images[0] || '',
                         badge: 'SPECIAL PACK',
                         savings: 'Save ₹500',
                       };
@@ -1983,9 +2060,14 @@ export const AdminDeskPage: React.FC = () => {
 
                       {/* DISTINCT PHOTO FOR THIS SPECIFIC SIZE */}
                       <div className="pt-2 border-t border-black/10">
-                        <label className="block text-[10px] font-bold uppercase text-[#183D27] mb-1">
-                          Distinct Photo For This Specific Size (URL)
-                        </label>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
+                          <label className="block text-[10px] font-bold uppercase text-[#183D27]">
+                            Distinct Photo For This Specific Size / Pack
+                          </label>
+                          <span className="text-[9.5px] font-mono text-[#66704B]">
+                            Recommended: 800 × 800 px or 1000 × 1000 px (1:1 Square)
+                          </span>
+                        </div>
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-xs border border-black/20 overflow-hidden shrink-0 bg-black/10">
                             <img
@@ -2168,7 +2250,7 @@ export const AdminDeskPage: React.FC = () => {
                   onChange={(imgs) =>
                     setNewProductForm({
                       ...newProductForm,
-                      images: imgs.length > 0 ? imgs : ['https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85'],
+                      images: imgs,
                     })
                   }
                   maxImages={5}

@@ -2,7 +2,6 @@ import React from 'react';
 import { HeroSection } from '../components/HeroSection';
 import { TrustStrip } from '../components/TrustStrip';
 import { BrandStorySection } from '../components/BrandStorySection';
-import { LaunchProductBanner } from '../components/LaunchProductBanner';
 import { ProductShowcaseSection } from '../components/ProductShowcaseSection';
 import { BenefitsSection } from '../components/BenefitsSection';
 import { ReviewSection } from '../components/ReviewSection';
@@ -16,7 +15,6 @@ export const HomePage: React.FC = () => {
       <ProductShowcaseSection />
       <TrustStrip />
       <BrandStorySection />
-      <LaunchProductBanner />
       <BenefitsSection />
       <ReviewSection />
       <QualityTrustSection />

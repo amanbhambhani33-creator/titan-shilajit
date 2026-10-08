@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle, Instagram, MapPin, Phone, Mail, ShieldCheck, Settings, RotateCcw } from 'lucide-react';
+import { Instagram, MapPin, Phone, Mail, ShieldCheck, Settings, RotateCcw } from 'lucide-react';
 import { BRAND_CONTACT } from '../data/content';
 import { useStoreContent } from '../context/StoreContentContext';
-import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
 import { ReturnProductModal } from './ReturnProductModal';
 import { AmazonFlipkartBadge } from './AmazonFlipkartBadge';
 
@@ -69,15 +68,6 @@ export const Footer: React.FC = () => {
               >
                 <Instagram className="w-4 h-4" />
               </a>
-              <a
-                href={getGeneralConciergeWhatsAppUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Message Titan Shilajit on WhatsApp"
-                className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-[#25D366] hover:border-[#25D366] hover:bg-[#25D366]/10 transition-colors"
-              >
-                <MessageCircle className="w-4 h-4" />
-              </a>
             </div>
 
             <div className="flex flex-col gap-2 pt-2 text-xs text-[#EEE8D7]/75 font-light">
@@ -87,7 +77,7 @@ export const Footer: React.FC = () => {
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-3.5 h-3.5 text-[#D4B66A]" />
-                <span>WhatsApp: {BRAND_CONTACT.phoneDisplay}</span>
+                <span>Customer Care: {BRAND_CONTACT.phoneDisplay}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-3.5 h-3.5 text-[#D4B66A]" />
@@ -176,15 +166,12 @@ export const Footer: React.FC = () => {
             </span>
             <ul className="flex flex-col gap-2.5 text-xs text-[#EEE8D7]/80 font-light">
               <li>
-                <a
-                  href={getGeneralConciergeWhatsAppUrl()}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  to="/faq"
                   className="hover:text-[#D4B66A] transition-colors flex items-center gap-1.5"
                 >
-                  <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
-                  <span>WhatsApp Concierge</span>
-                </a>
+                  <span>Help Desk & FAQ</span>
+                </Link>
               </li>
               <li>
                 <button

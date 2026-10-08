@@ -51,7 +51,7 @@ export const REVIEWS: Review[] = [
     name: 'Harshvardhan Rao',
     location: 'Mumbai',
     rating: 5,
-    review: 'Ordered on WhatsApp and the Titan concierge team answered my queries regarding timing and warm milk pairing within 10 minutes. Delivery to Mumbai was swift in 2 days. Grade-A resin in every sense.',
+    review: 'Ordered on the official Titan store and customer care answered my queries regarding timing and warm milk pairing within 10 minutes. Delivery to Mumbai was swift in 2 days. Grade-A resin in every sense.',
     productName: 'Titan Pure Himalayan Shilajit Resin',
     verifiedPurchase: true,
     date: 'August 22, 2026'

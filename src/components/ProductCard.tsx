@@ -40,7 +40,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   }, [product.id, currentPack.id, getItemQuantity]);
 
   // Dynamic image, price, mrp, and quantity based on active pack
-  const displayImage = currentPack.image || product.images[0];
+  // Strictly prefer user-uploaded images and custom pack photos - zero generic unsplash photos
+  const cleanProductImages = (product.images || []).filter((img) => img && !img.includes('unsplash.com'));
+  const isGenericPackImg = !currentPack.image || currentPack.image.includes('unsplash.com');
+  const displayImage = (!isGenericPackImg && currentPack.image)
+    ? currentPack.image
+    : (cleanProductImages[selectedPackIndex] || cleanProductImages[0] || '');
   const displayPrice = currentPack.price;
   const displayMrp = currentPack.mrp;
   const displayQuantityText = currentPack.quantityText;
@@ -72,30 +77,38 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           onClick={() => (isHomeScreen ? onQuickView(product) : undefined)}
           className="relative aspect-4/3 sm:aspect-square overflow-hidden bg-[#10110F] rounded-xs cursor-pointer mb-4"
         >
-          {isHomeScreen ? (
-            <div className="block w-full h-full">
-              <img
-                key={displayImage}
-                src={displayImage}
-                alt={`${product.name} - ${currentPack.name}`}
-                className={`w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-500 ${
-                  isOutOfStock ? 'opacity-50 grayscale' : 'opacity-95 group-hover:opacity-100'
-                }`}
-                loading="lazy"
-              />
-            </div>
+          {displayImage ? (
+            isHomeScreen ? (
+              <div className="block w-full h-full">
+                <img
+                  key={displayImage}
+                  src={displayImage}
+                  alt={`${product.name} - ${currentPack.name}`}
+                  className={`w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-500 ${
+                    isOutOfStock ? 'opacity-50 grayscale' : 'opacity-95 group-hover:opacity-100'
+                  }`}
+                  loading="lazy"
+                />
+              </div>
+            ) : (
+              <Link to={`/product/${product.slug}`} className="block w-full h-full">
+                <img
+                  key={displayImage}
+                  src={displayImage}
+                  alt={`${product.name} - ${currentPack.name}`}
+                  className={`w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-500 ${
+                    isOutOfStock ? 'opacity-50 grayscale' : 'opacity-95 group-hover:opacity-100'
+                  }`}
+                  loading="lazy"
+                />
+              </Link>
+            )
           ) : (
-            <Link to={`/product/${product.slug}`} className="block w-full h-full">
-              <img
-                key={displayImage}
-                src={displayImage}
-                alt={`${product.name} - ${currentPack.name}`}
-                className={`w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-500 ${
-                  isOutOfStock ? 'opacity-50 grayscale' : 'opacity-95 group-hover:opacity-100'
-                }`}
-                loading="lazy"
-              />
-            </Link>
+            <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#183D27] via-[#10110F] to-[#183D27]/80 text-[#D4B66A]">
+              <span className="text-[10px] uppercase tracking-[0.25em] text-[#D4B66A]/80 font-bold mb-1">TITAN SHILAJIT</span>
+              <span className="font-serif text-sm font-bold text-[#F7F3E8] line-clamp-2">{product.name}</span>
+              <span className="text-[10px] text-[#EEE8D7]/60 mt-2 font-mono">{currentPack.name}</span>
+            </div>
           )}
 
           {/* Badges & Pack indicator */}

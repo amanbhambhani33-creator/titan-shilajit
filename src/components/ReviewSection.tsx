@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Star, ShieldCheck, MessageCircle, RefreshCw } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Star, ShieldCheck, RefreshCw } from 'lucide-react';
 import { useStoreContent } from '../context/StoreContentContext';
-import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
 
 export const ReviewSection: React.FC = () => {
   const { reviews, setReviews } = useStoreContent();
@@ -134,26 +134,23 @@ export const ReviewSection: React.FC = () => {
           ))}
         </div>
 
-        {/* WhatsApp Experience Sharing CTA */}
+        {/* Experience Sharing & Help Desk CTA */}
         <div className="mt-12 p-6 rounded-sm bg-[#183D27]/10 border border-[#183D27]/20 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-center sm:text-left">
             <h4 className="font-serif font-bold text-base text-[#10110F]">
-              Have you tried Titan Shilajit?
+              Have questions or want to learn more about Titan Shilajit?
             </h4>
             <p className="text-xs text-[#66704B] mt-0.5 font-light">
-              Share your daily routine and morning protocol with our Delhi wellness team.
+              Visit our comprehensive Ayurvedic guide, FAQ desk, and certified lab analysis.
             </p>
           </div>
 
-          <a
-            href={getGeneralConciergeWhatsAppUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to="/faq"
             className="px-5 py-2.5 rounded-sm bg-[#10110F] hover:bg-[#183D27] text-[#F7F3E8] text-xs font-bold tracking-wider uppercase flex items-center gap-2 transition-colors shadow-sm shrink-0"
           >
-            <MessageCircle className="w-4 h-4 text-[#25D366]" />
-            <span>SHARE FEEDBACK</span>
-          </a>
+            <span>VISIT HELP & FAQ</span>
+          </Link>
         </div>
       </div>
     </section>

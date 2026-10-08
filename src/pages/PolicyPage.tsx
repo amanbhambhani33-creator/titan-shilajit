@@ -148,15 +148,28 @@ export const PolicyPage: React.FC = () => {
           {content}
 
           <div className="mt-12 pt-6 border-t border-[#10110F]/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#66704B]">
-            <span>Have questions about our terms or policies?</span>
-            <a
-              href={getGeneralConciergeWhatsAppUrl()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#183D27] font-bold hover:underline"
-            >
-              Contact Delhi Concierge on WhatsApp ({BRAND_CONTACT.phoneDisplay})
-            </a>
+            <span>
+              {location.pathname === '/refund-policy'
+                ? 'Need to request a return or damage replacement?'
+                : 'Have questions about our terms or policies?'}
+            </span>
+            {location.pathname === '/refund-policy' ? (
+              <a
+                href={getGeneralConciergeWhatsAppUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#183D27] font-bold hover:underline flex items-center gap-1.5"
+              >
+                <span>Initiate Return with Delhi Concierge on WhatsApp ({BRAND_CONTACT.phoneDisplay})</span>
+              </a>
+            ) : (
+              <Link
+                to="/faq"
+                className="text-[#183D27] font-bold hover:underline"
+              >
+                Visit Help & FAQ Desk
+              </Link>
+            )}
           </div>
         </div>
       </div>

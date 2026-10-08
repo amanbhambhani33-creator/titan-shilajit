@@ -1,11 +1,9 @@
 import React, { useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Zap, ShoppingBag, Star, ShieldCheck } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Zap } from 'lucide-react';
 import { useStoreContent, DEFAULT_PRODUCT_BENEFITS } from '../context/StoreContentContext';
-import { useCart } from '../context/CartContext';
 
 export const BenefitsSection: React.FC = () => {
-  const { content, products } = useStoreContent();
-  const { addToCart, openCart } = useCart();
+  const { content } = useStoreContent();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeSlide, setActiveSlide] = useState(0);
 
@@ -18,9 +16,6 @@ export const BenefitsSection: React.FC = () => {
     title: 'PRODUCT BENEFITS',
     description: 'Each single morning serving of Titan Shilajit delivers concentrated fulvic acid and ionic trace minerals that awaken natural cellular ATP and sustained physical drive.',
   };
-
-  // Find primary product for the quick buy strip
-  const primaryProduct = products.find((p) => p.slug.includes('resin') || p.category === 'resin') || products[0];
 
   const handleScroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -151,64 +146,6 @@ export const BenefitsSection: React.FC = () => {
             />
           ))}
         </div>
-
-        {/* Quick Product Banner Strip (as featured at the bottom of the user screenshot) */}
-        {primaryProduct && (
-          <div className="mt-10 sm:mt-12 bg-white rounded-2xl p-4 sm:p-6 border border-[#B88A32]/30 shadow-md flex flex-col md:flex-row items-center justify-between gap-5">
-            <div className="flex items-center gap-4 w-full md:w-auto">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-[#FAF7F2] border border-[#10110F]/10 shrink-0">
-                <img
-                  src={primaryProduct.images[0] || 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=400&q=80'}
-                  alt={primaryProduct.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="bg-[#183D27] text-[#D4B66A] text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
-                    CERTIFIED 100% PURE
-                  </span>
-                  <div className="flex items-center text-[#B88A32] text-xs">
-                    <Star className="w-3.5 h-3.5 fill-[#B88A32]" />
-                    <span className="font-bold text-[#10110F] ml-1">4.9</span>
-                    <span className="text-gray-400 text-[10px] ml-1">(420+ Reviews)</span>
-                  </div>
-                </div>
-                <h4 className="font-serif font-bold text-base sm:text-lg text-[#10110F] mt-0.5">
-                  {primaryProduct.name}
-                </h4>
-                <div className="flex items-baseline gap-2 mt-0.5">
-                  <span className="text-lg font-black text-[#183D27]">
-                    ₹{primaryProduct.price.toLocaleString('en-IN')}
-                  </span>
-                  {primaryProduct.mrp && (
-                    <span className="text-xs text-gray-400 line-through">
-                      ₹{primaryProduct.mrp.toLocaleString('en-IN')}
-                    </span>
-                  )}
-                  {primaryProduct.discount && (
-                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-xs">
-                      {primaryProduct.discount}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-              <button
-                onClick={() => {
-                  addToCart(primaryProduct, 1);
-                  openCart();
-                }}
-                className="w-full md:w-auto px-7 py-3 rounded-xl bg-[#183D27] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider hover:bg-[#10110F] transition-colors flex items-center justify-center gap-2 shadow-sm"
-              >
-                <ShoppingBag className="w-4 h-4 text-[#D4B66A]" />
-                <span>Add To Cart</span>
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </section>
   );

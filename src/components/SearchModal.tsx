@@ -136,7 +136,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
 
             {filteredProducts.length === 0 && filteredFaqs.length === 0 && (
               <div className="py-8 text-center text-sm text-[#66704B]">
-                No matching results found for "{query}". You can also inquire directly with our Delhi concierge on WhatsApp.
+                No matching results found for "{query}". You can browse our complete catalog in the Shop section or visit our Help & FAQ desk.
               </div>
             )}
           </div>

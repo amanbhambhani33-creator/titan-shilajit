@@ -1,8 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Mountain, ShieldCheck, Heart, MapPin, Phone, Mail, MessageCircle, ArrowRight } from 'lucide-react';
+import { Mountain, ShieldCheck, Heart, MapPin, Phone, Mail, ArrowRight } from 'lucide-react';
 import { BRAND_CONTACT } from '../data/content';
-import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
 
 export const AboutPage: React.FC = () => {
   return (
@@ -63,7 +62,7 @@ export const AboutPage: React.FC = () => {
             <Heart className="w-6 h-6 text-[#183D27] mb-3" />
             <h4 className="font-serif font-bold text-lg text-[#10110F] mb-1">Direct Connection</h4>
             <p className="text-xs text-[#66704B] leading-relaxed">
-              Personalized guidance, batch authenticity certificates, and direct dispatch through WhatsApp.
+              Personalized guidance, batch authenticity certificates, and direct dispatch across India.
             </p>
           </div>
         </div>
@@ -84,7 +83,7 @@ export const AboutPage: React.FC = () => {
               </p>
               <p className="flex items-center justify-center md:justify-start gap-2">
                 <Phone className="w-3.5 h-3.5 text-[#D4B66A]" />
-                <span>WhatsApp: {BRAND_CONTACT.phoneDisplay}</span>
+                <span>Customer Care: {BRAND_CONTACT.phoneDisplay}</span>
               </p>
               <p className="flex items-center justify-center md:justify-start gap-2">
                 <Mail className="w-3.5 h-3.5 text-[#D4B66A]" />
@@ -93,15 +92,12 @@ export const AboutPage: React.FC = () => {
             </div>
           </div>
 
-          <a
-            href={getGeneralConciergeWhatsAppUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-6 py-3.5 rounded-xs bg-[#25D366] hover:bg-[#1EBE5D] text-[#10110F] font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-md transition-all shrink-0"
+          <Link
+            to="/faq"
+            className="px-6 py-3.5 rounded-xs bg-[#B88A32] hover:bg-[#D4B66A] text-[#10110F] font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-md transition-all shrink-0 cursor-pointer"
           >
-            <MessageCircle className="w-4 h-4" />
-            <span>CONTACT SUPPORT</span>
-          </a>
+            <span>VISIT HELP & SUPPORT</span>
+          </Link>
         </div>
       </div>
     </div>

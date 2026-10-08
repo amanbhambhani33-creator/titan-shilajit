@@ -1,11 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { SlidersHorizontal, MessageCircle, ShieldCheck, Award } from 'lucide-react';
+import { useSearchParams, Link } from 'react-router-dom';
+import { SlidersHorizontal, ShieldCheck, Award } from 'lucide-react';
 import { useStoreContent } from '../context/StoreContentContext';
 import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
 import { Product } from '../types';
-import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
 
 export const ShopPage: React.FC = () => {
   const { products } = useStoreContent();
@@ -115,7 +114,7 @@ export const ShopPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Direct Concierge Banner */}
+        {/* Direct Help Desk Banner */}
         <div className="mt-16 p-8 rounded-xs bg-[#10110F] text-[#F7F3E8] border border-[#B88A32]/30 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
           <div className="flex flex-col gap-2 text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-2 text-[#D4B66A] text-xs font-bold uppercase tracking-wider">
@@ -126,19 +125,16 @@ export const ShopPage: React.FC = () => {
               Need help selecting your Titan product?
             </h3>
             <p className="text-xs text-[#EEE8D7]/75 max-w-lg">
-              Connect directly with our wellness team on WhatsApp for personalized product guidance, batch certificates, and express Indian delivery.
+              Connect with our wellness team via our Help & FAQ desk for personalized product guidance, batch certificates, and express Indian delivery.
             </p>
           </div>
 
-          <a
-            href={getGeneralConciergeWhatsAppUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-6 py-3.5 rounded-xs bg-[#25D366] hover:bg-[#1EBE5D] text-[#10110F] font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-md transition-all shrink-0"
+          <Link
+            to="/faq"
+            className="px-6 py-3.5 rounded-xs bg-[#B88A32] hover:bg-[#D4B66A] text-[#10110F] font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-md transition-all shrink-0 cursor-pointer"
           >
-            <MessageCircle className="w-4 h-4" />
-            <span>ASK WELLNESS TEAM</span>
-          </a>
+            <span>VISIT HELP & FAQ</span>
+          </Link>
         </div>
       </div>
 

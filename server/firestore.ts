@@ -352,17 +352,24 @@ export async function getNextContinuousInvoiceNumber(): Promise<string> {
  */
 export async function saveStoreContentToFirestore(content: any): Promise<boolean> {
   try {
-    const url = `${FIRESTORE_BASE_URL}/store_content/main?key=${API_KEY}`;
-    const res = await fetch(url, {
+    const fields = toFirestoreFields({
+      ...content,
+      updatedAt: new Date().toISOString(),
+    });
+    const patchUrl = `${FIRESTORE_BASE_URL}/store_content/main?key=${API_KEY}`;
+    let res = await fetch(patchUrl, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fields: toFirestoreFields({
-          ...content,
-          updatedAt: new Date().toISOString(),
-        }),
-      }),
+      body: JSON.stringify({ fields }),
     });
+    if (!res.ok) {
+      const postUrl = `${FIRESTORE_BASE_URL}/store_content?documentId=main&key=${API_KEY}`;
+      res = await fetch(postUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields }),
+      });
+    }
     return res.ok;
   } catch (e) {
     console.error('Server saveStoreContent error:', e);
@@ -384,17 +391,24 @@ export async function getStoreContentFromFirestore(): Promise<any | null> {
 
 export async function saveProductsToFirestore(products: any[]): Promise<boolean> {
   try {
-    const url = `${FIRESTORE_BASE_URL}/store_content/products?key=${API_KEY}`;
-    const res = await fetch(url, {
+    const fields = toFirestoreFields({
+      items: products,
+      updatedAt: new Date().toISOString(),
+    });
+    const patchUrl = `${FIRESTORE_BASE_URL}/store_content/products?key=${API_KEY}`;
+    let res = await fetch(patchUrl, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fields: toFirestoreFields({
-          items: products,
-          updatedAt: new Date().toISOString(),
-        }),
-      }),
+      body: JSON.stringify({ fields }),
     });
+    if (!res.ok) {
+      const postUrl = `${FIRESTORE_BASE_URL}/store_content?documentId=products&key=${API_KEY}`;
+      res = await fetch(postUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields }),
+      });
+    }
     return res.ok;
   } catch (e) {
     console.error('Server saveProducts error:', e);
@@ -417,17 +431,24 @@ export async function getProductsFromFirestore(): Promise<any[] | null> {
 
 export async function saveReviewsToFirestore(reviews: any[]): Promise<boolean> {
   try {
-    const url = `${FIRESTORE_BASE_URL}/store_content/reviews?key=${API_KEY}`;
-    const res = await fetch(url, {
+    const fields = toFirestoreFields({
+      items: reviews,
+      updatedAt: new Date().toISOString(),
+    });
+    const patchUrl = `${FIRESTORE_BASE_URL}/store_content/reviews?key=${API_KEY}`;
+    let res = await fetch(patchUrl, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fields: toFirestoreFields({
-          items: reviews,
-          updatedAt: new Date().toISOString(),
-        }),
-      }),
+      body: JSON.stringify({ fields }),
     });
+    if (!res.ok) {
+      const postUrl = `${FIRESTORE_BASE_URL}/store_content?documentId=reviews&key=${API_KEY}`;
+      res = await fetch(postUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields }),
+      });
+    }
     return res.ok;
   } catch (e) {
     console.error('Server saveReviews error:', e);

@@ -144,7 +144,7 @@ export const SOURCING_JOURNEY = [
     step: '06',
     title: 'The Morning Titan Ritual',
     subtitle: 'Pure Daily Awakening',
-    description: 'Dispatched fresh to your hands with our precision stainless measuring spoon and dedicated WhatsApp concierge guidance.'
+    description: 'Dispatched fresh to your hands with our precision stainless measuring spoon and dedicated customer care guidance.'
   }
 ];
 

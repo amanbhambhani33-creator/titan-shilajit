@@ -15,7 +15,6 @@ import {
   Lock,
 } from 'lucide-react';
 import { Product, ProductPack } from '../types';
-import { getProductWhatsAppUrl } from '../utils/whatsapp';
 import { useCart } from '../context/CartContext';
 import { getProductPacks, getPackShortBadge, getPackShortName, getPackShortQuantity } from '../utils/productPacks';
 import { AmazonFlipkartBadge } from './AmazonFlipkartBadge';
@@ -54,11 +53,13 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, 
     }
   }, [product.id, currentPack.id, getItemQuantity]);
 
-  const displayImage = currentPack.image || product.images[selectedImageIndex] || product.images[0];
+  const cleanProductImages = (product.images || []).filter((img) => img && !img.includes('unsplash.com'));
+  const isGenericPackImg = !currentPack.image || currentPack.image.includes('unsplash.com');
+  const activePackImg = (!isGenericPackImg && currentPack.image) ? currentPack.image : '';
+
+  const displayImage = cleanProductImages[selectedImageIndex] || activePackImg || cleanProductImages[0] || '';
   const displayPrice = currentPack.price;
   const displayMrp = currentPack.mrp;
-
-  const whatsappUrl = getProductWhatsAppUrl(product, quantity, currentPack);
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
@@ -82,6 +83,7 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, 
 
   const handleSelectPack = (idx: number) => {
     setSelectedPackIndex(idx);
+    setSelectedImageIndex(0);
   };
 
   return (
@@ -108,14 +110,22 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, 
         <div className="w-full md:w-5/12 bg-[#10110F] p-4 sm:p-6 flex flex-col justify-between shrink-0">
           <div>
             <div className="relative aspect-square w-full rounded-xs overflow-hidden bg-black/50 border border-white/10 mb-3 sm:mb-4">
-              <img
-                key={displayImage}
-                src={displayImage}
-                alt={`${product.name} - ${currentPack.name}`}
-                className={`w-full h-full object-cover animate-in fade-in duration-300 ${
-                  isOutOfStock ? 'opacity-55 grayscale' : ''
-                }`}
-              />
+              {displayImage ? (
+                <img
+                  key={displayImage}
+                  src={displayImage}
+                  alt={`${product.name} - ${currentPack.name}`}
+                  className={`w-full h-full object-cover animate-in fade-in duration-300 ${
+                    isOutOfStock ? 'opacity-55 grayscale' : ''
+                  }`}
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#183D27] via-[#10110F] to-[#183D27]/80 text-[#D4B66A]">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-[#D4B66A]/80 font-bold mb-1">TITAN SHILAJIT</span>
+                  <span className="font-serif text-sm font-bold text-[#F7F3E8]">{product.name}</span>
+                  <span className="text-[10px] text-[#EEE8D7]/60 mt-2 font-mono">{currentPack.name}</span>
+                </div>
+              )}
               {isOutOfStock ? (
                 <div className="absolute top-3 left-3 bg-red-800 text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-xs border border-red-500 shadow-md">
                   OUT OF STOCK
@@ -128,21 +138,23 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, 
             </div>
 
             {/* Thumbnail selector */}
-            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-              {product.images.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedImageIndex(idx)}
-                  className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xs overflow-hidden border transition-all shrink-0 cursor-pointer ${
-                    selectedImageIndex === idx
-                      ? 'border-[#D4B66A] opacity-100 scale-105'
-                      : 'border-white/20 opacity-60 hover:opacity-100'
-                  }`}
-                >
-                  <img src={img} alt="Thumbnail" className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
+            {cleanProductImages.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                {cleanProductImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedImageIndex(idx)}
+                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xs overflow-hidden border transition-all shrink-0 cursor-pointer ${
+                      selectedImageIndex === idx
+                        ? 'border-[#D4B66A] opacity-100 scale-105'
+                        : 'border-white/20 opacity-60 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={img} alt="Thumbnail" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Quick purity proof badges */}

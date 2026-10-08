@@ -18,7 +18,6 @@ import {
 import { useStoreContent } from '../context/StoreContentContext';
 import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
-import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
 import { useCart } from '../context/CartContext';
 import { Product, ProductPack } from '../types';
 import { getProductPacks, getPackShortBadge, getPackShortName, getPackShortQuantity } from '../utils/productPacks';
@@ -78,11 +77,17 @@ export const ProductDetailPage: React.FC = () => {
     );
   }
 
-  const displayImage = currentPack?.image || product.images[selectedImageIndex] || product.images[0];
+  // Display image: strictly prioritize user-uploaded images or custom pack photo - zero generic unsplash images
+  const cleanProductImages = (product.images || []).filter((img) => img && !img.includes('unsplash.com'));
+  const isGenericPackImg = !currentPack?.image || currentPack.image.includes('unsplash.com');
+  const activePackImg = (!isGenericPackImg && currentPack?.image) ? currentPack.image : '';
+
+  const displayImage = selectedImageIndex !== 0 && cleanProductImages[selectedImageIndex]
+    ? cleanProductImages[selectedImageIndex]
+    : (activePackImg || cleanProductImages[selectedPackIndex] || cleanProductImages[0] || '');
   const displayPrice = currentPack ? currentPack.price : product.price;
   const displayMrp = currentPack ? currentPack.mrp : product.mrp;
 
-  const conciergeHelpUrl = getGeneralConciergeWhatsAppUrl();
   const relatedProducts = products.filter((p) => p.id !== product.id).slice(0, 3);
   const matchedReviews = (reviews || []).filter(
     (r) => r.productId === product.id || (r.productName && r.productName.toLowerCase().includes(product.name.toLowerCase()))
@@ -91,6 +96,7 @@ export const ProductDetailPage: React.FC = () => {
 
   const handleSelectPack = (idx: number) => {
     setSelectedPackIndex(idx);
+    setSelectedImageIndex(0); // Switching pack switches photo to the chosen pack's photo!
   };
 
   const handleAddToCart = () => {
@@ -126,12 +132,20 @@ export const ProductDetailPage: React.FC = () => {
           {/* Left Gallery (6 cols) */}
           <div className="lg:col-span-6 flex flex-col gap-3 sm:gap-4">
             <div className="relative aspect-square w-full rounded-sm overflow-hidden bg-[#10110F] border border-[#10110F]/10 shadow-lg">
-              <img
-                key={displayImage}
-                src={displayImage}
-                alt={`${product.name} - ${currentPack?.name}`}
-                className="w-full h-full object-cover animate-in fade-in duration-300"
-              />
+              {displayImage ? (
+                <img
+                  key={displayImage}
+                  src={displayImage}
+                  alt={`${product.name} - ${currentPack?.name}`}
+                  className="w-full h-full object-cover animate-in fade-in duration-300"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center bg-gradient-to-br from-[#183D27] via-[#10110F] to-[#183D27]/80 text-[#D4B66A]">
+                  <span className="text-xs uppercase tracking-[0.25em] text-[#D4B66A]/80 font-bold mb-2">TITAN SHILAJIT</span>
+                  <span className="font-serif text-xl font-bold text-[#F7F3E8]">{product.name}</span>
+                  <span className="text-xs text-[#EEE8D7]/60 mt-3 font-mono">{currentPack?.name || product.size}</span>
+                </div>
+              )}
               {currentPack?.savings ? (
                 <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-[#183D27] text-[#D4B66A] text-[10px] sm:text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-xs border border-[#B88A32]/40 shadow-sm">
                   {currentPack.savings}
@@ -144,21 +158,23 @@ export const ProductDetailPage: React.FC = () => {
             </div>
 
             {/* Thumbnail Strip */}
-            <div className="grid grid-cols-4 gap-2 sm:gap-3">
-              {product.images.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedImageIndex(idx)}
-                  className={`aspect-square rounded-xs overflow-hidden border-2 transition-all ${
-                    selectedImageIndex === idx
-                      ? 'border-[#B88A32] shadow-sm scale-105'
-                      : 'border-black/10 opacity-70 hover:opacity-100'
-                  }`}
-                >
-                  <img src={img} alt={`${product.name} thumbnail ${idx}`} className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
+            {cleanProductImages.length > 1 && (
+              <div className="grid grid-cols-4 gap-2 sm:gap-3">
+                {cleanProductImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedImageIndex(idx)}
+                    className={`aspect-square rounded-xs overflow-hidden border-2 transition-all ${
+                      selectedImageIndex === idx
+                        ? 'border-[#B88A32] shadow-sm scale-105'
+                        : 'border-black/10 opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={img} alt={`${product.name} thumbnail ${idx}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right Product Buy Box (6 cols) */}
@@ -397,18 +413,15 @@ export const ProductDetailPage: React.FC = () => {
                 <span>Delhivery Express</span>
               </div>
 
-              {/* Concierge Assistance Link */}
+              {/* Help & Support Link */}
               <div className="mt-0.5 text-center text-[11px] text-[#66704B]">
                 Need custom advice?{' '}
-                <a
-                  href={conciergeHelpUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  to="/faq"
                   className="text-[#183D27] font-bold hover:underline inline-flex items-center gap-1"
                 >
-                  <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
-                  <span>Chat with Delhi Concierge</span>
-                </a>
+                  <span>Visit Help & FAQ Desk</span>
+                </Link>
               </div>
 
               {/* Authorized Pan-India Platforms (Amazon & Flipkart) */}
@@ -542,7 +555,7 @@ export const ProductDetailPage: React.FC = () => {
               </div>
 
               <p className="text-xs text-[#66704B]">
-                Batch test certificates (COA) are verified through independent NABL-accredited testing laboratories in India. Digital test certificates for your batch can also be requested via our WhatsApp concierge.
+                Batch test certificates (COA) are verified through independent NABL-accredited testing laboratories in India. Digital test certificates for your batch can also be viewed on our Help & FAQ desk.
               </p>
             </div>
           )}
@@ -573,7 +586,7 @@ export const ProductDetailPage: React.FC = () => {
                 </div>
               ) : (
                 <div className="py-6 text-center text-sm text-[#66704B]">
-                  Be among the first to review this Titan formulation. Share your routine on WhatsApp.
+                  Be among the first to review this Titan formulation. Share your experience with us.
                 </div>
               )}
             </div>

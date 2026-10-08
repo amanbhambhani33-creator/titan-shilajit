@@ -16,12 +16,7 @@ export const PRODUCTS: Product[] = [
     reviewCount: 342,
     inStock: true,
     stockQty: 85,
-    images: [
-      'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&w=1200&q=85'
-    ],
+    images: [],
     shortDescription: 'Sourced from the pristine high-altitude rocky crevices of the Himalayas. Rich in naturally occurring fulvic acid, minerals, and bioactive compounds for cellular vitality.',
     description: 'Titan Pure Himalayan Shilajit Resin is the pinnacle of ancient natural strength. Hand-harvested from high-altitude rock faces above 16,000 feet in the Himalayan range during peak summer months, our resin undergoes slow sun-drying and gentle traditional purification using pure spring water. It retains maximum natural bio-availability without synthetic preservatives, binders, or artificial additives.',
     origin: 'Kashmir & Ladakh High Himalayan Ranges (16,000+ ft)',
@@ -87,11 +82,7 @@ export const PRODUCTS: Product[] = [
     reviewCount: 215,
     inStock: true,
     stockQty: 42,
-    images: [
-      'https://images.unsplash.com/photo-1587049352851-8d4e89133924?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=85'
-    ],
+    images: [],
     shortDescription: 'Convenient single-serve honey sticks blending authentic purified Himalayan Shilajit resin with unprocessed wild forest honey for an earthy, naturally sweet vitality boost on the go.',
     description: 'Designed for modern lifestyles and effortless daily routines, Titan Classic Honey Sticks combine the legendary benefits of high-altitude Himalayan Shilajit with single-origin wild forest honey. No spoon required, no measuring hassle — just tear, squeeze directly, or stir into your morning beverage.',
     origin: 'Himalayan Foothills & High Altitude Reserve',
@@ -151,11 +142,7 @@ export const PRODUCTS: Product[] = [
     reviewCount: 184,
     inStock: true,
     stockQty: 18,
-    images: [
-      'https://images.unsplash.com/photo-1511381939415-e44015466834?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=85'
-    ],
+    images: [],
     shortDescription: 'Decadent dark raw cacao meets pure Himalayan Shilajit and raw wild honey. A delicious, antioxidant-rich pre-workout and afternoon ritual.',
     description: 'A sophisticated harmony of 70% ceremonial raw cacao, wildflower honey, and purified Himalayan Shilajit. The flavonoids from unroasted cacao complement the mineral density of Shilajit, creating a velvety, rich pick-me-up that elevates both physical vitality and mood.',
     origin: 'Himalayan Forest Honey & Single-Origin Cacao',
@@ -212,11 +199,7 @@ export const PRODUCTS: Product[] = [
     reviewCount: 147,
     inStock: true,
     stockQty: 34,
-    images: [
-      'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1587049352851-8d4e89133924?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=85'
-    ],
+    images: [],
     shortDescription: 'Refreshing, tart Himalayan wild strawberry notes fused with sweet wildflower honey and pure Shilajit resin. A bright daily vitality boost.',
     description: 'Crafted for those who crave a bright, fruity twist to their wellness routine. Real cold-pressed wild Himalayan strawberry fruit essence is blended with raw honey and our pure purified Shilajit resin, offering a naturally uplifting taste without artificial flavor drops.',
     origin: 'Himalayan Sub-Alpine Valleys',
@@ -273,11 +256,7 @@ export const PRODUCTS: Product[] = [
     reviewCount: 96,
     inStock: true,
     stockQty: 26,
-    images: [
-      'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1587049352851-8d4e89133924?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=85'
-    ],
+    images: [],
     shortDescription: 'Our flagship ritual kit featuring the 20g Pure Resin Jar, custom engraved matte-black stainless measuring spoon, and a 10-stick pack of Classic Honey Sticks for travel.',
     description: 'The definitive Titan Shilajit experience. Designed for those committed to a high-standard morning routine at home and on the move. Includes our lab-certified Grade-A Himalayan Resin, our precision stainless steel dosing spoon, and travel-ready Classic Honey Sticks, presented in a luxury matte black and gold rigid gift box.',
     origin: 'Himalayan Ranges (16,000+ ft)',
@@ -334,11 +313,7 @@ export const PRODUCTS: Product[] = [
     reviewCount: 112,
     inStock: true,
     stockQty: 15,
-    images: [
-      'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1511381939415-e44015466834?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=1200&q=85'
-    ],
+    images: [],
     shortDescription: 'Explore all three flavor profiles of Titan Shilajit Honey Sticks in one complete wellness pack. Pure Wild Honey, 70% Raw Dark Chocolate, and Wild Strawberry.',
     description: 'The perfect way to discover your favorite daily Shilajit stick. Enjoy the traditional simplicity of Classic Honey, the rich antioxidant indulgence of Dark Chocolate, and the crisp refreshing berry notes of Wild Strawberry.',
     origin: 'Himalayan Range',

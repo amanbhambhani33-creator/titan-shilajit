@@ -206,7 +206,7 @@ export const WhyTitanPage: React.FC = () => {
                 <tr>
                   <td className="p-4 sm:p-5 font-semibold">Direct Concierge Dispatch</td>
                   <td className="p-4 sm:p-5 bg-[#183D27]/5 font-bold text-[#183D27] flex items-center gap-1.5">
-                    <Check className="w-4 h-4" /> Direct Delhi Team on WhatsApp
+                    <Check className="w-4 h-4" /> Direct Delhi Central Dispatch
                   </td>
                   <td className="p-4 sm:p-5 text-[#66704B]">Automated 3rd-party warehouse</td>
                   <td className="p-4 sm:p-5 text-[#66704B]">Generic marketplace sellers</td>
