@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Lock,
   Mail,
@@ -15,6 +16,7 @@ import {
   Crown,
   Clock,
   ArrowRight,
+  X,
 } from 'lucide-react';
 import { useAuth, ADMIN_REQUIRED_PASSWORD, PERMANENT_SUPER_ADMIN_EMAILS } from '../context/AuthContext';
 import { AdminRole, AccessRequestRecord } from '../types';
@@ -24,6 +26,7 @@ interface AdminLoginGateProps {
 }
 
 export const AdminLoginGate: React.FC<AdminLoginGateProps> = ({ onSuccessToast }) => {
+  const navigate = useNavigate();
   const {
     signIn,
     submitAccessRequest,
@@ -149,6 +152,17 @@ export const AdminLoginGate: React.FC<AdminLoginGateProps> = ({ onSuccessToast }
   return (
     <div id="admin-login-screen" className="min-h-screen pt-24 pb-20 bg-[#10110F] text-[#F7F3E8] flex items-center justify-center px-4">
       <div className="w-full max-w-lg bg-[#183D27]/30 border border-[#B88A32]/50 rounded-sm p-6 sm:p-10 shadow-2xl backdrop-blur-md relative overflow-hidden">
+        {/* Close Button redirecting to website */}
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          className="absolute top-4 right-4 z-20 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-[#D4B66A] hover:text-white transition-all cursor-pointer flex items-center gap-1.5 border border-[#B88A32]/30 shadow-sm"
+          title="Close and Return to Website"
+        >
+          <X className="w-3.5 h-3.5" />
+          <span className="text-[10px] font-bold uppercase tracking-wider">Close to Website</span>
+        </button>
+
         {/* Ambient Gold Glows */}
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#B88A32]/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[#183D27]/40 rounded-full blur-3xl pointer-events-none" />
@@ -516,6 +530,18 @@ export const AdminLoginGate: React.FC<AdminLoginGateProps> = ({ onSuccessToast }
             )}
           </div>
         )}
+
+        {/* Prominent Footer Close Button redirecting to website */}
+        <div className="mt-8 pt-5 border-t border-[#B88A32]/25 flex items-center justify-center relative z-10">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="w-full py-3 rounded-xs bg-[#10110F] hover:bg-black text-[#D4B66A] hover:text-white text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 border border-[#B88A32]/50 shadow-lg transition-all cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+            <span>Close Admin &amp; Return to Storefront</span>
+          </button>
+        </div>
       </div>
     </div>
   );

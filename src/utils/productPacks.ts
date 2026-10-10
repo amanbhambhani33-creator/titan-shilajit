@@ -2,23 +2,23 @@ import { Product, ProductPack } from '../types';
 
 export function getProductPacks(product: Product): ProductPack[] {
   const cleanImages = (product.images || []).filter((img) => img && !img.includes('unsplash.com'));
+  const primaryImg = cleanImages[0] || '';
 
   // If product already has configured packs (e.g. from Admin Desk)
   if (product.packs && product.packs.length > 0) {
-    return product.packs.map((p, idx) => {
-      // If pack image is empty or an old generic unsplash placeholder, automatically use the product's uploaded/active image
-      const isGeneric = !p.image || p.image.includes('unsplash.com');
-      const fallbackImg = cleanImages[idx] || cleanImages[0] || '';
+    return product.packs.map((p) => {
+      // If pack image is empty or an old generic unsplash placeholder or mismatched resin photo, automatically use primaryImg
+      const isGeneric = !p.image || p.image.includes('unsplash.com') || (product.slug === 'titan-honey-sticks-strawberry' && p.image.includes('shilajit-resin'));
       return {
         ...p,
-        image: isGeneric ? fallbackImg : (p.image || fallbackImg),
+        image: isGeneric ? primaryImg : (p.image || primaryImg),
       };
     });
   }
 
   // Pre-configured packs by slug, strictly using the product's own images (user uploaded / pasted)
   const getPackImg = (idx: number) => {
-    return cleanImages[idx] || cleanImages[0] || '';
+    return primaryImg;
   };
 
   if (product.slug === 'titan-shilajit-resin') {

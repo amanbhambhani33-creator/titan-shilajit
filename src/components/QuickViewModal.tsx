@@ -106,16 +106,16 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, 
           <X className="w-5 h-5" />
         </button>
 
-        {/* Left Side: Product Gallery */}
-        <div className="w-full md:w-5/12 bg-[#10110F] p-4 sm:p-6 flex flex-col justify-between shrink-0">
+        {/* Left Side: Product Gallery (Amazon-style large prominent product view) */}
+        <div className="w-full md:w-1/2 bg-[#10110F] p-4 sm:p-6 flex flex-col justify-between shrink-0">
           <div>
-            <div className="relative aspect-square w-full rounded-xs overflow-hidden bg-black/50 border border-white/10 mb-3 sm:mb-4">
+            <div className="relative aspect-square w-full rounded-xs overflow-hidden bg-[#F7F3E8] border border-[#B88A32]/30 mb-3 sm:mb-4 flex items-center justify-center p-3">
               {displayImage ? (
                 <img
                   key={displayImage}
                   src={displayImage}
                   alt={`${product.name} - ${currentPack.name}`}
-                  className={`w-full h-full object-cover animate-in fade-in duration-300 ${
+                  className={`w-full h-full object-contain animate-in fade-in duration-300 ${
                     isOutOfStock ? 'opacity-55 grayscale' : ''
                   }`}
                 />

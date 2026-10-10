@@ -40,12 +40,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   }, [product.id, currentPack.id, getItemQuantity]);
 
   // Dynamic image, price, mrp, and quantity based on active pack
-  // Strictly prefer user-uploaded images and custom pack photos - zero generic unsplash photos
+  // Strictly prefer user-uploaded primary image or explicit custom pack photos - zero generic unsplash photos
   const cleanProductImages = (product.images || []).filter((img) => img && !img.includes('unsplash.com'));
-  const isGenericPackImg = !currentPack.image || currentPack.image.includes('unsplash.com');
-  const displayImage = (!isGenericPackImg && currentPack.image)
+  const hasCustomPackImg = Boolean(
+    currentPack.image &&
+    !currentPack.image.includes('unsplash.com') &&
+    currentPack.image.trim() !== ''
+  );
+  const displayImage = hasCustomPackImg
     ? currentPack.image
-    : (cleanProductImages[selectedPackIndex] || cleanProductImages[0] || '');
+    : (cleanProductImages[0] || '');
   const displayPrice = currentPack.price;
   const displayMrp = currentPack.mrp;
   const displayQuantityText = currentPack.quantityText;
@@ -71,11 +75,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           : 'border-[#10110F]/10 hover:border-[#B88A32]/60'
       }`}
     >
-      {/* Upper Section: Image Container */}
+      {/* Upper Section: Image Container (Amazon-style large prominent product view) */}
       <div>
         <div
           onClick={() => (isHomeScreen ? onQuickView(product) : undefined)}
-          className="relative aspect-4/3 sm:aspect-square overflow-hidden bg-[#10110F] rounded-xs cursor-pointer mb-4"
+          className="relative aspect-square overflow-hidden bg-[#F7F3E8] border border-[#10110F]/10 rounded-xs cursor-pointer mb-4 flex items-center justify-center p-2 sm:p-3"
         >
           {displayImage ? (
             isHomeScreen ? (
@@ -84,8 +88,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   key={displayImage}
                   src={displayImage}
                   alt={`${product.name} - ${currentPack.name}`}
-                  className={`w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-500 ${
-                    isOutOfStock ? 'opacity-50 grayscale' : 'opacity-95 group-hover:opacity-100'
+                  className={`w-full h-full object-contain object-center group-hover:scale-105 transition-all duration-500 ${
+                    isOutOfStock ? 'opacity-50 grayscale' : 'opacity-100'
                   }`}
                   loading="lazy"
                 />
@@ -96,8 +100,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   key={displayImage}
                   src={displayImage}
                   alt={`${product.name} - ${currentPack.name}`}
-                  className={`w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-500 ${
-                    isOutOfStock ? 'opacity-50 grayscale' : 'opacity-95 group-hover:opacity-100'
+                  className={`w-full h-full object-contain object-center group-hover:scale-105 transition-all duration-500 ${
+                    isOutOfStock ? 'opacity-50 grayscale' : 'opacity-100'
                   }`}
                   loading="lazy"
                 />

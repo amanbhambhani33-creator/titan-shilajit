@@ -348,13 +348,24 @@ const LAST_SYNC_STORAGE_KEY = 'titan_last_firestore_sync';
 function sanitizeProductsImages(items: Product[]): Product[] {
   if (!Array.isArray(items)) return [];
   return items.map((p) => {
-    const cleanImgs = (p.images || []).filter((img) => img && !img.includes('unsplash.com'));
-    const cleanPacks = (p.packs || []).map((pk, idx) => {
-      const isGeneric = !pk.image || pk.image.includes('unsplash.com');
-      const fallbackImg = cleanImgs[idx] || cleanImgs[0] || '';
+    let cleanImgs = (p.images || []).filter((img) => img && !img.includes('unsplash.com'));
+    // Prevent accidental resin photo fallback on strawberry sticks
+    if (p.id === 'titan-honey-sticks-strawberry') {
+      cleanImgs = cleanImgs.filter((img) => !img.includes('shilajit-resin'));
+    }
+    // If empty, fallback to authentic product defaults
+    if (cleanImgs.length === 0) {
+      const def = DEFAULT_PRODUCTS.find((d) => d.id === p.id);
+      if (def && Array.isArray(def.images) && def.images.length > 0) {
+        cleanImgs = [...def.images];
+      }
+    }
+    const primaryImg = cleanImgs[0] || '';
+    const cleanPacks = (p.packs || []).map((pk) => {
+      const isGeneric = !pk.image || pk.image.includes('unsplash.com') || (p.id === 'titan-honey-sticks-strawberry' && pk.image.includes('shilajit-resin'));
       return {
         ...pk,
-        image: isGeneric ? fallbackImg : pk.image,
+        image: isGeneric ? primaryImg : (pk.image || primaryImg),
       };
     });
     return {
@@ -873,6 +884,7 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
 
   const updateProduct = async (id: string, updates: Partial<Product>): Promise<boolean> => {
+    let targetUpdatedProd: Product | null = null;
     const updated = products.map((item) => {
       if (item.id !== id) return item;
       const nextStock = updates.stockQty !== undefined ? updates.stockQty : item.stockQty;
@@ -882,17 +894,18 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
 
       const mergedImages = updates.images !== undefined ? updates.images : item.images;
       const cleanImages = (mergedImages || []).filter((img) => img && !img.includes('unsplash.com'));
+      const primaryImg = cleanImages[0] || '';
 
       const mergedPacks = updates.packs !== undefined ? updates.packs : item.packs;
-      const cleanPacks = (mergedPacks || []).map((pk, idx) => {
-        const isGeneric = !pk.image || pk.image.includes('unsplash.com');
+      const cleanPacks = (mergedPacks || []).map((pk) => {
+        const isGeneric = !pk.image || pk.image.includes('unsplash.com') || (id === 'titan-honey-sticks-strawberry' && pk.image.includes('shilajit-resin'));
         return {
           ...pk,
-          image: isGeneric ? (cleanImages[idx] || cleanImages[0] || '') : pk.image,
+          image: isGeneric ? primaryImg : (pk.image || primaryImg),
         };
       });
 
-      return {
+      const updatedObj: Product = {
         ...item,
         ...updates,
         images: cleanImages,
@@ -900,25 +913,45 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
         stockQty: nextStock,
         inStock: (nextStock !== undefined && nextStock <= 0) ? false : nextInStock,
       };
+      targetUpdatedProd = updatedObj;
+      return updatedObj;
     });
+
     setProducts(updated);
     try { localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(updated)); } catch {}
+
     let success = false;
+    // 1. Direct Firestore write: both summary document and dedicated individual product document
     try {
       const productsDocRef = doc(db, 'store_content', 'products');
       await setDoc(productsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: true });
+
+      if (targetUpdatedProd) {
+        const individualDocRef = doc(db, 'products', id);
+        await setDoc(individualDocRef, { ...targetUpdatedProd, updatedAt: new Date().toISOString() }, { merge: true });
+      }
       success = true;
     } catch (e) {
       console.warn('Firestore updateProduct client notice:', e);
     }
+
+    // 2. Dual server write pipeline: converts any base64 images to static files and persists to Firestore
     try {
       const res = await fetch('/api/store-content/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ products: updated }),
       });
-      if (res.ok) success = true;
+      if (res.ok) {
+        success = true;
+        const resData = await res.json();
+        if (Array.isArray(resData?.products) && resData.products.length > 0) {
+          setProducts(resData.products);
+          try { localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(resData.products)); } catch {}
+        }
+      }
     } catch {}
+
     if (success) setIsFirebaseSynced(true);
     return success;
   };

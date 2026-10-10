@@ -14,6 +14,11 @@ import {
   Info,
   Lock,
   CreditCard,
+  ZoomIn,
+  Maximize2,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useStoreContent } from '../context/StoreContentContext';
 import { ProductCard } from '../components/ProductCard';
@@ -37,6 +42,11 @@ export const ProductDetailPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'how-to-use' | 'lab-testing' | 'reviews'>('overview');
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [isAddedToast, setIsAddedToast] = useState(false);
+
+  // Amazon-style Zoom & Fullscreen state
+  const [isZooming, setIsZooming] = useState(false);
+  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   const currentPack: ProductPack = packs[selectedPackIndex] || packs[0];
 
@@ -77,14 +87,19 @@ export const ProductDetailPage: React.FC = () => {
     );
   }
 
+  // Selected thumbnail tracking
+  const [isUserSelectedThumbnail, setIsUserSelectedThumbnail] = useState(false);
+
   // Display image: strictly prioritize user-uploaded images or custom pack photo - zero generic unsplash images
   const cleanProductImages = (product.images || []).filter((img) => img && !img.includes('unsplash.com'));
-  const isGenericPackImg = !currentPack?.image || currentPack.image.includes('unsplash.com');
-  const activePackImg = (!isGenericPackImg && currentPack?.image) ? currentPack.image : '';
+  const currentPackImg = currentPack?.image && !currentPack.image.includes('unsplash.com') ? currentPack.image : null;
 
-  const displayImage = selectedImageIndex !== 0 && cleanProductImages[selectedImageIndex]
+  // If user explicitly clicked a thumbnail, strictly show that thumbnail.
+  // Otherwise show current pack photo if assigned, else cleanProductImages[0].
+  const displayImage = isUserSelectedThumbnail && cleanProductImages[selectedImageIndex]
     ? cleanProductImages[selectedImageIndex]
-    : (activePackImg || cleanProductImages[selectedPackIndex] || cleanProductImages[0] || '');
+    : (currentPackImg || cleanProductImages[selectedImageIndex] || cleanProductImages[0] || '');
+
   const displayPrice = currentPack ? currentPack.price : product.price;
   const displayMrp = currentPack ? currentPack.mrp : product.mrp;
 
@@ -96,7 +111,14 @@ export const ProductDetailPage: React.FC = () => {
 
   const handleSelectPack = (idx: number) => {
     setSelectedPackIndex(idx);
-    setSelectedImageIndex(0); // Switching pack switches photo to the chosen pack's photo!
+    setIsUserSelectedThumbnail(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+    setZoomPos({ x, y });
   };
 
   const handleAddToCart = () => {
@@ -127,58 +149,100 @@ export const ProductDetailPage: React.FC = () => {
           <span className="text-[#10110F] font-semibold truncate">{product.name}</span>
         </nav>
 
-        {/* Top Product Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 mb-14">
-          {/* Left Gallery (6 cols) */}
-          <div className="lg:col-span-6 flex flex-col gap-3 sm:gap-4">
-            <div className="relative aspect-square w-full rounded-sm overflow-hidden bg-[#10110F] border border-[#10110F]/10 shadow-lg">
+        {/* Top Product Section: Amazon-style prominent 7/5 Grid Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 mb-14 items-start">
+          {/* Left Gallery (Amazon-style large prominent 7-cols) */}
+          <div className="lg:col-span-7 flex flex-col gap-4">
+            {/* Main Amazon-style Large Frame with Zoom Lens */}
+            <div className="relative aspect-square w-full rounded-sm overflow-hidden bg-white border border-[#10110F]/15 shadow-xl flex items-center justify-center p-3 sm:p-5 select-none">
               {displayImage ? (
-                <img
-                  key={displayImage}
-                  src={displayImage}
-                  alt={`${product.name} - ${currentPack?.name}`}
-                  className="w-full h-full object-cover animate-in fade-in duration-300"
-                />
+                <div
+                  className="relative w-full h-full overflow-hidden flex items-center justify-center cursor-crosshair"
+                  onMouseEnter={() => setIsZooming(true)}
+                  onMouseLeave={() => setIsZooming(false)}
+                  onMouseMove={handleMouseMove}
+                  onClick={() => setIsLightboxOpen(true)}
+                >
+                  <img
+                    key={displayImage}
+                    src={displayImage}
+                    alt={`${product.name} - ${currentPack?.name}`}
+                    className={`w-full h-full object-contain transition-transform duration-150 ${
+                      isZooming ? 'scale-[2.3]' : 'scale-100'
+                    }`}
+                    style={isZooming ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : undefined}
+                  />
+
+                  {/* Amazon Zoom Hint Badge */}
+                  {!isZooming && (
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-[#10110F]/85 backdrop-blur-md text-[#F7F3E8] px-3.5 py-1.5 rounded-full text-[10px] sm:text-xs font-sans font-medium flex items-center gap-2 pointer-events-none shadow-md border border-[#B88A32]/30">
+                      <ZoomIn className="w-3.5 h-3.5 text-[#D4B66A]" />
+                      <span>Roll over image to zoom • Click for full view</span>
+                    </div>
+                  )}
+
+                  {/* High Res Lightbox Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsLightboxOpen(true);
+                    }}
+                    className="absolute top-3 right-3 p-2 rounded-xs bg-[#10110F]/80 hover:bg-[#10110F] text-[#D4B66A] transition-all shadow-md z-10 cursor-pointer"
+                    title="Open Full Screen Lightbox"
+                  >
+                    <Maximize2 className="w-4 h-4" />
+                  </button>
+                </div>
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center bg-gradient-to-br from-[#183D27] via-[#10110F] to-[#183D27]/80 text-[#D4B66A]">
                   <span className="text-xs uppercase tracking-[0.25em] text-[#D4B66A]/80 font-bold mb-2">TITAN SHILAJIT</span>
-                  <span className="font-serif text-xl font-bold text-[#F7F3E8]">{product.name}</span>
+                  <span className="font-serif text-2xl font-bold text-[#F7F3E8]">{product.name}</span>
                   <span className="text-xs text-[#EEE8D7]/60 mt-3 font-mono">{currentPack?.name || product.size}</span>
                 </div>
               )}
+
+              {/* Savings / Discount Badge */}
               {currentPack?.savings ? (
-                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-[#183D27] text-[#D4B66A] text-[10px] sm:text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-xs border border-[#B88A32]/40 shadow-sm">
+                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-[#183D27] text-[#D4B66A] text-[10px] sm:text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-xs border border-[#B88A32]/40 shadow-sm pointer-events-none">
                   {currentPack.savings}
                 </div>
               ) : product.discount ? (
-                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-[#183D27] text-[#D4B66A] text-[10px] sm:text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-xs border border-[#B88A32]/40 shadow-sm">
+                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-[#183D27] text-[#D4B66A] text-[10px] sm:text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-xs border border-[#B88A32]/40 shadow-sm pointer-events-none">
                   {product.discount}
                 </div>
               ) : null}
             </div>
 
-            {/* Thumbnail Strip */}
+            {/* Amazon-style High Resolution Thumbnail Carousel */}
             {cleanProductImages.length > 1 && (
-              <div className="grid grid-cols-4 gap-2 sm:gap-3">
-                {cleanProductImages.map((img, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSelectedImageIndex(idx)}
-                    className={`aspect-square rounded-xs overflow-hidden border-2 transition-all ${
-                      selectedImageIndex === idx
-                        ? 'border-[#B88A32] shadow-sm scale-105'
-                        : 'border-black/10 opacity-70 hover:opacity-100'
-                    }`}
-                  >
-                    <img src={img} alt={`${product.name} thumbnail ${idx}`} className="w-full h-full object-cover" />
-                  </button>
-                ))}
+              <div className="flex items-center gap-3 overflow-x-auto pb-2 no-scrollbar pt-1">
+                {cleanProductImages.map((img, idx) => {
+                  const isActive = isUserSelectedThumbnail ? selectedImageIndex === idx : displayImage === img;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setSelectedImageIndex(idx);
+                        setIsUserSelectedThumbnail(true);
+                      }}
+                      className={`w-18 h-18 sm:w-22 sm:h-22 rounded-xs overflow-hidden border-2 bg-white transition-all shrink-0 cursor-pointer p-1 ${
+                        isActive
+                          ? 'border-[#B88A32] shadow-md ring-2 ring-[#B88A32]/30 scale-105'
+                          : 'border-black/15 opacity-75 hover:opacity-100 hover:border-black/40'
+                      }`}
+                    >
+                      <img src={img} alt={`${product.name} thumbnail ${idx + 1}`} className="w-full h-full object-contain" />
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
 
-          {/* Right Product Buy Box (6 cols) */}
-          <div className="lg:col-span-6 flex flex-col justify-between">
+          {/* Right Product Buy Box (5 cols) */}
+          <div className="lg:col-span-5 flex flex-col justify-between">
             <div>
               {/* Category & Rating */}
               <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
@@ -615,6 +679,85 @@ export const ProductDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Amazon-style High Resolution Fullscreen Lightbox Modal */}
+      {isLightboxOpen && displayImage && (
+        <div
+          id="amazon-lightbox-modal"
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 animate-in fade-in duration-200"
+          onClick={() => setIsLightboxOpen(false)}
+        >
+          {/* Top Bar */}
+          <div className="flex items-center justify-between text-white border-b border-white/10 pb-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3">
+              <span className="text-xs uppercase font-mono tracking-widest text-[#D4B66A]">
+                TITAN SHILAJIT HIGH-RESOLUTION VIEWER
+              </span>
+              <span className="hidden sm:inline text-xs text-white/50">|</span>
+              <span className="text-xs text-white/80 font-medium truncate max-w-xs sm:max-w-md">
+                {product.name} ({selectedImageIndex + 1} of {cleanProductImages.length || 1})
+              </span>
+            </div>
+
+            <button
+              onClick={() => setIsLightboxOpen(false)}
+              className="p-2 rounded-full bg-white/10 hover:bg-white/25 text-white transition-all cursor-pointer"
+              title="Close (Esc)"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Centered Large Image */}
+          <div className="relative flex-1 flex items-center justify-center p-4 sm:p-8 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            {cleanProductImages.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : cleanProductImages.length - 1))}
+                className="absolute left-2 sm:left-6 z-20 p-3 rounded-full bg-black/60 hover:bg-black/90 text-white transition-all border border-white/20 cursor-pointer shadow-xl"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+            )}
+
+            <div className="max-w-4xl max-h-[75vh] w-full h-full flex items-center justify-center">
+              <img
+                src={displayImage}
+                alt={product.name}
+                className="max-w-full max-h-[75vh] object-contain rounded-xs shadow-2xl transition-all"
+              />
+            </div>
+
+            {cleanProductImages.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setSelectedImageIndex((prev) => (prev < cleanProductImages.length - 1 ? prev + 1 : 0))}
+                className="absolute right-2 sm:right-6 z-20 p-3 rounded-full bg-black/60 hover:bg-black/90 text-white transition-all border border-white/20 cursor-pointer shadow-xl"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            )}
+          </div>
+
+          {/* Bottom Thumbnails */}
+          {cleanProductImages.length > 1 && (
+            <div className="flex items-center justify-center gap-3 pt-3 border-t border-white/10 overflow-x-auto no-scrollbar" onClick={(e) => e.stopPropagation()}>
+              {cleanProductImages.map((img, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setSelectedImageIndex(idx)}
+                  className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xs overflow-hidden border-2 p-1 bg-white shrink-0 cursor-pointer transition-all ${
+                    selectedImageIndex === idx ? 'border-[#D4B66A] ring-2 ring-[#D4B66A]/50 scale-105' : 'border-white/20 opacity-60 hover:opacity-100'
+                  }`}
+                >
+                  <img src={img} alt="" className="w-full h-full object-contain" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Quick View Modal */}
       {quickViewProduct && (

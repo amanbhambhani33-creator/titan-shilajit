@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Package,
   Plus,
@@ -34,6 +35,9 @@ import {
   Users,
   Crown,
   Star,
+  Upload,
+  X,
+  Check,
 } from 'lucide-react';
 import { useStoreContent, HeroBannerConfig, LaunchBannerConfig, BrandStoryConfig } from '../context/StoreContentContext';
 import { useAuth } from '../context/AuthContext';
@@ -101,10 +105,12 @@ export const AdminDeskPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'quality' | 'developer' | 'rbac' | 'settings' | 'orders' | 'reviews'>('products');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+  const navigate = useNavigate();
 
   // Edit Product Modal / Drawer State
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
+  const [selectedPackPhotoTab, setSelectedPackPhotoTab] = useState<number>(0);
 
   // Master Security Passkey Clearance State (Required: titan@1234)
   const [isMasterUnlocked, setIsMasterUnlocked] = useState<boolean>(() => {
@@ -158,9 +164,7 @@ export const AdminDeskPage: React.FC = () => {
     reviewCount: 1,
     inStock: true,
     stockQty: 50,
-    images: [
-      'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85',
-    ],
+    images: [],
     shortDescription: '',
     description: '',
     origin: 'Himalayan Ranges (16,000+ ft)',
@@ -195,29 +199,33 @@ export const AdminDeskPage: React.FC = () => {
   };
 
   // Handle saving product edits with automatic pricing pack image synchronization
-  const handleSaveProductEdit = (e: React.FormEvent) => {
+  const handleSaveProductEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct) return;
+
+    const cleanImgs = (editingProduct.images || []).filter((img) => img && !img.includes('unsplash.com'));
+    const primaryImg = cleanImgs[0] || '';
 
     // Clean up packs so no generic images remain and pricing packs always have the right images
     const currentPacks = (editingProduct.packs && editingProduct.packs.length > 0)
       ? editingProduct.packs
       : getProductPacks(editingProduct);
 
-    const cleanPacks = currentPacks.map((pack, pIdx) => {
+    const cleanPacks = currentPacks.map((pack) => {
       const isGeneric = !pack.image || pack.image.includes('unsplash.com');
       return {
         ...pack,
-        image: isGeneric ? (editingProduct.images[pIdx] || editingProduct.images[0] || '') : pack.image,
+        image: isGeneric || !pack.image ? primaryImg : pack.image,
       };
     });
 
     const updatedProduct: Product = {
       ...editingProduct,
+      images: cleanImgs,
       packs: cleanPacks,
     };
 
-    updateProduct(updatedProduct.id, updatedProduct);
+    await updateProduct(updatedProduct.id, updatedProduct);
     setEditingProduct(null);
     showToast('Product updated successfully and synced with pricing!');
   };
@@ -257,7 +265,7 @@ export const AdminDeskPage: React.FC = () => {
         price: Number(newProductForm.price),
         mrp: Number(newProductForm.mrp) || Math.round(Number(newProductForm.price) * 1.35),
         discount: newProductForm.discount || '25% OFF',
-        image: newProductForm.images?.[1] || primaryImg,
+        image: primaryImg,
         badge: 'MOST POPULAR',
         savings: 'Save ₹500',
         isPopular: true,
@@ -270,7 +278,7 @@ export const AdminDeskPage: React.FC = () => {
         price: Math.round(Number(newProductForm.price) * 1.75),
         mrp: Math.round(Number(newProductForm.price) * 1.75 * 1.45),
         discount: '35% OFF',
-        image: newProductForm.images?.[2] || primaryImg,
+        image: primaryImg,
         badge: 'SUPERSAVER',
         savings: 'Save ₹1,000',
       },
@@ -384,6 +392,7 @@ export const AdminDeskPage: React.FC = () => {
     } catch (e) {}
     signOut();
     showToast('Signed out of admin desk.');
+    navigate('/');
   };
 
   // IF NOT AUTHENTICATED: SHOW RBAC LOGIN GATE (Sign in / Request access / Check status)
@@ -398,6 +407,17 @@ export const AdminDeskPage: React.FC = () => {
     return (
       <div id="admin-banned-screen" className="min-h-screen pt-28 pb-20 bg-[#0A0606] text-[#F7F3E8] flex items-center justify-center px-4 animate-in fade-in duration-300">
         <div className="w-full max-w-lg bg-red-950/40 border-2 border-red-600/70 rounded-sm p-8 sm:p-10 shadow-[0_0_50px_rgba(220,38,38,0.25)] backdrop-blur-md relative overflow-hidden text-center">
+          {/* Close to Website Button */}
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="absolute top-4 right-4 z-20 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer flex items-center gap-1.5 border border-white/20 shadow-sm"
+            title="Close and Return to Website"
+          >
+            <X className="w-3.5 h-3.5" />
+            <span className="text-[10px] font-bold uppercase tracking-wider">Close to Website</span>
+          </button>
+
           {/* Emergency Alert Glows */}
           <div className="absolute -top-20 -right-20 w-44 h-44 bg-red-600/20 rounded-full blur-3xl pointer-events-none animate-pulse" />
           <div className="absolute -bottom-20 -left-20 w-44 h-44 bg-red-800/20 rounded-full blur-3xl pointer-events-none" />
@@ -440,10 +460,10 @@ export const AdminDeskPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-4">
             <button
               onClick={handleResetBanWithCredentials}
-              className="px-5 py-3 rounded-xs bg-red-700 hover:bg-red-600 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all"
+              className="px-5 py-3 rounded-xs bg-red-700 hover:bg-red-600 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
             >
               <KeyRound className="w-4 h-4" />
               <span>Admin Re-Verification</span>
@@ -451,12 +471,21 @@ export const AdminDeskPage: React.FC = () => {
 
             <button
               onClick={handleSignOutDesk}
-              className="px-5 py-3 rounded-xs bg-white/10 hover:bg-white/20 text-[#EEE8D7] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
+              className="px-5 py-3 rounded-xs bg-white/10 hover:bg-white/20 text-[#EEE8D7] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
-              <span>Sign Out</span>
+              <span>Sign Out &amp; Exit</span>
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="w-full py-2.5 rounded-xs bg-black/60 hover:bg-black text-[#D4B66A] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border border-white/10 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+            <span>Close &amp; Return to Storefront</span>
+          </button>
         </div>
       </div>
     );
@@ -469,6 +498,16 @@ export const AdminDeskPage: React.FC = () => {
     return (
       <div id="admin-master-gate-screen" className="min-h-screen pt-28 pb-20 bg-[#10110F] text-[#F7F3E8] flex items-center justify-center px-4">
         <div className="w-full max-w-md bg-[#183D27]/35 border border-[#B88A32]/60 rounded-sm p-8 sm:p-10 shadow-2xl backdrop-blur-md relative overflow-hidden">
+          {/* Close to Website Button */}
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="absolute top-4 right-4 z-20 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-[#D4B66A] hover:text-white transition-all cursor-pointer flex items-center gap-1.5 border border-[#B88A32]/30 shadow-sm"
+            title="Close and Return to Website"
+          >
+            <X className="w-3.5 h-3.5" />
+            <span className="text-[10px] font-bold uppercase tracking-wider">Close to Website</span>
+          </button>
           {/* Ambient Gold Glow */}
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#B88A32]/25 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[#183D27]/50 rounded-full blur-3xl pointer-events-none" />
@@ -562,12 +601,22 @@ export const AdminDeskPage: React.FC = () => {
 
             <button
               onClick={handleSignOutDesk}
-              className="text-[11px] text-red-300 hover:text-red-100 flex items-center gap-1"
+              className="text-[11px] text-red-300 hover:text-red-100 flex items-center gap-1 cursor-pointer"
             >
               <LogOut className="w-3 h-3" />
               <span>Sign Out</span>
             </button>
           </div>
+
+          {/* Prominent Close to Storefront Button */}
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="w-full py-3 mt-4 rounded-xs bg-black/60 hover:bg-black text-[#D4B66A] hover:text-white text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 border border-[#B88A32]/40 shadow-lg transition-all cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+            <span>Close Admin &amp; Return to Storefront</span>
+          </button>
         </div>
       </div>
     );
@@ -655,6 +704,15 @@ export const AdminDeskPage: React.FC = () => {
               <span>Live Store</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
+
+            <button
+              onClick={() => navigate('/')}
+              className="px-3 sm:px-4 py-2.5 rounded-xs bg-[#B88A32] hover:bg-[#D4B66A] text-[#10110F] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all min-h-[38px] cursor-pointer shadow-md font-sans"
+              title="Close Admin and Redirect to Website"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>Close Admin</span>
+            </button>
 
             <button
               onClick={handleSignOutDesk}
@@ -1736,26 +1794,246 @@ export const AdminDeskPage: React.FC = () => {
                 <AdminProductImageUploader
                   images={editingProduct.images || []}
                   onChange={(imgs) => {
+                    const cleanImgs = (imgs || []).filter((img) => img && !img.includes('unsplash.com'));
+                    const newPrimary = cleanImgs[0] || '';
+                    const oldPrimary = editingProduct.images?.[0] || '';
+
                     const currentPacks = (editingProduct.packs && editingProduct.packs.length > 0)
                       ? editingProduct.packs
                       : getProductPacks(editingProduct);
-                    
-                    const updatedPacks = currentPacks.map((pack, pIdx) => {
-                      const isGeneric = !pack.image || pack.image.includes('unsplash.com') || (editingProduct.images || []).includes(pack.image);
+
+                    // Strictly preserve custom distinct pack photos, only update packs that were using the primary image
+                    const updatedPacks = currentPacks.map((pack) => {
+                      const wasUsingPrimary = !pack.image || pack.image.includes('unsplash.com') || pack.image === oldPrimary;
                       return {
                         ...pack,
-                        image: isGeneric ? (imgs[pIdx] || imgs[0] || '') : pack.image,
+                        image: wasUsingPrimary ? newPrimary : pack.image,
                       };
                     });
 
                     setEditingProduct({
                       ...editingProduct,
-                      images: imgs,
+                      images: cleanImgs,
                       packs: updatedPacks,
                     });
                   }}
                   maxImages={5}
                 />
+              </div>
+
+              {/* CHOOSE PICTURE FOR SPECIFIC PACK SIZE */}
+              <div className="p-4 rounded-xs bg-[#183D27]/10 border border-[#183D27]/30 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 border-b border-[#183D27]/20 pb-2">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4 text-[#183D27]" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#10110F]">
+                      Choose Picture For Specific Pack Size
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-sans font-medium text-[#66704B]">
+                    Assign distinct photos per pack or use main product photo
+                  </span>
+                </div>
+
+                {/* Pack Size Selector Tabs / Dropdown */}
+                {(() => {
+                  const currentPacks = (editingProduct.packs && editingProduct.packs.length > 0)
+                    ? editingProduct.packs
+                    : getProductPacks(editingProduct);
+                  const safeActiveIdx = Math.min(selectedPackPhotoTab, Math.max(0, currentPacks.length - 1));
+                  const activePack = currentPacks[safeActiveIdx] || currentPacks[0];
+                  const packImg = activePack?.image || editingProduct.images[0] || '';
+                  const isUsingMainPhoto = !activePack?.image || activePack.image === editingProduct.images[0];
+
+                  return (
+                    <div className="space-y-3">
+                      {/* Pack selector buttons */}
+                      <div className="flex flex-wrap gap-2">
+                        {currentPacks.map((pk, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setSelectedPackPhotoTab(idx)}
+                            className={`px-3 py-1.5 rounded-xs text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all ${
+                              safeActiveIdx === idx
+                                ? 'bg-[#183D27] text-[#D4B66A] shadow-sm'
+                                : 'bg-white text-[#10110F] border border-[#10110F]/20 hover:border-[#183D27]'
+                            }`}
+                          >
+                            <span>Pack {idx + 1}: {pk.name || `Variant ${idx + 1}`}</span>
+                            {pk.image && pk.image !== editingProduct.images[0] && (
+                              <span className="w-2 h-2 rounded-full bg-[#D4B66A]" title="Distinct photo assigned" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Active Pack Photo Configuration Card */}
+                      <div className="p-3 bg-white rounded-xs border border-[#10110F]/15 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-[#10110F]">
+                              Selected: {activePack.name} ({activePack.quantityText})
+                            </span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-xs font-bold uppercase ${
+                              isUsingMainPhoto
+                                ? 'bg-stone-100 text-stone-700'
+                                : 'bg-emerald-100 text-emerald-800'
+                            }`}>
+                              {isUsingMainPhoto ? 'Using Main Photo' : 'Distinct Photo Assigned'}
+                            </span>
+                          </div>
+
+                          {!isUsingMainPhoto && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...currentPacks];
+                                updated[safeActiveIdx] = { ...updated[safeActiveIdx], image: editingProduct.images[0] || '' };
+                                setEditingProduct({ ...editingProduct, packs: updated });
+                              }}
+                              className="text-[10px] font-bold text-amber-800 hover:underline uppercase cursor-pointer"
+                            >
+                              Reset to Main Photo
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                          {/* Active pack photo preview */}
+                          <div className="w-16 h-16 rounded-xs border-2 border-[#183D27]/30 overflow-hidden shrink-0 bg-[#F7F3E8] p-1 flex items-center justify-center">
+                            {packImg ? (
+                              <img src={packImg} alt={activePack.name} className="w-full h-full object-contain" />
+                            ) : (
+                              <span className="text-[9px] text-gray-400 font-mono text-center">No Photo</span>
+                            )}
+                          </div>
+
+                          {/* Quick Select from Uploaded Gallery Photos */}
+                          <div className="flex-1 space-y-1.5 w-full">
+                            <label className="block text-[10px] font-bold uppercase text-[#66704B]">
+                              1-Click Select From Uploaded Gallery Photos:
+                            </label>
+                            {editingProduct.images.length > 0 ? (
+                              <div className="flex flex-wrap items-center gap-2">
+                                {editingProduct.images.map((img, iIdx) => {
+                                  const isSelected = packImg === img;
+                                  return (
+                                    <button
+                                      key={iIdx}
+                                      type="button"
+                                      onClick={() => {
+                                        const updated = [...currentPacks];
+                                        updated[safeActiveIdx] = { ...updated[safeActiveIdx], image: img };
+                                        setEditingProduct({ ...editingProduct, packs: updated });
+                                      }}
+                                      className={`w-11 h-11 rounded-xs border-2 overflow-hidden relative cursor-pointer p-0.5 transition-all ${
+                                        isSelected
+                                          ? 'border-[#183D27] ring-2 ring-[#D4B66A] shadow-sm'
+                                          : 'border-black/20 hover:border-black/50 opacity-75 hover:opacity-100'
+                                      }`}
+                                      title={`Assign Photo #${iIdx + 1} to ${activePack.name}`}
+                                    >
+                                      <img src={img} alt="" className="w-full h-full object-contain" />
+                                      {isSelected && (
+                                        <div className="absolute top-0 right-0 bg-[#183D27] text-[#D4B66A] p-0.5 rounded-bl-xs">
+                                          <Check className="w-2.5 h-2.5" />
+                                        </div>
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <p className="text-[11px] text-stone-500 italic">
+                                Upload photos in the gallery above first to select them for this pack size.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Or Direct Upload / URL for this Pack */}
+                        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-black/10">
+                          <input
+                            type="url"
+                            placeholder="Or paste direct image URL for this pack size..."
+                            value={activePack.image || ''}
+                            onChange={(e) => {
+                              const updated = [...currentPacks];
+                              updated[safeActiveIdx] = { ...updated[safeActiveIdx], image: e.target.value };
+                              setEditingProduct({ ...editingProduct, packs: updated });
+                            }}
+                            className="flex-1 min-w-[200px] px-2.5 py-1.5 rounded-xs border border-[#10110F]/20 text-xs bg-[#F7F3E8]"
+                          />
+
+                          <label className="px-3 py-1.5 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#D4B66A] text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shrink-0">
+                            <Upload className="w-3 h-3" />
+                            <span>Upload Dedicated File</span>
+                            <input
+                              type="file"
+                              accept="image/png, image/jpeg, image/webp"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                const reader = new FileReader();
+                                reader.onload = (ev) => {
+                                  const imgObj = new Image();
+                                  imgObj.onload = () => {
+                                    const canvas = document.createElement('canvas');
+                                    const maxDim = 1000;
+                                    let width = imgObj.width;
+                                    let height = imgObj.height;
+                                    if (width > maxDim || height > maxDim) {
+                                      if (width > height) {
+                                        height = Math.round((height * maxDim) / width);
+                                        width = maxDim;
+                                      } else {
+                                        width = Math.round((width * maxDim) / height);
+                                        height = maxDim;
+                                      }
+                                    }
+                                    canvas.width = width;
+                                    canvas.height = height;
+                                    const ctx = canvas.getContext('2d');
+                                    if (ctx) {
+                                      ctx.drawImage(imgObj, 0, 0, width, height);
+                                      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                                      // Persist to server /uploads immediately
+                                      fetch('/api/upload-image', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                          dataUrl,
+                                          productId: editingProduct.id,
+                                          packId: activePack.id || safeActiveIdx,
+                                        }),
+                                      })
+                                        .then((r) => r.json())
+                                        .then((d) => {
+                                          const finalUrl = d?.url || dataUrl;
+                                          const updated = [...currentPacks];
+                                          updated[safeActiveIdx] = { ...updated[safeActiveIdx], image: finalUrl };
+                                          setEditingProduct({ ...editingProduct, packs: updated });
+                                        })
+                                        .catch(() => {
+                                          const updated = [...currentPacks];
+                                          updated[safeActiveIdx] = { ...updated[safeActiveIdx], image: dataUrl };
+                                          setEditingProduct({ ...editingProduct, packs: updated });
+                                        });
+                                    }
+                                  };
+                                  imgObj.src = ev.target?.result as string;
+                                };
+                                reader.readAsDataURL(file);
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -2068,7 +2346,7 @@ export const AdminDeskPage: React.FC = () => {
                             Recommended: 800 × 800 px or 1000 × 1000 px (1:1 Square)
                           </span>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-2.5">
                           <div className="w-12 h-12 rounded-xs border border-black/20 overflow-hidden shrink-0 bg-black/10">
                             <img
                               src={pack.image || editingProduct.images[0]}
@@ -2078,31 +2356,102 @@ export const AdminDeskPage: React.FC = () => {
                           </div>
                           <input
                             type="url"
-                            placeholder="https://..."
+                            placeholder="Paste direct image URL (https://...)"
                             value={pack.image}
                             onChange={(e) => {
                               const current = (editingProduct.packs && editingProduct.packs.length > 0) ? [...editingProduct.packs] : getProductPacks(editingProduct);
                               current[pIdx] = { ...current[pIdx], image: e.target.value };
                               setEditingProduct({ ...editingProduct, packs: current });
                             }}
-                            className="flex-1 px-2.5 py-1.5 rounded-xs border border-[#10110F]/20 text-xs bg-white"
+                            className="flex-1 min-w-[140px] px-2.5 py-1.5 rounded-xs border border-[#10110F]/20 text-xs bg-white"
                           />
-                          <div className="flex items-center gap-1 shrink-0">
-                            {editingProduct.images.slice(0, 3).map((img, iIdx) => (
+                          <label className="px-2.5 py-1.5 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#D4B66A] text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer shrink-0">
+                            <Upload className="w-3 h-3" />
+                            <span>Upload File</span>
+                            <input
+                              type="file"
+                              accept="image/png, image/jpeg, image/webp"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                const reader = new FileReader();
+                                reader.onload = (ev) => {
+                                  const img = new Image();
+                                  img.onload = () => {
+                                    const canvas = document.createElement('canvas');
+                                    const maxDim = 1000;
+                                    let width = img.width;
+                                    let height = img.height;
+                                    if (width > maxDim || height > maxDim) {
+                                      if (width > height) {
+                                        height = Math.round((height * maxDim) / width);
+                                        width = maxDim;
+                                      } else {
+                                        width = Math.round((width * maxDim) / height);
+                                        height = maxDim;
+                                      }
+                                    }
+                                    canvas.width = width;
+                                    canvas.height = height;
+                                    const ctx = canvas.getContext('2d');
+                                    if (ctx) {
+                                      ctx.drawImage(img, 0, 0, width, height);
+                                      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                                      const current = (editingProduct.packs && editingProduct.packs.length > 0) ? [...editingProduct.packs] : getProductPacks(editingProduct);
+                                      current[pIdx] = { ...current[pIdx], image: dataUrl };
+                                      setEditingProduct({ ...editingProduct, packs: current });
+                                    }
+                                  };
+                                  img.src = ev.target?.result as string;
+                                };
+                                reader.readAsDataURL(file);
+                              }}
+                            />
+                          </label>
+                          <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                            {editingProduct.images.map((img, iIdx) => {
+                              const isSelected = (pack.image || editingProduct.images[0]) === img;
+                              return (
+                                <button
+                                  key={iIdx}
+                                  type="button"
+                                  title={`Assign gallery photo #${iIdx + 1} to this pack`}
+                                  onClick={() => {
+                                    const current = (editingProduct.packs && editingProduct.packs.length > 0) ? [...editingProduct.packs] : getProductPacks(editingProduct);
+                                    current[pIdx] = { ...current[pIdx], image: img };
+                                    setEditingProduct({ ...editingProduct, packs: current });
+                                  }}
+                                  className={`w-8 h-8 rounded-xs border-2 overflow-hidden relative cursor-pointer transition-all ${
+                                    isSelected
+                                      ? 'border-[#183D27] ring-1 ring-[#D4B66A]'
+                                      : 'border-black/20 hover:border-black/50 opacity-70 hover:opacity-100'
+                                  }`}
+                                >
+                                  <img src={img} alt="" className="w-full h-full object-contain" />
+                                  {isSelected && (
+                                    <div className="absolute top-0 right-0 bg-[#183D27] text-[#D4B66A] p-0.5 rounded-bl-xs">
+                                      <Check className="w-2 h-2" />
+                                    </div>
+                                  )}
+                                </button>
+                              );
+                            })}
+
+                            {pack.image && pack.image !== editingProduct.images[0] && (
                               <button
-                                key={iIdx}
                                 type="button"
-                                title={`Use product gallery photo ${iIdx + 1}`}
+                                title="Reset to main product photo"
                                 onClick={() => {
                                   const current = (editingProduct.packs && editingProduct.packs.length > 0) ? [...editingProduct.packs] : getProductPacks(editingProduct);
-                                  current[pIdx] = { ...current[pIdx], image: img };
+                                  current[pIdx] = { ...current[pIdx], image: editingProduct.images[0] || '' };
                                   setEditingProduct({ ...editingProduct, packs: current });
                                 }}
-                                className="w-7 h-7 rounded-xs border overflow-hidden hover:border-[#183D27] cursor-pointer"
+                                className="px-2 py-1 text-[9px] font-bold text-amber-800 hover:text-black uppercase rounded-xs border border-amber-800/30 bg-amber-50 cursor-pointer"
                               >
-                                <img src={img} alt="" className="w-full h-full object-cover" />
+                                Reset
                               </button>
-                            ))}
+                            )}
                           </div>
                         </div>
                       </div>

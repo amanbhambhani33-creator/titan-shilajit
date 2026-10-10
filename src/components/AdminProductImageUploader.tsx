@@ -69,18 +69,35 @@ export const AdminProductImageUploader: React.FC<AdminProductImageUploaderProps>
     }
 
     setIsProcessing(true);
-    setUploadNotice('Optimizing and loading images...');
+    setUploadNotice('Optimizing and saving images to Firebase storage...');
 
     const filesToProcess = (Array.from(files) as File[]).slice(0, remainingSlots);
     try {
-      const processedDataUrls: string[] = [];
+      const processedUrls: string[] = [];
       for (const file of filesToProcess) {
         const dataUrl = await compressFile(file);
-        processedDataUrls.push(dataUrl);
+        // Persist immediately to server storage
+        let permanentUrl = dataUrl;
+        try {
+          const res = await fetch('/api/upload-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dataUrl, filename: file.name }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.url) {
+              permanentUrl = data.url;
+            }
+          }
+        } catch (uploadErr) {
+          console.warn('Image upload endpoint notice:', uploadErr);
+        }
+        processedUrls.push(permanentUrl);
       }
-      const updated = [...safeImages, ...processedDataUrls].slice(0, maxImages);
+      const updated = [...safeImages, ...processedUrls].slice(0, maxImages);
       onChange(updated);
-      setUploadNotice(`Added ${processedDataUrls.length} image(s). Up to ${maxImages} allowed.`);
+      setUploadNotice(`Saved ${processedUrls.length} image(s) successfully!`);
     } catch (err) {
       console.error('Error reading files:', err);
       setUploadNotice('Failed to process image file.');

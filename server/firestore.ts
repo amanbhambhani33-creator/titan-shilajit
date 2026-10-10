@@ -409,6 +409,28 @@ export async function saveProductsToFirestore(products: any[]): Promise<boolean>
         body: JSON.stringify({ fields }),
       });
     }
+
+    // Also persist each product document individually into /products/{productId} for bulletproof isolation
+    try {
+      await Promise.all(
+        products.map(async (prod) => {
+          if (!prod.id) return;
+          const prodFields = toFirestoreFields({
+            ...prod,
+            updatedAt: new Date().toISOString(),
+          });
+          const prodUrl = `${FIRESTORE_BASE_URL}/products/${encodeURIComponent(prod.id)}?key=${API_KEY}`;
+          await fetch(prodUrl, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fields: prodFields }),
+          });
+        })
+      );
+    } catch (e) {
+      console.warn('[Firestore Server] Individual products collection write notice:', e);
+    }
+
     return res.ok;
   } catch (e) {
     console.error('Server saveProducts error:', e);
@@ -420,10 +442,34 @@ export async function getProductsFromFirestore(): Promise<any[] | null> {
   try {
     const url = `${FIRESTORE_BASE_URL}/store_content/products?key=${API_KEY}`;
     const res = await fetch(url);
-    if (!res.ok) return null;
-    const doc = await res.json();
-    const parsed = fromFirestoreDoc(doc);
-    return Array.isArray(parsed?.items) ? parsed.items : null;
+    if (res.ok) {
+      const doc = await res.json();
+      const parsed = fromFirestoreDoc(doc);
+      if (Array.isArray(parsed?.items) && parsed.items.length > 0) {
+        return parsed.items;
+      }
+    }
+
+    // Fallback: fetch from individual /products collection
+    const queryUrl = `${FIRESTORE_BASE_URL}:runQuery?key=${API_KEY}`;
+    const qRes = await fetch(queryUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: 'products' }],
+        },
+      }),
+    });
+    if (qRes.ok) {
+      const qData = await qRes.json();
+      if (Array.isArray(qData)) {
+        const prods = qData.map((d: any) => fromFirestoreDoc(d?.document)).filter(Boolean);
+        if (prods.length > 0) return prods;
+      }
+    }
+
+    return null;
   } catch {
     return null;
   }

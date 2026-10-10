@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 import Razorpay from 'razorpay';
@@ -58,6 +59,38 @@ app.use((req, res, next) => {
   express.json({ limit: '50mb' })(req, res, next);
 });
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Ensure public/uploads directory exists and is statically served
+const UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads');
+try {
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+} catch (e) {
+  console.warn('[Server] Could not create uploads dir:', e);
+}
+app.use('/uploads', express.static(UPLOADS_DIR, { maxAge: '7d' }));
+
+// Helper to save base64 data URLs as permanent static image files
+function saveBase64ToUploadFile(dataUrl: string, prefix = 'product'): string {
+  if (!dataUrl || !dataUrl.startsWith('data:image')) {
+    return dataUrl;
+  }
+  try {
+    const matches = dataUrl.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
+    if (!matches || matches.length < 3) return dataUrl;
+    const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1].replace('svg+xml', 'svg');
+    const buffer = Buffer.from(matches[2], 'base64');
+    const safePrefix = prefix.replace(/[^a-zA-Z0-9_-]/g, '-').toLowerCase();
+    const filename = `${safePrefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${ext}`;
+    const filePath = path.join(UPLOADS_DIR, filename);
+    fs.writeFileSync(filePath, buffer);
+    return `/uploads/${filename}`;
+  } catch (err) {
+    console.warn('[Server] Failed to write base64 image to disk:', err);
+    return dataUrl;
+  }
+}
 
 // Helper to keep Delhivery runtime config synchronized with Firestore
 async function syncDelhiveryConfig() {
@@ -1013,13 +1046,60 @@ apiRouter.post('/store-content/save', async (req, res) => {
   }
 });
 
-// Resilient save for products catalog to Firestore
+// Dedicated image upload API to save files permanently to disk and return compact URLs
+apiRouter.post('/upload-image', async (req, res) => {
+  try {
+    const { dataUrl, filename, productId, packId } = req.body;
+    if (!dataUrl) {
+      return res.status(400).json({ success: false, error: 'dataUrl is required.' });
+    }
+    const prefix = packId ? `${productId || 'product'}-pack-${packId}` : (productId || 'product');
+    const savedUrl = saveBase64ToUploadFile(dataUrl, prefix);
+    return res.json({ success: true, url: savedUrl });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || 'Upload failed' });
+  }
+});
+
+// Resilient save for products catalog to Firestore with automatic base64 image conversion
 apiRouter.post('/store-content/products', async (req, res) => {
   try {
     const { products } = req.body;
     if (!Array.isArray(products)) return res.status(400).json({ success: false, error: 'Products array is required.' });
-    const ok = await saveProductsToFirestore(products);
-    return res.json({ success: ok, message: ok ? 'Products catalog updated in Firestore.' : 'Failed to save products.' });
+
+    // Clean all products: extract any base64 data URLs to permanent disk files
+    const sanitizedProducts = products.map((prod: any) => {
+      const cleanImages = (prod.images || []).map((img: string, idx: number) => {
+        if (typeof img === 'string' && img.startsWith('data:image')) {
+          return saveBase64ToUploadFile(img, `${prod.id || 'prod'}-${idx}`);
+        }
+        return img;
+      });
+
+      const cleanPacks = (prod.packs || []).map((pk: any, pIdx: number) => {
+        let pkImg = pk.image;
+        if (typeof pkImg === 'string' && pkImg.startsWith('data:image')) {
+          pkImg = saveBase64ToUploadFile(pkImg, `${prod.id || 'prod'}-pack-${pk.id || pIdx}`);
+        }
+        return {
+          ...pk,
+          image: pkImg,
+        };
+      });
+
+      return {
+        ...prod,
+        images: cleanImages,
+        packs: cleanPacks,
+      };
+    });
+
+    const ok = await saveProductsToFirestore(sanitizedProducts);
+    return res.json({
+      success: ok,
+      products: sanitizedProducts,
+      message: ok ? 'Products catalog updated in Firestore.' : 'Failed to save products.',
+    });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message });
   }
