@@ -130,6 +130,7 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, 
                   }`}
                   onError={(e) => {
                     const target = e.currentTarget;
+                    target.onerror = null;
                     if (cleanProductImages[0] && target.src !== cleanProductImages[0]) {
                       target.src = cleanProductImages[0];
                     }

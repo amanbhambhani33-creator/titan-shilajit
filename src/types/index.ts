@@ -3,11 +3,11 @@ export type PackType = 'trial' | 'popular' | 'supersaver';
 export interface ProductPack {
   id: PackType;
   name: string;
-  label: string;
+  label?: string;
   quantityText: string;
   price: number;
   mrp: number;
-  discount: string;
+  discount?: string;
   image: string;
   badge?: string;
   savings?: string;

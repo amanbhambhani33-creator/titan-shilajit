@@ -85,10 +85,33 @@ function saveBase64ToUploadFile(dataUrl: string, prefix = 'product'): string {
     const filename = `${safePrefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${ext}`;
     const filePath = path.join(UPLOADS_DIR, filename);
     fs.writeFileSync(filePath, buffer);
+
+    // Also persist directly into dist/uploads if dist exists so production builds serve it immediately
+    const distUploads = path.join(process.cwd(), 'dist', 'uploads');
+    try {
+      if (fs.existsSync(distUploads)) {
+        fs.writeFileSync(path.join(distUploads, filename), buffer);
+      }
+    } catch {}
+
     return `/uploads/${filename}`;
   } catch (err) {
     console.warn('[Server] Failed to write base64 image to disk:', err);
     return dataUrl;
+  }
+}
+
+// Automatically sync edited products directly into src/data/products.ts so GitHub pushes & Vercel builds always have the latest images
+function syncProductsToSourceFile(products: any[]) {
+  try {
+    const tsFilePath = path.join(process.cwd(), 'src', 'data', 'products.ts');
+    if (fs.existsSync(tsFilePath)) {
+      const content = `import { Product } from '../types';\n\nexport const PRODUCTS: Product[] = ${JSON.stringify(products, null, 2)};\n`;
+      fs.writeFileSync(tsFilePath, content, 'utf8');
+      console.log('[Server] Successfully synchronized products to src/data/products.ts');
+    }
+  } catch (e) {
+    console.warn('[Server] Notice: src/data/products.ts not writable (likely serverless/read-only):', e);
   }
 }
 
@@ -1095,6 +1118,7 @@ apiRouter.post('/store-content/products', async (req, res) => {
     });
 
     const ok = await saveProductsToFirestore(sanitizedProducts);
+    syncProductsToSourceFile(sanitizedProducts);
     return res.json({
       success: ok,
       products: sanitizedProducts,

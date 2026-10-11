@@ -22,7 +22,7 @@ export function getProductPacks(product: Product): ProductPack[] {
 
   // Pre-configured packs by slug, strictly using the product's own images (user uploaded / pasted)
   const getPackImg = (idx: number) => {
-    return primaryImg;
+    return cleanImages[idx] || primaryImg;
   };
 
   if (product.slug === 'titan-shilajit-resin') {

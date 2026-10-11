@@ -104,6 +104,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   loading="lazy"
                   onError={(e) => {
                     const target = e.currentTarget;
+                    target.onerror = null;
                     if (cleanProductImages[0] && target.src !== cleanProductImages[0]) {
                       target.src = cleanProductImages[0];
                     }
@@ -122,6 +123,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   loading="lazy"
                   onError={(e) => {
                     const target = e.currentTarget;
+                    target.onerror = null;
                     if (cleanProductImages[0] && target.src !== cleanProductImages[0]) {
                       target.src = cleanProductImages[0];
                     }

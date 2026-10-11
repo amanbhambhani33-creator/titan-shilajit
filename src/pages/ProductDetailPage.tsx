@@ -183,6 +183,7 @@ export const ProductDetailPage: React.FC = () => {
                     style={isZooming ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : undefined}
                     onError={(e) => {
                       const target = e.currentTarget;
+                      target.onerror = null;
                       if (cleanProductImages[0] && target.src !== cleanProductImages[0]) {
                         target.src = cleanProductImages[0];
                       }
