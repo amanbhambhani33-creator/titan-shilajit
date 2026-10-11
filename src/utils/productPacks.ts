@@ -7,11 +7,15 @@ export function getProductPacks(product: Product): ProductPack[] {
   // If product already has configured packs (e.g. from Admin Desk)
   if (product.packs && product.packs.length > 0) {
     return product.packs.map((p) => {
+      let packImg = p.image || '';
+      if (packImg.includes('/uploads/')) {
+        packImg = packImg.substring(packImg.indexOf('/uploads/'));
+      }
       // If pack image is empty or an old generic unsplash placeholder or mismatched resin photo, automatically use primaryImg
-      const isGeneric = !p.image || p.image.includes('unsplash.com') || (product.slug === 'titan-honey-sticks-strawberry' && p.image.includes('shilajit-resin'));
+      const isGeneric = !packImg || packImg.includes('unsplash.com') || (product.slug === 'titan-honey-sticks-strawberry' && packImg.includes('shilajit-resin'));
       return {
         ...p,
-        image: isGeneric ? primaryImg : (p.image || primaryImg),
+        image: isGeneric ? primaryImg : (packImg || primaryImg),
       };
     });
   }

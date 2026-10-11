@@ -53,9 +53,19 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, 
     }
   }, [product.id, currentPack.id, getItemQuantity]);
 
-  const cleanProductImages = (product.images || []).filter((img) => img && !img.includes('unsplash.com'));
-  const isGenericPackImg = !currentPack.image || currentPack.image.includes('unsplash.com');
-  const activePackImg = (!isGenericPackImg && currentPack.image) ? currentPack.image : '';
+  const cleanProductImages = (product.images || []).map((img) => {
+    if (typeof img === 'string' && img.includes('/uploads/')) {
+      return img.substring(img.indexOf('/uploads/'));
+    }
+    return img;
+  }).filter((img) => img && !img.includes('unsplash.com'));
+
+  let packImg = currentPack.image || '';
+  if (typeof packImg === 'string' && packImg.includes('/uploads/')) {
+    packImg = packImg.substring(packImg.indexOf('/uploads/'));
+  }
+  const isGenericPackImg = !packImg || packImg.includes('unsplash.com');
+  const activePackImg = (!isGenericPackImg && packImg) ? packImg : '';
 
   const displayImage = cleanProductImages[selectedImageIndex] || activePackImg || cleanProductImages[0] || '';
   const displayPrice = currentPack.price;
@@ -118,6 +128,12 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, 
                   className={`w-full h-full object-contain animate-in fade-in duration-300 ${
                     isOutOfStock ? 'opacity-55 grayscale' : ''
                   }`}
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (cleanProductImages[0] && target.src !== cleanProductImages[0]) {
+                      target.src = cleanProductImages[0];
+                    }
+                  }}
                 />
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#183D27] via-[#10110F] to-[#183D27]/80 text-[#D4B66A]">

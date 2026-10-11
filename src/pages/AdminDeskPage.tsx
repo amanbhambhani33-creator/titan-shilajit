@@ -203,7 +203,12 @@ export const AdminDeskPage: React.FC = () => {
     e.preventDefault();
     if (!editingProduct) return;
 
-    const cleanImgs = (editingProduct.images || []).filter((img) => img && !img.includes('unsplash.com'));
+    const cleanImgs = (editingProduct.images || []).map((img) => {
+      if (typeof img === 'string' && img.includes('/uploads/')) {
+        return img.substring(img.indexOf('/uploads/'));
+      }
+      return img;
+    }).filter((img) => img && !img.includes('unsplash.com'));
     const primaryImg = cleanImgs[0] || '';
 
     // Clean up packs so no generic images remain and pricing packs always have the right images
@@ -212,10 +217,14 @@ export const AdminDeskPage: React.FC = () => {
       : getProductPacks(editingProduct);
 
     const cleanPacks = currentPacks.map((pack) => {
-      const isGeneric = !pack.image || pack.image.includes('unsplash.com');
+      let pImg = pack.image || '';
+      if (typeof pImg === 'string' && pImg.includes('/uploads/')) {
+        pImg = pImg.substring(pImg.indexOf('/uploads/'));
+      }
+      const isGeneric = !pImg || pImg.includes('unsplash.com');
       return {
         ...pack,
-        image: isGeneric || !pack.image ? primaryImg : pack.image,
+        image: isGeneric || !pImg ? primaryImg : pImg,
       };
     });
 
@@ -897,6 +906,12 @@ export const AdminDeskPage: React.FC = () => {
                           src={p.images[0]}
                           alt={p.name}
                           className={`w-full h-full object-cover ${isItemOutOfStock ? 'opacity-50 grayscale' : ''}`}
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (p.images[1] && target.src !== p.images[1]) {
+                              target.src = p.images[1];
+                            }
+                          }}
                         />
                         <div className="absolute top-2 left-2 px-2 py-0.5 rounded-xs bg-[#183D27] text-[#D4B66A] text-[9px] font-bold uppercase tracking-wider border border-[#B88A32]/30">
                           {p.category}
@@ -1051,11 +1066,23 @@ export const AdminDeskPage: React.FC = () => {
                     {/* Actions */}
                     <div className="p-4 bg-[#F7F3E8]/60 border-t border-[#10110F]/10 flex items-center justify-between gap-2">
                       <button
+                        onClick={() => {
+                          setEditingProduct({ ...p });
+                          setSelectedPackPhotoTab(0);
+                        }}
+                        className="px-3 py-2 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#D4B66A] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                        title="Upload, change, or assign photos for this product and its pack sizes"
+                      >
+                        <ImageIcon className="w-3.5 h-3.5" />
+                        <span>Change Photos</span>
+                      </button>
+
+                      <button
                         onClick={() => setEditingProduct({ ...p })}
                         className="flex-1 px-3 py-2 rounded-xs bg-[#10110F] hover:bg-[#183D27] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
-                        <span>Edit Product &amp; Stock</span>
+                        <span>Edit Product</span>
                       </button>
 
                       <button

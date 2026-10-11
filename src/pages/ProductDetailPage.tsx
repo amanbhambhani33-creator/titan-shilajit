@@ -91,8 +91,18 @@ export const ProductDetailPage: React.FC = () => {
   const [isUserSelectedThumbnail, setIsUserSelectedThumbnail] = useState(false);
 
   // Display image: strictly prioritize user-uploaded images or custom pack photo - zero generic unsplash images
-  const cleanProductImages = (product.images || []).filter((img) => img && !img.includes('unsplash.com'));
-  const currentPackImg = currentPack?.image && !currentPack.image.includes('unsplash.com') ? currentPack.image : null;
+  const cleanProductImages = (product.images || []).map((img) => {
+    if (typeof img === 'string' && img.includes('/uploads/')) {
+      return img.substring(img.indexOf('/uploads/'));
+    }
+    return img;
+  }).filter((img) => img && !img.includes('unsplash.com'));
+
+  let packImg = currentPack?.image || '';
+  if (typeof packImg === 'string' && packImg.includes('/uploads/')) {
+    packImg = packImg.substring(packImg.indexOf('/uploads/'));
+  }
+  const currentPackImg = packImg && !packImg.includes('unsplash.com') ? packImg : null;
 
   // If user explicitly clicked a thumbnail, strictly show that thumbnail.
   // Otherwise show current pack photo if assigned, else cleanProductImages[0].
@@ -171,6 +181,12 @@ export const ProductDetailPage: React.FC = () => {
                       isZooming ? 'scale-[2.3]' : 'scale-100'
                     }`}
                     style={isZooming ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : undefined}
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (cleanProductImages[0] && target.src !== cleanProductImages[0]) {
+                        target.src = cleanProductImages[0];
+                      }
+                    }}
                   />
 
                   {/* Amazon Zoom Hint Badge */}

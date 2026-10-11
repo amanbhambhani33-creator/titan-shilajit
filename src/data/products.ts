@@ -87,9 +87,9 @@ export const PRODUCTS: Product[] = [
     inStock: true,
     stockQty: 42,
     images: [
+      '/uploads/product-1791632586215-73g2v.jpg',
+      '/uploads/product-1791633326601-qav8u.jpg',
       '/uploads/titan-honey-sticks-classic-0.jpg',
-      '/uploads/titan-honey-sticks-classic-1.jpg',
-      '/uploads/titan-honey-sticks-classic-2.jpg',
     ],
     shortDescription: 'Convenient single-serve honey sticks blending authentic purified Himalayan Shilajit resin with unprocessed wild forest honey for an earthy, naturally sweet vitality boost on the go.',
     description: 'Designed for modern lifestyles and effortless daily routines, Titan Classic Honey Sticks combine the legendary benefits of high-altitude Himalayan Shilajit with single-origin wild forest honey. No spoon required, no measuring hassle — just tear, squeeze directly, or stir into your morning beverage.',

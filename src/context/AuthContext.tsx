@@ -8,7 +8,7 @@ import {
   firebaseSignOut,
   sendPasswordResetEmail,
   doc,
-  setDoc,
+  safeSetDoc,
   getDoc,
   getDocs,
   collection,
@@ -398,7 +398,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Save to Firestore
     try {
-      await setDoc(doc(db, 'access_requests', newRequest.id), newRequest);
+      await safeSetDoc(doc(db, 'access_requests', newRequest.id), newRequest);
     } catch (err) {
       console.warn('Firestore request save fallback notice:', err);
     }
@@ -485,8 +485,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Write to Firestore
     try {
-      await setDoc(doc(db, 'access_requests', requestId), updatedReq);
-      await setDoc(doc(db, 'admin_users', newAdminUser.id), newAdminUser);
+      await safeSetDoc(doc(db, 'access_requests', requestId), updatedReq);
+      await safeSetDoc(doc(db, 'admin_users', newAdminUser.id), newAdminUser);
     } catch (err) {
       console.warn('Firestore approve write fallback notice:', err);
     }
@@ -510,7 +510,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAccessRequests((prev) => prev.map((r) => (r.id === requestId ? updatedReq : r)));
 
     try {
-      await setDoc(doc(db, 'access_requests', requestId), updatedReq);
+      await safeSetDoc(doc(db, 'access_requests', requestId), updatedReq);
     } catch (err) {
       console.warn('Firestore reject write notice:', err);
     }
@@ -555,7 +555,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAdminUsers((prev) => prev.map((u) => (u.id === target.id ? updatedAdmin : u)));
 
     try {
-      await setDoc(doc(db, 'admin_users', target.id), updatedAdmin);
+      await safeSetDoc(doc(db, 'admin_users', target.id), updatedAdmin);
     } catch (err) {
       console.warn('Firestore updateAdminUser notice:', err);
     }

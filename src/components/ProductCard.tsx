@@ -41,14 +41,24 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   // Dynamic image, price, mrp, and quantity based on active pack
   // Strictly prefer user-uploaded primary image or explicit custom pack photos - zero generic unsplash photos
-  const cleanProductImages = (product.images || []).filter((img) => img && !img.includes('unsplash.com'));
+  const cleanProductImages = (product.images || []).map((img) => {
+    if (typeof img === 'string' && img.includes('/uploads/')) {
+      return img.substring(img.indexOf('/uploads/'));
+    }
+    return img;
+  }).filter((img) => img && !img.includes('unsplash.com'));
+
+  let packImg = currentPack.image || '';
+  if (typeof packImg === 'string' && packImg.includes('/uploads/')) {
+    packImg = packImg.substring(packImg.indexOf('/uploads/'));
+  }
   const hasCustomPackImg = Boolean(
-    currentPack.image &&
-    !currentPack.image.includes('unsplash.com') &&
-    currentPack.image.trim() !== ''
+    packImg &&
+    !packImg.includes('unsplash.com') &&
+    packImg.trim() !== ''
   );
   const displayImage = hasCustomPackImg
-    ? currentPack.image
+    ? packImg
     : (cleanProductImages[0] || '');
   const displayPrice = currentPack.price;
   const displayMrp = currentPack.mrp;
@@ -92,6 +102,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     isOutOfStock ? 'opacity-50 grayscale' : 'opacity-100'
                   }`}
                   loading="lazy"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (cleanProductImages[0] && target.src !== cleanProductImages[0]) {
+                      target.src = cleanProductImages[0];
+                    }
+                  }}
                 />
               </div>
             ) : (
@@ -104,6 +120,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     isOutOfStock ? 'opacity-50 grayscale' : 'opacity-100'
                   }`}
                   loading="lazy"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (cleanProductImages[0] && target.src !== cleanProductImages[0]) {
+                      target.src = cleanProductImages[0];
+                    }
+                  }}
                 />
               </Link>
             )
