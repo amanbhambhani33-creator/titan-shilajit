@@ -99,9 +99,9 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
 
   // Razorpay Gateway Settings State
   const [razorpaySettings, setRazorpaySettings] = useState({
-    keyId: 'rzp_test_ThmxATMBoq6ZuU',
+    keyId: '',
     keySecret: '',
-    isTest: true,
+    isTest: false,
     configured: false,
   });
   const [isSavingRazorpay, setIsSavingRazorpay] = useState(false);

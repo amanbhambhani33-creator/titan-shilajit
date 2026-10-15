@@ -17,15 +17,15 @@ export const PRODUCTS: Product[] = [
     inStock: true,
     stockQty: 85,
     images: [
-      '/uploads/product-1791727204107-juykt.jpg',
-      '/uploads/product-1791727208508-d7nci.jpg',
-      '/uploads/product-1791727212114-qyui0.jpg',
+      '/uploads/titan-shilajit-resin-0.jpg',
+      '/uploads/titan-shilajit-resin-1.jpg',
+      '/uploads/titan-shilajit-resin-2.jpg',
     ],
     packs: [
       {
         id: 'trial',
         name: 'Trial Pack',
-        image: '/uploads/product-1791727204107-juykt.jpg',
+        image: '/uploads/titan-shilajit-resin-0.jpg',
         price: 999,
         mrp: 1499,
         quantityText: '20g Glass Jar (40–50 Servings)',
@@ -35,7 +35,7 @@ export const PRODUCTS: Product[] = [
       {
         id: 'popular',
         name: 'Most Popular Pack',
-        image: '/uploads/titan-shilajit-resin-pack-popular-1791727183310-smjy0.jpg',
+        image: '/uploads/titan-shilajit-resin-1.jpg',
         price: 1899,
         mrp: 2799,
         quantityText: '50g Jar + Pure Brass Spoon',
@@ -46,7 +46,7 @@ export const PRODUCTS: Product[] = [
       {
         id: 'supersaver',
         name: 'Supersaver Pack',
-        image: '/uploads/titan-shilajit-resin-pack-supersaver-1791727183311-zt6gt.jpg',
+        image: '/uploads/titan-shilajit-resin-2.jpg',
         price: 3299,
         mrp: 4999,
         quantityText: '100g Vault (2 x 50g)',
@@ -120,15 +120,15 @@ export const PRODUCTS: Product[] = [
     inStock: true,
     stockQty: 42,
     images: [
-      '/uploads/product-1791632586215-73g2v.jpg',
-      '/uploads/product-1791633326601-qav8u.jpg',
       '/uploads/titan-honey-sticks-classic-0.jpg',
+      '/uploads/titan-honey-sticks-classic-1.jpg',
+      '/uploads/titan-honey-sticks-classic-2.jpg',
     ],
     packs: [
       {
         id: 'trial',
         name: 'Trial Pack',
-        image: '/uploads/product-1791632586215-73g2v.jpg',
+        image: '/uploads/titan-honey-sticks-classic-0.jpg',
         price: 699,
         mrp: 999,
         quantityText: '15 Sticks Box (150g)',
@@ -138,7 +138,7 @@ export const PRODUCTS: Product[] = [
       {
         id: 'popular',
         name: 'Most Popular Pack',
-        image: '/uploads/product-1791632586215-73g2v.jpg',
+        image: '/uploads/titan-honey-sticks-classic-1.jpg',
         price: 1299,
         mrp: 1799,
         quantityText: '30 Sticks Twin Box (300g)',
@@ -149,7 +149,7 @@ export const PRODUCTS: Product[] = [
       {
         id: 'supersaver',
         name: 'Supersaver Pack',
-        image: '/uploads/product-1791632586215-73g2v.jpg',
+        image: '/uploads/titan-honey-sticks-classic-2.jpg',
         price: 2199,
         mrp: 3199,
         quantityText: '60 Sticks Family Pack (600g)',
@@ -309,7 +309,6 @@ export const PRODUCTS: Product[] = [
     inStock: true,
     stockQty: 34,
     images: [
-      '/uploads/product-1791726244944-xybub.jpg',
       '/uploads/titan-honey-sticks-strawberry-0.jpg',
       '/uploads/titan-honey-sticks-strawberry-1.jpg',
     ],
@@ -317,7 +316,7 @@ export const PRODUCTS: Product[] = [
       {
         id: 'trial',
         name: 'Trial Pack',
-        image: '/uploads/product-1791726244944-xybub.jpg',
+        image: '/uploads/titan-honey-sticks-strawberry-0.jpg',
         price: 799,
         mrp: 1099,
         quantityText: '15 Sticks Box',
@@ -327,7 +326,7 @@ export const PRODUCTS: Product[] = [
       {
         id: 'popular',
         name: 'Most Popular Pack',
-        image: '/uploads/product-1791726244944-xybub.jpg',
+        image: '/uploads/titan-honey-sticks-strawberry-1.jpg',
         price: 1399,
         mrp: 1899,
         quantityText: '30 Sticks Twin Box',
@@ -338,7 +337,7 @@ export const PRODUCTS: Product[] = [
       {
         id: 'supersaver',
         name: 'Supersaver Pack',
-        image: '/uploads/product-1791726244944-xybub.jpg',
+        image: '/uploads/titan-honey-sticks-strawberry-0.jpg',
         price: 2399,
         mrp: 3399,
         quantityText: '60 Sticks Family Pack',

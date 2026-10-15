@@ -1,84 +1,57 @@
 [
   {
-    "id": "titan-shilajit-resin",
-    "name": "Titan Pure Himalayan Shilajit Resin",
-    "slug": "titan-shilajit-resin",
     "category": "resin",
-    "tagline": "100% Raw, Grade-A Himalayan Shilajit Resin Harvested at 16,000+ Feet",
-    "price": 1499,
-    "mrp": 1999,
-    "discount": "25% OFF",
-    "size": "20g Glass Jar",
-    "servings": "40–50 Servings",
-    "rating": 4.9,
-    "reviewCount": 342,
-    "inStock": true,
-    "stockQty": 85,
-    "images": [
-      "/uploads/product-1791727204107-juykt.jpg",
-      "/uploads/product-1791727208508-d7nci.jpg",
-      "/uploads/product-1791727212114-qyui0.jpg"
-    ],
+    "shortDescription": "Sourced from the pristine high-altitude rocky crevices of the Himalayas. Rich in naturally occurring fulvic acid, minerals, and bioactive compounds for cellular vitality.",
     "packs": [
       {
-        "id": "trial",
-        "name": "Trial Pack",
-        "image": "/uploads/product-1791727204107-juykt.jpg",
-        "price": 999,
         "mrp": 1499,
-        "quantityText": "20g Glass Jar (40–50 Servings)",
         "savings": "Save ₹500",
-        "badge": "STARTER TRIAL"
+        "badge": "STARTER TRIAL",
+        "id": "trial",
+        "image": "/uploads/product-1791727204107-juykt.jpg",
+        "quantityText": "20g Glass Jar (40–50 Servings)",
+        "name": "Trial Pack",
+        "price": 999
       },
       {
         "id": "popular",
-        "name": "Most Popular Pack",
-        "image": "/uploads/titan-shilajit-resin-pack-popular-1791727183310-smjy0.jpg",
-        "price": 1899,
-        "mrp": 2799,
-        "quantityText": "50g Jar + Pure Brass Spoon",
         "savings": "Save ₹900",
+        "name": "Most Popular Pack",
+        "mrp": 2799,
         "badge": "MOST POPULAR • BESTSELLER",
-        "isPopular": true
+        "image": "/uploads/titan-shilajit-resin-pack-popular-1791727183310-smjy0.jpg",
+        "isPopular": true,
+        "price": 1899,
+        "quantityText": "50g Jar + Pure Brass Spoon"
       },
       {
-        "id": "supersaver",
-        "name": "Supersaver Pack",
-        "image": "/uploads/titan-shilajit-resin-pack-supersaver-1791727183311-zt6gt.jpg",
-        "price": 3299,
         "mrp": 4999,
+        "name": "Supersaver Pack",
+        "id": "supersaver",
         "quantityText": "100g Vault (2 x 50g)",
+        "price": 3299,
+        "badge": "SUPERSAVER • MAX SAVINGS",
         "savings": "Save ₹1,700",
-        "badge": "SUPERSAVER • MAX SAVINGS"
+        "image": "/uploads/titan-shilajit-resin-pack-supersaver-1791727183311-zt6gt.jpg"
       }
     ],
-    "shortDescription": "Sourced from the pristine high-altitude rocky crevices of the Himalayas. Rich in naturally occurring fulvic acid, minerals, and bioactive compounds for cellular vitality.",
+    "tagline": "100% Raw, Grade-A Himalayan Shilajit Resin Harvested at 16,000+ Feet",
+    "inStock": true,
+    "safetyNotes": "Store in a cool, dry place away from direct sunlight. Do not exceed the suggested daily serving. Keep out of reach of children.",
     "description": "Titan Pure Himalayan Shilajit Resin is the pinnacle of ancient natural strength. Hand-harvested from high-altitude rock faces above 16,000 feet in the Himalayan range during peak summer months, our resin undergoes slow sun-drying and gentle traditional purification using pure spring water. It retains maximum natural bio-availability without synthetic preservatives, binders, or artificial additives.",
     "origin": "Kashmir & Ladakh High Himalayan Ranges (16,000+ ft)",
     "elevation": "16,000 – 18,000 ft",
-    "fulvicAcidContent": "> 75% Lab Verified Fulvic Acid",
-    "ingredients": [
-      "100% Pure Himalayan Shilajit (Asphaltum punjabianum) Resin",
-      "84+ Naturally Occurring Ionic Trace Minerals",
-      "Naturally Occurring Humic Acid & Dibenzopyrones"
-    ],
-    "benefits": [
-      {
-        "title": "Cellular Energy & Vitality",
-        "description": "Supports mitochondrial ATP production and healthy cellular nutrient transport."
-      },
-      {
-        "title": "Stamina & Physical Endurance",
-        "description": "Traditionally revered for assisting active bodies with sustained energy output."
-      },
-      {
-        "title": "Mental Clarity & Calm Focus",
-        "description": "Bioactive fulvic compounds assist cognitive resilience and everyday mental focus."
-      },
-      {
-        "title": "Nutrient Bio-Absorption",
-        "description": "Fulvic acid naturally acts as a micro-transporter, aiding nutrient assimilation in daily diets."
-      }
+    "mrp": 1999,
+    "name": "Titan Pure Himalayan Shilajit Resin",
+    "size": "20g Glass Jar",
+    "servings": "40–50 Servings",
+    "id": "titan-shilajit-resin",
+    "discount": "25% OFF",
+    "qualityNotes": [
+      "NABL Accredited Third-Party Lab Tested for Heavy Metals (Lead, Arsenic, Mercury, Cadmium)",
+      "Traditional Ayurvedic Shodhana (Gentle Spring Water Purification)",
+      "Packaged in UV-protective, dark amber cosmetic-grade glass jar with airtight seal",
+      "Free from maltodextrin, artificial fillers, sugar, preservatives, and GMOs"
     ],
     "usage": [
       {
@@ -86,83 +59,92 @@
         "instruction": "Use the included stainless steel spoon to take a pea-sized portion (approx. 300mg to 500mg)."
       },
       {
-        "step": "Step 2: Dissolve",
-        "instruction": "Stir into 100ml of lukewarm water, warm milk, green tea, or herbal infusion until fully dissolved."
+        "instruction": "Stir into 100ml of lukewarm water, warm milk, green tea, or herbal infusion until fully dissolved.",
+        "step": "Step 2: Dissolve"
       },
       {
-        "step": "Step 3: Consume",
-        "instruction": "Drink once daily, ideally in the morning on an empty stomach for optimal consistency."
+        "instruction": "Drink once daily, ideally in the morning on an empty stomach for optimal consistency.",
+        "step": "Step 3: Consume"
       }
     ],
-    "qualityNotes": [
-      "NABL Accredited Third-Party Lab Tested for Heavy Metals (Lead, Arsenic, Mercury, Cadmium)",
-      "Traditional Ayurvedic Shodhana (Gentle Spring Water Purification)",
-      "Packaged in UV-protective, dark amber cosmetic-grade glass jar with airtight seal",
-      "Free from maltodextrin, artificial fillers, sugar, preservatives, and GMOs"
+    "ingredients": [
+      "100% Pure Himalayan Shilajit (Asphaltum punjabianum) Resin",
+      "84+ Naturally Occurring Ionic Trace Minerals",
+      "Naturally Occurring Humic Acid & Dibenzopyrones"
     ],
-    "safetyNotes": "Store in a cool, dry place away from direct sunlight. Do not exceed the suggested daily serving. Keep out of reach of children."
+    "reviewCount": 342,
+    "price": 1499,
+    "rating": 4.9,
+    "stockQty": 84,
+    "fulvicAcidContent": "> 75% Lab Verified Fulvic Acid",
+    "slug": "titan-shilajit-resin",
+    "benefits": [
+      {
+        "description": "Supports mitochondrial ATP production and healthy cellular nutrient transport.",
+        "title": "Cellular Energy & Vitality"
+      },
+      {
+        "title": "Stamina & Physical Endurance",
+        "description": "Traditionally revered for assisting active bodies with sustained energy output."
+      },
+      {
+        "description": "Bioactive fulvic compounds assist cognitive resilience and everyday mental focus.",
+        "title": "Mental Clarity & Calm Focus"
+      },
+      {
+        "description": "Fulvic acid naturally acts as a micro-transporter, aiding nutrient assimilation in daily diets.",
+        "title": "Nutrient Bio-Absorption"
+      }
+    ],
+    "images": [
+      "/uploads/product-1791727204107-juykt.jpg",
+      "/uploads/product-1791727208508-d7nci.jpg",
+      "/uploads/product-1791727212114-qyui0.jpg"
+    ]
   },
   {
-    "id": "titan-honey-sticks-classic",
-    "name": "Titan Shilajit Honey Sticks — Classic Honey",
     "slug": "titan-honey-sticks-classic",
+    "inStock": true,
+    "origin": "Himalayan Foothills & High Altitude Reserve",
+    "price": 999,
+    "usage": [
+      {
+        "instruction": "Tear open the top notch of 1 Titan Honey Stick.",
+        "step": "Step 1: Tear"
+      },
+      {
+        "instruction": "Squeeze directly into your mouth or mix into warm water, oatmeal, black coffee, or herbal tea.",
+        "step": "Step 2: Consume"
+      },
+      {
+        "instruction": "Best taken in the morning or 30 minutes before your workout or high-focus work sessions.",
+        "step": "Step 3: Timing"
+      }
+    ],
+    "reviewCount": 215,
+    "elevation": "14,000 – 16,000 ft Shilajit Source",
+    "ingredients": [
+      "Pure Raw Himalayan Wild Forest Honey (96.5%)",
+      "Purified High-Altitude Himalayan Shilajit Resin (3.5% / 350mg)"
+    ],
     "category": "honey-sticks",
     "tagline": "Pure Himalayan Shilajit infused with 100% Raw Wild Himalayan Forest Honey",
-    "price": 999,
     "mrp": 1299,
-    "discount": "23% OFF",
     "size": "Box of 15 Sticks (10g each)",
-    "servings": "15 Servings",
-    "rating": 4.8,
-    "reviewCount": 215,
-    "inStock": true,
-    "stockQty": 42,
+    "name": "Titan Shilajit Honey Sticks — Classic Honey",
     "images": [
       "/uploads/product-1791632586215-73g2v.jpg",
       "/uploads/product-1791633326601-qav8u.jpg",
       "/uploads/titan-honey-sticks-classic-0.jpg"
     ],
-    "packs": [
-      {
-        "id": "trial",
-        "name": "Trial Pack",
-        "image": "/uploads/product-1791632586215-73g2v.jpg",
-        "price": 699,
-        "mrp": 999,
-        "quantityText": "15 Sticks Box (150g)",
-        "savings": "Save ₹300",
-        "badge": "STARTER PACK"
-      },
-      {
-        "id": "popular",
-        "name": "Most Popular Pack",
-        "image": "/uploads/product-1791632586215-73g2v.jpg",
-        "price": 1299,
-        "mrp": 1799,
-        "quantityText": "30 Sticks Twin Box (300g)",
-        "savings": "Save ₹500",
-        "badge": "MOST POPULAR",
-        "isPopular": true
-      },
-      {
-        "id": "supersaver",
-        "name": "Supersaver Pack",
-        "image": "/uploads/product-1791632586215-73g2v.jpg",
-        "price": 2199,
-        "mrp": 3199,
-        "quantityText": "60 Sticks Family Pack (600g)",
-        "savings": "Save ₹1,000",
-        "badge": "SUPERSAVER • 2 MONTHS"
-      }
-    ],
-    "shortDescription": "Convenient single-serve honey sticks blending authentic purified Himalayan Shilajit resin with unprocessed wild forest honey for an earthy, naturally sweet vitality boost on the go.",
-    "description": "Designed for modern lifestyles and effortless daily routines, Titan Classic Honey Sticks combine the legendary benefits of high-altitude Himalayan Shilajit with single-origin wild forest honey. No spoon required, no measuring hassle — just tear, squeeze directly, or stir into your morning beverage.",
-    "origin": "Himalayan Foothills & High Altitude Reserve",
-    "elevation": "14,000 – 16,000 ft Shilajit Source",
+    "id": "titan-honey-sticks-classic",
+    "stockQty": 42,
     "fulvicAcidContent": "Standardized 350mg Purified Shilajit per stick",
-    "ingredients": [
-      "Pure Raw Himalayan Wild Forest Honey (96.5%)",
-      "Purified High-Altitude Himalayan Shilajit Resin (3.5% / 350mg)"
+    "rating": 4.8,
+    "qualityNotes": [
+      "100% Raw, unpasteurized and unheated Himalayan honey",
+      "No added sucrose, glucose, artificial flavors or corn syrup",
+      "Food-grade, BPA-free nitrogen-flushed single-use sachets"
     ],
     "benefits": [
       {
@@ -170,95 +152,74 @@
         "description": "Pre-portioned single-serve stick fits into your pocket, gym bag, or office drawer."
       },
       {
-        "title": "Natural Sustained Energy",
-        "description": "Combines the slow-release natural sugars of raw honey with bioactive fulvic minerals."
+        "description": "Combines the slow-release natural sugars of raw honey with bioactive fulvic minerals.",
+        "title": "Natural Sustained Energy"
       },
       {
-        "title": "Rich Earthy Flavor",
-        "description": "Smooth, naturally sweetened profile that softens the potent bitter notes of raw Shilajit."
+        "description": "Smooth, naturally sweetened profile that softens the potent bitter notes of raw Shilajit.",
+        "title": "Rich Earthy Flavor"
       }
     ],
-    "usage": [
-      {
-        "step": "Step 1: Tear",
-        "instruction": "Tear open the top notch of 1 Titan Honey Stick."
-      },
-      {
-        "step": "Step 2: Consume",
-        "instruction": "Squeeze directly into your mouth or mix into warm water, oatmeal, black coffee, or herbal tea."
-      },
-      {
-        "step": "Step 3: Timing",
-        "instruction": "Best taken in the morning or 30 minutes before your workout or high-focus work sessions."
-      }
-    ],
-    "qualityNotes": [
-      "100% Raw, unpasteurized and unheated Himalayan honey",
-      "No added sucrose, glucose, artificial flavors or corn syrup",
-      "Food-grade, BPA-free nitrogen-flushed single-use sachets"
-    ],
-    "safetyNotes": "Not suitable for infants under 12 months. Store at room temperature."
-  },
-  {
-    "id": "titan-honey-sticks-dark-chocolate",
-    "name": "Titan Shilajit Honey Sticks — Dark Chocolate",
-    "slug": "titan-honey-sticks-dark-chocolate",
-    "category": "honey-sticks",
-    "tagline": "Infused with Organic 70% Raw Cacao & Himalayan Shilajit",
-    "price": 1099,
-    "mrp": 1399,
-    "discount": "21% OFF",
-    "size": "Box of 15 Sticks (10g each)",
-    "servings": "15 Servings",
-    "rating": 4.9,
-    "reviewCount": 184,
-    "inStock": true,
-    "stockQty": 18,
-    "images": [
-      "/uploads/titan-honey-sticks-dark-chocolate-0.jpg"
-    ],
+    "safetyNotes": "Not suitable for infants under 12 months. Store at room temperature.",
+    "description": "Designed for modern lifestyles and effortless daily routines, Titan Classic Honey Sticks combine the legendary benefits of high-altitude Himalayan Shilajit with single-origin wild forest honey. No spoon required, no measuring hassle — just tear, squeeze directly, or stir into your morning beverage.",
     "packs": [
       {
-        "id": "trial",
-        "name": "Trial Pack",
-        "image": "/uploads/titan-honey-sticks-dark-chocolate-0.jpg",
-        "price": 799,
-        "mrp": 1099,
-        "quantityText": "15 Sticks Box",
+        "mrp": 999,
+        "badge": "STARTER PACK",
         "savings": "Save ₹300",
-        "badge": "STARTER PACK"
+        "id": "trial",
+        "image": "/uploads/product-1791632586215-73g2v.jpg",
+        "quantityText": "15 Sticks Box (150g)",
+        "price": 699,
+        "name": "Trial Pack"
       },
       {
-        "id": "popular",
+        "quantityText": "30 Sticks Twin Box (300g)",
         "name": "Most Popular Pack",
-        "image": "/uploads/titan-honey-sticks-dark-chocolate-0.jpg",
-        "price": 1399,
-        "mrp": 1899,
-        "quantityText": "30 Sticks Twin Box",
+        "isPopular": true,
+        "price": 1299,
+        "mrp": 1799,
         "savings": "Save ₹500",
-        "badge": "MOST POPULAR",
-        "isPopular": true
+        "id": "popular",
+        "image": "/uploads/product-1791632586215-73g2v.jpg",
+        "badge": "MOST POPULAR"
       },
       {
-        "id": "supersaver",
-        "name": "Supersaver Pack",
-        "image": "/uploads/titan-honey-sticks-dark-chocolate-0.jpg",
-        "price": 2399,
-        "mrp": 3399,
-        "quantityText": "60 Sticks Family Pack",
+        "mrp": 3199,
+        "price": 2199,
         "savings": "Save ₹1,000",
-        "badge": "SUPERSAVER • 2 MONTHS"
+        "badge": "SUPERSAVER • 2 MONTHS",
+        "image": "/uploads/product-1791632586215-73g2v.jpg",
+        "name": "Supersaver Pack",
+        "quantityText": "60 Sticks Family Pack (600g)",
+        "id": "supersaver"
       }
     ],
-    "shortDescription": "Decadent dark raw cacao meets pure Himalayan Shilajit and raw wild honey. A delicious, antioxidant-rich pre-workout and afternoon ritual.",
+    "servings": "15 Servings",
+    "discount": "23% OFF",
+    "shortDescription": "Convenient single-serve honey sticks blending authentic purified Himalayan Shilajit resin with unprocessed wild forest honey for an earthy, naturally sweet vitality boost on the go."
+  },
+  {
+    "price": 1099,
+    "servings": "15 Servings",
+    "usage": [
+      {
+        "step": "Step 1: Tear & Enjoy",
+        "instruction": "Tear open and consume directly as an afternoon treat or pre-workout fuel."
+      },
+      {
+        "step": "Step 2: Beverage Pairing",
+        "instruction": "Drizzle over warm espresso, almond milk, or protein shakes for an elevated recipe."
+      }
+    ],
+    "discount": "21% OFF",
+    "rating": 4.9,
+    "stockQty": 18,
+    "safetyNotes": "Contains cocoa. Store in a cool, dark environment.",
     "description": "A sophisticated harmony of 70% ceremonial raw cacao, wildflower honey, and purified Himalayan Shilajit. The flavonoids from unroasted cacao complement the mineral density of Shilajit, creating a velvety, rich pick-me-up that elevates both physical vitality and mood.",
-    "origin": "Himalayan Forest Honey & Single-Origin Cacao",
-    "elevation": "15,000+ ft Shilajit Source",
-    "fulvicAcidContent": "Standardized 350mg Purified Shilajit per stick",
-    "ingredients": [
-      "Pure Raw Himalayan Honey (88%)",
-      "Organic Raw Dark Cacao Powder 70% (8.5%)",
-      "Purified Himalayan Shilajit Resin (3.5% / 350mg)"
+    "id": "titan-honey-sticks-dark-chocolate",
+    "images": [
+      "/uploads/titan-honey-sticks-dark-chocolate-0.jpg"
     ],
     "benefits": [
       {
@@ -274,86 +235,68 @@
         "description": "Velvety dark chocolate taste with warm honey sweetness and subtle mineral depth."
       }
     ],
-    "usage": [
-      {
-        "step": "Step 1: Tear & Enjoy",
-        "instruction": "Tear open and consume directly as an afternoon treat or pre-workout fuel."
-      },
-      {
-        "step": "Step 2: Beverage Pairing",
-        "instruction": "Drizzle over warm espresso, almond milk, or protein shakes for an elevated recipe."
-      }
+    "inStock": true,
+    "category": "honey-sticks",
+    "fulvicAcidContent": "Standardized 350mg Purified Shilajit per stick",
+    "mrp": 1399,
+    "slug": "titan-honey-sticks-dark-chocolate",
+    "shortDescription": "Decadent dark raw cacao meets pure Himalayan Shilajit and raw wild honey. A delicious, antioxidant-rich pre-workout and afternoon ritual.",
+    "elevation": "15,000+ ft Shilajit Source",
+    "origin": "Himalayan Forest Honey & Single-Origin Cacao",
+    "ingredients": [
+      "Pure Raw Himalayan Honey (88%)",
+      "Organic Raw Dark Cacao Powder 70% (8.5%)",
+      "Purified Himalayan Shilajit Resin (3.5% / 350mg)"
     ],
+    "reviewCount": 184,
+    "size": "Box of 15 Sticks (10g each)",
+    "name": "Titan Shilajit Honey Sticks — Dark Chocolate",
     "qualityNotes": [
       "No refined sugars or dairy ingredients",
       "Non-alkalized raw cacao retaining natural flavanols",
       "Individually sealed for freshness and travel convenience"
     ],
-    "safetyNotes": "Contains cocoa. Store in a cool, dark environment."
-  },
-  {
-    "id": "titan-honey-sticks-strawberry",
-    "name": "Titan Shilajit Honey Sticks — Strawberry",
-    "slug": "titan-honey-sticks-strawberry",
-    "category": "honey-sticks",
-    "tagline": "Infused with Wild Himalayan Strawberry Extract & Forest Honey",
-    "price": 1099,
-    "mrp": 1399,
-    "discount": "21% OFF",
-    "size": "Box of 15 Sticks (10g each)",
-    "servings": "15 Servings",
-    "rating": 4.8,
-    "reviewCount": 147,
-    "inStock": true,
-    "stockQty": 34,
-    "images": [
-      "/uploads/product-1791726244944-xybub.jpg",
-      "/uploads/titan-honey-sticks-strawberry-0.jpg",
-      "/uploads/titan-honey-sticks-strawberry-1.jpg"
-    ],
     "packs": [
       {
-        "id": "trial",
-        "name": "Trial Pack",
-        "image": "/uploads/product-1791726244944-xybub.jpg",
-        "price": 799,
         "mrp": 1099,
-        "quantityText": "15 Sticks Box",
+        "name": "Trial Pack",
+        "id": "trial",
+        "price": 799,
+        "badge": "STARTER PACK",
         "savings": "Save ₹300",
-        "badge": "STARTER PACK"
+        "image": "/uploads/titan-honey-sticks-dark-chocolate-0.jpg",
+        "quantityText": "15 Sticks Box"
       },
       {
-        "id": "popular",
-        "name": "Most Popular Pack",
-        "image": "/uploads/product-1791726244944-xybub.jpg",
         "price": 1399,
-        "mrp": 1899,
         "quantityText": "30 Sticks Twin Box",
-        "savings": "Save ₹500",
+        "image": "/uploads/titan-honey-sticks-dark-chocolate-0.jpg",
         "badge": "MOST POPULAR",
+        "savings": "Save ₹500",
+        "mrp": 1899,
+        "name": "Most Popular Pack",
+        "id": "popular",
         "isPopular": true
       },
       {
-        "id": "supersaver",
-        "name": "Supersaver Pack",
-        "image": "/uploads/product-1791726244944-xybub.jpg",
-        "price": 2399,
-        "mrp": 3399,
-        "quantityText": "60 Sticks Family Pack",
         "savings": "Save ₹1,000",
-        "badge": "SUPERSAVER • 2 MONTHS"
+        "mrp": 3399,
+        "image": "/uploads/titan-honey-sticks-dark-chocolate-0.jpg",
+        "name": "Supersaver Pack",
+        "badge": "SUPERSAVER • 2 MONTHS",
+        "price": 2399,
+        "id": "supersaver",
+        "quantityText": "60 Sticks Family Pack"
       }
     ],
-    "shortDescription": "Refreshing, tart Himalayan wild strawberry notes fused with sweet wildflower honey and pure Shilajit resin. A bright daily vitality boost.",
-    "description": "Crafted for those who crave a bright, fruity twist to their wellness routine. Real cold-pressed wild Himalayan strawberry fruit essence is blended with raw honey and our pure purified Shilajit resin, offering a naturally uplifting taste without artificial flavor drops.",
+    "tagline": "Infused with Organic 70% Raw Cacao & Himalayan Shilajit"
+  },
+  {
+    "inStock": true,
     "origin": "Himalayan Sub-Alpine Valleys",
-    "elevation": "15,000+ ft Shilajit Source",
-    "fulvicAcidContent": "Standardized 350mg Purified Shilajit per stick",
-    "ingredients": [
-      "Pure Raw Himalayan Forest Honey (91.5%)",
-      "Natural Wild Himalayan Strawberry Fruit Essence (5.0%)",
-      "Purified Himalayan Shilajit Resin (3.5% / 350mg)"
-    ],
+    "safetyNotes": "Store below 30°C in a dry location.",
+    "description": "Crafted for those who crave a bright, fruity twist to their wellness routine. Real cold-pressed wild Himalayan strawberry fruit essence is blended with raw honey and our pure purified Shilajit resin, offering a naturally uplifting taste without artificial flavor drops.",
+    "stockQty": 34,
     "benefits": [
       {
         "title": "Bright & Crisp Palate",
@@ -364,10 +307,16 @@
         "description": "An enjoyable and gentle way to introduce Shilajit into any daily schedule."
       },
       {
-        "title": "Gentle Vitality & Focus",
-        "description": "Supports balanced energy throughout demanding workdays without nervous jitters."
+        "description": "Supports balanced energy throughout demanding workdays without nervous jitters.",
+        "title": "Gentle Vitality & Focus"
       }
     ],
+    "fulvicAcidContent": "Standardized 350mg Purified Shilajit per stick",
+    "shortDescription": "Refreshing, tart Himalayan wild strawberry notes fused with sweet wildflower honey and pure Shilajit resin. A bright daily vitality boost.",
+    "servings": "15 Servings",
+    "discount": "21% OFF",
+    "price": 1099,
+    "tagline": "Infused with Wild Himalayan Strawberry Extract & Forest Honey",
     "usage": [
       {
         "step": "Step 1: Direct Intake",
@@ -378,75 +327,101 @@
         "instruction": "Drizzle over Greek yogurt, chia pudding, or fresh seasonal fruits."
       }
     ],
+    "elevation": "15,000+ ft Shilajit Source",
+    "rating": 4.8,
+    "slug": "titan-honey-sticks-strawberry",
+    "ingredients": [
+      "Pure Raw Himalayan Forest Honey (91.5%)",
+      "Natural Wild Himalayan Strawberry Fruit Essence (5.0%)",
+      "Purified Himalayan Shilajit Resin (3.5% / 350mg)"
+    ],
+    "reviewCount": 147,
+    "packs": [
+      {
+        "mrp": 1099,
+        "price": 799,
+        "savings": "Save ₹300",
+        "badge": "STARTER PACK",
+        "image": "/uploads/product-1791726244944-xybub.jpg",
+        "name": "Trial Pack",
+        "id": "trial",
+        "quantityText": "15 Sticks Box"
+      },
+      {
+        "image": "/uploads/product-1791726244944-xybub.jpg",
+        "badge": "MOST POPULAR",
+        "isPopular": true,
+        "quantityText": "30 Sticks Twin Box",
+        "id": "popular",
+        "price": 1399,
+        "savings": "Save ₹500",
+        "name": "Most Popular Pack",
+        "mrp": 1899
+      },
+      {
+        "savings": "Save ₹1,000",
+        "quantityText": "60 Sticks Family Pack",
+        "id": "supersaver",
+        "image": "/uploads/product-1791726244944-xybub.jpg",
+        "name": "Supersaver Pack",
+        "badge": "SUPERSAVER • 2 MONTHS",
+        "mrp": 3399,
+        "price": 2399
+      }
+    ],
+    "images": [
+      "/uploads/product-1791726244944-xybub.jpg",
+      "/uploads/titan-honey-sticks-strawberry-0.jpg",
+      "/uploads/titan-honey-sticks-strawberry-1.jpg"
+    ],
+    "mrp": 1399,
     "qualityNotes": [
       "100% Real fruit essence, no synthetic red food colorants",
       "Micro-filtered for smooth consistency",
       "Third-party tested for purity and microbial safety"
     ],
-    "safetyNotes": "Store below 30°C in a dry location."
+    "category": "honey-sticks",
+    "id": "titan-honey-sticks-strawberry",
+    "name": "Titan Shilajit Honey Sticks — Strawberry",
+    "size": "Box of 15 Sticks (10g each)"
   },
   {
-    "id": "titan-vitality-ritual-box",
-    "name": "The Titan Vitality Ritual Box",
-    "slug": "titan-vitality-ritual-box",
-    "category": "bundles",
-    "tagline": "The Ultimate Himalayan Wellness Set: Resin 20g + Spoon + Classic Honey Sticks (10 Pack)",
-    "price": 2199,
-    "mrp": 2999,
-    "discount": "27% OFF",
-    "size": "Complete Ritual Gift Box",
-    "servings": "60+ Servings Total",
-    "rating": 5,
-    "reviewCount": 96,
-    "inStock": true,
-    "stockQty": 26,
     "images": [
       "/uploads/product-1791727204107-juykt.jpg",
       "/uploads/product-1791632586215-73g2v.jpg"
     ],
-    "packs": [
+    "id": "titan-vitality-ritual-box",
+    "rating": 5,
+    "category": "bundles",
+    "shortDescription": "Our flagship ritual kit featuring the 20g Pure Resin Jar, custom engraved matte-black stainless measuring spoon, and a 10-stick pack of Classic Honey Sticks for travel.",
+    "mrp": 2999,
+    "price": 2199,
+    "usage": [
       {
-        "id": "trial",
-        "name": "Starter Ritual Set",
-        "image": "/uploads/product-1791727204107-juykt.jpg",
-        "price": 2199,
-        "mrp": 2999,
-        "quantityText": "20g Resin + 10 Classic Sticks + Brass Spoon",
-        "savings": "Save ₹800",
-        "badge": "STARTER RITUAL"
+        "instruction": "Use the stainless spoon to dissolve a pea-sized portion of resin in warm water each morning.",
+        "step": "Home Routine"
       },
       {
-        "id": "popular",
-        "name": "Master Ritual Set",
-        "image": "/uploads/titan-shilajit-resin-pack-popular-1791727183310-smjy0.jpg",
-        "price": 3499,
-        "mrp": 4699,
-        "quantityText": "50g Resin + 20 Honey Sticks + Brass Spoon",
-        "savings": "Save ₹1,200",
-        "badge": "MOST POPULAR",
-        "isPopular": true
-      },
-      {
-        "id": "supersaver",
-        "name": "Vault Ritual Set",
-        "image": "/uploads/titan-shilajit-resin-pack-supersaver-1791727183311-zt6gt.jpg",
-        "price": 5999,
-        "mrp": 7999,
-        "quantityText": "100g Vault + 40 Honey Sticks + 2 Spoons",
-        "savings": "Save ₹2,000",
-        "badge": "MAX SAVINGS"
+        "step": "Travel Routine",
+        "instruction": "Take 1 honey stick with you on active days or workouts when away from home."
       }
     ],
-    "shortDescription": "Our flagship ritual kit featuring the 20g Pure Resin Jar, custom engraved matte-black stainless measuring spoon, and a 10-stick pack of Classic Honey Sticks for travel.",
     "description": "The definitive Titan Shilajit experience. Designed for those committed to a high-standard morning routine at home and on the move. Includes our lab-certified Grade-A Himalayan Resin, our precision stainless steel dosing spoon, and travel-ready Classic Honey Sticks, presented in a luxury matte black and gold rigid gift box.",
-    "origin": "Himalayan Ranges (16,000+ ft)",
-    "elevation": "16,000+ ft",
+    "safetyNotes": "Store in a cool, dry place. Refer to individual product instructions.",
     "fulvicAcidContent": "> 75% Lab Verified Fulvic Acid",
-    "ingredients": [
-      "Titan Pure Himalayan Shilajit Resin (20g)",
-      "Titan Shilajit Classic Honey Sticks (10 Sticks x 10g)",
-      "1x Precision Stainless Steel Measuring Spoon"
+    "elevation": "16,000+ ft",
+    "discount": "27% OFF",
+    "tagline": "The Ultimate Himalayan Wellness Set: Resin 20g + Spoon + Classic Honey Sticks (10 Pack)",
+    "origin": "Himalayan Ranges (16,000+ ft)",
+    "name": "The Titan Vitality Ritual Box",
+    "size": "Complete Ritual Gift Box",
+    "qualityNotes": [
+      "Comprehensive Batch Lab Analysis Certificate included in the box",
+      "Custom gold-accented precision dosing instrument",
+      "Strict quality seal on all components"
     ],
+    "servings": "60+ Servings Total",
+    "slug": "titan-vitality-ritual-box",
     "benefits": [
       {
         "title": "Complete Dual Protocol",
@@ -457,89 +432,99 @@
         "description": "Guarantees the exact 300–500mg daily serving every single morning."
       },
       {
-        "title": "Luxury Gift Ready",
-        "description": "Housed in an embossed matte dark charcoal gift chest with gold foil detailing."
+        "description": "Housed in an embossed matte dark charcoal gift chest with gold foil detailing.",
+        "title": "Luxury Gift Ready"
       }
     ],
-    "usage": [
+    "packs": [
       {
-        "step": "Home Routine",
-        "instruction": "Use the stainless spoon to dissolve a pea-sized portion of resin in warm water each morning."
+        "savings": "Save ₹800",
+        "image": "/uploads/product-1791727204107-juykt.jpg",
+        "mrp": 2999,
+        "quantityText": "20g Resin + 10 Classic Sticks + Brass Spoon",
+        "badge": "STARTER RITUAL",
+        "name": "Starter Ritual Set",
+        "id": "trial",
+        "price": 2199
       },
       {
-        "step": "Travel Routine",
-        "instruction": "Take 1 honey stick with you on active days or workouts when away from home."
+        "badge": "MOST POPULAR",
+        "image": "/uploads/titan-shilajit-resin-pack-popular-1791727183310-smjy0.jpg",
+        "id": "popular",
+        "savings": "Save ₹1,200",
+        "quantityText": "50g Resin + 20 Honey Sticks + Brass Spoon",
+        "mrp": 4699,
+        "price": 3499,
+        "isPopular": true,
+        "name": "Master Ritual Set"
+      },
+      {
+        "price": 5999,
+        "badge": "MAX SAVINGS",
+        "mrp": 7999,
+        "name": "Vault Ritual Set",
+        "id": "supersaver",
+        "image": "/uploads/titan-shilajit-resin-pack-supersaver-1791727183311-zt6gt.jpg",
+        "savings": "Save ₹2,000",
+        "quantityText": "100g Vault + 40 Honey Sticks + 2 Spoons"
       }
     ],
-    "qualityNotes": [
-      "Comprehensive Batch Lab Analysis Certificate included in the box",
-      "Custom gold-accented precision dosing instrument",
-      "Strict quality seal on all components"
+    "inStock": true,
+    "reviewCount": 96,
+    "ingredients": [
+      "Titan Pure Himalayan Shilajit Resin (20g)",
+      "Titan Shilajit Classic Honey Sticks (10 Sticks x 10g)",
+      "1x Precision Stainless Steel Measuring Spoon"
     ],
-    "safetyNotes": "Store in a cool, dry place. Refer to individual product instructions."
+    "stockQty": 26
   },
   {
-    "id": "titan-honey-sticks-trio",
-    "name": "Titan Honey Sticks Discovery Trio",
-    "slug": "titan-honey-sticks-trio",
-    "category": "bundles",
-    "tagline": "30 Sticks Variety: 10 Classic + 10 Dark Chocolate + 10 Strawberry",
-    "price": 1999,
-    "mrp": 2699,
     "discount": "26% OFF",
-    "size": "Bundle of 3 Boxes (30 Sticks Total)",
-    "servings": "30 Servings",
-    "rating": 4.9,
-    "reviewCount": 112,
+    "id": "titan-honey-sticks-trio",
     "inStock": true,
-    "stockQty": 15,
+    "qualityNotes": [
+      "All 3 varieties formulated with 100% natural, unadulterated ingredients",
+      "Third-party tested batch quality guarantee"
+    ],
+    "servings": "30 Servings",
+    "mrp": 2699,
+    "packs": [
+      {
+        "savings": "Save ₹700",
+        "id": "trial",
+        "name": "30 Sticks Discovery Set",
+        "image": "/uploads/product-1791632586215-73g2v.jpg",
+        "quantityText": "30 Sticks (10 Classic, 10 Cacao, 10 Berry)",
+        "badge": "DISCOVERY TRIO",
+        "price": 1999,
+        "mrp": 2699
+      },
+      {
+        "mrp": 4999,
+        "badge": "MOST POPULAR",
+        "image": "/uploads/titan-honey-sticks-dark-chocolate-0.jpg",
+        "id": "popular",
+        "price": 3599,
+        "quantityText": "60 Sticks (20 of each blend)",
+        "name": "60 Sticks Dual Discovery",
+        "isPopular": true,
+        "savings": "Save ₹1,400"
+      },
+      {
+        "quantityText": "90 Sticks (30 of each blend)",
+        "savings": "Save ₹2,000",
+        "mrp": 6999,
+        "name": "90 Sticks Season Vault",
+        "price": 4999,
+        "badge": "MAX VALUE",
+        "id": "supersaver",
+        "image": "/uploads/product-1791726244944-xybub.jpg"
+      }
+    ],
     "images": [
       "/uploads/product-1791632586215-73g2v.jpg",
       "/uploads/titan-honey-sticks-dark-chocolate-0.jpg",
       "/uploads/product-1791726244944-xybub.jpg"
-    ],
-    "packs": [
-      {
-        "id": "trial",
-        "name": "30 Sticks Discovery Set",
-        "image": "/uploads/product-1791632586215-73g2v.jpg",
-        "price": 1999,
-        "mrp": 2699,
-        "quantityText": "30 Sticks (10 Classic, 10 Cacao, 10 Berry)",
-        "savings": "Save ₹700",
-        "badge": "DISCOVERY TRIO"
-      },
-      {
-        "id": "popular",
-        "name": "60 Sticks Dual Discovery",
-        "image": "/uploads/titan-honey-sticks-dark-chocolate-0.jpg",
-        "price": 3599,
-        "mrp": 4999,
-        "quantityText": "60 Sticks (20 of each blend)",
-        "savings": "Save ₹1,400",
-        "badge": "MOST POPULAR",
-        "isPopular": true
-      },
-      {
-        "id": "supersaver",
-        "name": "90 Sticks Season Vault",
-        "image": "/uploads/product-1791726244944-xybub.jpg",
-        "price": 4999,
-        "mrp": 6999,
-        "quantityText": "90 Sticks (30 of each blend)",
-        "savings": "Save ₹2,000",
-        "badge": "MAX VALUE"
-      }
-    ],
-    "shortDescription": "Explore all three flavor profiles of Titan Shilajit Honey Sticks in one complete wellness pack. Pure Wild Honey, 70% Raw Dark Chocolate, and Wild Strawberry.",
-    "description": "The perfect way to discover your favorite daily Shilajit stick. Enjoy the traditional simplicity of Classic Honey, the rich antioxidant indulgence of Dark Chocolate, and the crisp refreshing berry notes of Wild Strawberry.",
-    "origin": "Himalayan Range",
-    "elevation": "15,000+ ft",
-    "fulvicAcidContent": "Standardized 350mg Purified Shilajit per stick",
-    "ingredients": [
-      "1x Titan Honey Sticks Classic Honey (10 sticks)",
-      "1x Titan Honey Sticks Dark Chocolate (10 sticks)",
-      "1x Titan Honey Sticks Strawberry (10 sticks)"
     ],
     "benefits": [
       {
@@ -547,28 +532,43 @@
         "description": "Switch between Classic, Dark Cacao, and Strawberry based on mood and time of day."
       },
       {
-        "title": "30-Day Complete Supply",
-        "description": "One full month of effortless daily vitality."
+        "description": "One full month of effortless daily vitality.",
+        "title": "30-Day Complete Supply"
       },
       {
         "title": "Greatest Value Pack",
         "description": "Save 26% compared to purchasing individual boxes separately."
       }
     ],
+    "tagline": "30 Sticks Variety: 10 Classic + 10 Dark Chocolate + 10 Strawberry",
+    "rating": 4.9,
+    "stockQty": 15,
+    "safetyNotes": "Store in cool ambient conditions.",
+    "description": "The perfect way to discover your favorite daily Shilajit stick. Enjoy the traditional simplicity of Classic Honey, the rich antioxidant indulgence of Dark Chocolate, and the crisp refreshing berry notes of Wild Strawberry.",
+    "size": "Bundle of 3 Boxes (30 Sticks Total)",
+    "name": "Titan Honey Sticks Discovery Trio",
+    "fulvicAcidContent": "Standardized 350mg Purified Shilajit per stick",
     "usage": [
       {
-        "step": "Morning",
-        "instruction": "Try Classic Honey with your morning green tea."
+        "instruction": "Try Classic Honey with your morning green tea.",
+        "step": "Morning"
       },
       {
-        "step": "Afternoon / Gym",
-        "instruction": "Enjoy Dark Chocolate 30 mins before workout or Strawberry with cold water."
+        "instruction": "Enjoy Dark Chocolate 30 mins before workout or Strawberry with cold water.",
+        "step": "Afternoon / Gym"
       }
     ],
-    "qualityNotes": [
-      "All 3 varieties formulated with 100% natural, unadulterated ingredients",
-      "Third-party tested batch quality guarantee"
-    ],
-    "safetyNotes": "Store in cool ambient conditions."
+    "category": "bundles",
+    "elevation": "15,000+ ft",
+    "price": 1999,
+    "shortDescription": "Explore all three flavor profiles of Titan Shilajit Honey Sticks in one complete wellness pack. Pure Wild Honey, 70% Raw Dark Chocolate, and Wild Strawberry.",
+    "origin": "Himalayan Range",
+    "slug": "titan-honey-sticks-trio",
+    "reviewCount": 112,
+    "ingredients": [
+      "1x Titan Honey Sticks Classic Honey (10 sticks)",
+      "1x Titan Honey Sticks Dark Chocolate (10 sticks)",
+      "1x Titan Honey Sticks Strawberry (10 sticks)"
+    ]
   }
 ]

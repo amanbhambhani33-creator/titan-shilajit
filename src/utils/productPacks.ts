@@ -1,29 +1,32 @@
 import { Product, ProductPack } from '../types';
 
-export function getProductPacks(product: Product): ProductPack[] {
-  const cleanImages = (product.images || []).filter((img) => img && !img.includes('unsplash.com'));
-  const primaryImg = cleanImages[0] || '';
+const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=800&q=85';
 
-  // If product already has configured packs (e.g. from Admin Desk)
+export function getProductPacks(product: Product): ProductPack[] {
+  const cleanImages = (product.images || []).filter(Boolean);
+  const primaryImg = cleanImages[0] || DEFAULT_FALLBACK_IMAGE;
+
+  // If product already has configured packs (e.g. from Admin Desk or store catalog)
   if (product.packs && product.packs.length > 0) {
-    return product.packs.map((p) => {
+    return product.packs.map((p, idx) => {
       let packImg = p.image || '';
-      if (packImg.includes('/uploads/')) {
+      if (typeof packImg === 'string' && packImg.includes('/uploads/')) {
         packImg = packImg.substring(packImg.indexOf('/uploads/'));
       }
-      // If pack image is empty or an old generic unsplash placeholder or mismatched resin photo, automatically use primaryImg
-      const isGeneric = !packImg || packImg.includes('unsplash.com') || (product.slug === 'titan-honey-sticks-strawberry' && packImg.includes('shilajit-resin'));
       return {
         ...p,
-        image: isGeneric ? primaryImg : (packImg || primaryImg),
+        image: packImg || primaryImg,
       };
     });
   }
 
-  // Pre-configured packs by slug, strictly using the product's own images (user uploaded / pasted)
+  // Pre-configured packs by slug with prices dynamically derived from product.price if modified
   const getPackImg = (idx: number) => {
     return cleanImages[idx] || primaryImg;
   };
+
+  const basePrice = Number(product.price) || 1499;
+  const baseMrp = Number(product.mrp) || Math.round(basePrice * 1.35);
 
   if (product.slug === 'titan-shilajit-resin') {
     return [
@@ -32,8 +35,8 @@ export function getProductPacks(product: Product): ProductPack[] {
         name: 'Trial Pack',
         label: 'Trial Pack',
         quantityText: '20g Glass Jar (40–50 Servings)',
-        price: 999,
-        mrp: 1499,
+        price: Math.round(basePrice * 0.67),
+        mrp: Math.round(baseMrp * 0.75),
         discount: '33% OFF',
         image: getPackImg(0),
         badge: 'STARTER TRIAL',
@@ -44,9 +47,9 @@ export function getProductPacks(product: Product): ProductPack[] {
         name: 'Most Popular Pack',
         label: 'Most Popular Pack',
         quantityText: '50g Jar + Pure Brass Spoon (100+ Servings)',
-        price: 1899,
-        mrp: 2799,
-        discount: '32% OFF',
+        price: basePrice,
+        mrp: baseMrp,
+        discount: product.discount || '32% OFF',
         image: getPackImg(1),
         badge: 'MOST POPULAR • BESTSELLER',
         savings: 'Save ₹900',
@@ -57,8 +60,8 @@ export function getProductPacks(product: Product): ProductPack[] {
         name: 'Supersaver Pack',
         label: 'Supersaver Pack',
         quantityText: '100g Vault (2 x 50g) + 2 Brass Spoons + Testing Kit',
-        price: 3299,
-        mrp: 4999,
+        price: Math.round(basePrice * 1.75),
+        mrp: Math.round(baseMrp * 1.8),
         discount: '34% OFF',
         image: getPackImg(2),
         badge: 'SUPERSAVER • MAX SAVINGS',
@@ -74,8 +77,8 @@ export function getProductPacks(product: Product): ProductPack[] {
         name: 'Trial Pack',
         label: 'Trial Pack',
         quantityText: '15 Sticks Box (150g)',
-        price: 699,
-        mrp: 999,
+        price: Math.round(basePrice * 0.7),
+        mrp: Math.round(baseMrp * 0.75),
         discount: '30% OFF',
         image: getPackImg(0),
         badge: 'STARTER PACK',
@@ -86,9 +89,9 @@ export function getProductPacks(product: Product): ProductPack[] {
         name: 'Most Popular Pack',
         label: 'Most Popular Pack',
         quantityText: '30 Sticks Twin Box (300g)',
-        price: 1299,
-        mrp: 1799,
-        discount: '28% OFF',
+        price: basePrice,
+        mrp: baseMrp,
+        discount: product.discount || '28% OFF',
         image: getPackImg(1),
         badge: 'MOST POPULAR',
         savings: 'Save ₹500',
@@ -99,8 +102,8 @@ export function getProductPacks(product: Product): ProductPack[] {
         name: 'Supersaver Pack',
         label: 'Supersaver Pack',
         quantityText: '60 Sticks Family Pack (600g)',
-        price: 2199,
-        mrp: 3199,
+        price: Math.round(basePrice * 1.7),
+        mrp: Math.round(baseMrp * 1.75),
         discount: '31% OFF',
         image: getPackImg(2),
         badge: 'SUPERSAVER • 2 MONTHS',
@@ -116,8 +119,8 @@ export function getProductPacks(product: Product): ProductPack[] {
         name: 'Trial Pack',
         label: 'Trial Pack',
         quantityText: '15 Sticks Box (150g)',
-        price: 749,
-        mrp: 1099,
+        price: Math.round(basePrice * 0.68),
+        mrp: Math.round(baseMrp * 0.75),
         discount: '32% OFF',
         image: getPackImg(0),
         badge: 'TRIAL PACK',
@@ -128,9 +131,9 @@ export function getProductPacks(product: Product): ProductPack[] {
         name: 'Most Popular Pack',
         label: 'Most Popular Pack',
         quantityText: '30 Sticks Twin Box (300g)',
-        price: 1399,
-        mrp: 1999,
-        discount: '30% OFF',
+        price: basePrice,
+        mrp: baseMrp,
+        discount: product.discount || '30% OFF',
         image: getPackImg(1),
         badge: 'MOST POPULAR',
         savings: 'Save ₹600',
@@ -141,8 +144,8 @@ export function getProductPacks(product: Product): ProductPack[] {
         name: 'Supersaver Pack',
         label: 'Supersaver Pack',
         quantityText: '60 Sticks Mega Box (600g)',
-        price: 2399,
-        mrp: 3499,
+        price: Math.round(basePrice * 1.7),
+        mrp: Math.round(baseMrp * 1.75),
         discount: '31% OFF',
         image: getPackImg(2),
         badge: 'SUPERSAVER',
@@ -158,8 +161,8 @@ export function getProductPacks(product: Product): ProductPack[] {
         name: 'Trial Pack',
         label: 'Trial Pack',
         quantityText: '15 Sticks Box (150g)',
-        price: 749,
-        mrp: 1099,
+        price: Math.round(basePrice * 0.68),
+        mrp: Math.round(baseMrp * 0.75),
         discount: '32% OFF',
         image: getPackImg(0),
         badge: 'TRIAL PACK',
@@ -170,9 +173,9 @@ export function getProductPacks(product: Product): ProductPack[] {
         name: 'Most Popular Pack',
         label: 'Most Popular Pack',
         quantityText: '30 Sticks Twin Box (300g)',
-        price: 1399,
-        mrp: 1999,
-        discount: '30% OFF',
+        price: basePrice,
+        mrp: baseMrp,
+        discount: product.discount || '30% OFF',
         image: getPackImg(1),
         badge: 'MOST POPULAR',
         savings: 'Save ₹600',
@@ -183,8 +186,8 @@ export function getProductPacks(product: Product): ProductPack[] {
         name: 'Supersaver Pack',
         label: 'Supersaver Pack',
         quantityText: '60 Sticks Mega Box (600g)',
-        price: 2399,
-        mrp: 3499,
+        price: Math.round(basePrice * 1.7),
+        mrp: Math.round(baseMrp * 1.75),
         discount: '31% OFF',
         image: getPackImg(2),
         badge: 'SUPERSAVER',
@@ -200,8 +203,8 @@ export function getProductPacks(product: Product): ProductPack[] {
         name: 'Trial Pack',
         label: 'Trial Pack',
         quantityText: 'Starter Kit: 20g Resin + Brass Spoon',
-        price: 1499,
-        mrp: 1999,
+        price: Math.round(basePrice * 0.68),
+        mrp: Math.round(baseMrp * 0.67),
         discount: '25% OFF',
         image: getPackImg(0),
         badge: 'STARTER KIT',
@@ -212,9 +215,9 @@ export function getProductPacks(product: Product): ProductPack[] {
         name: 'Most Popular Pack',
         label: 'Most Popular Pack',
         quantityText: 'Signature Box: 20g Resin + Spoon + 10 Honey Sticks',
-        price: 2199,
-        mrp: 2999,
-        discount: '27% OFF',
+        price: basePrice,
+        mrp: baseMrp,
+        discount: product.discount || '27% OFF',
         image: getPackImg(1),
         badge: 'MOST POPULAR • SIGNATURE',
         savings: 'Save ₹800',
@@ -225,8 +228,8 @@ export function getProductPacks(product: Product): ProductPack[] {
         name: 'Supersaver Pack',
         label: 'Supersaver Pack',
         quantityText: 'Grand Emperor: 50g Resin + Brass Spoon + 30 Honey Sticks',
-        price: 3499,
-        mrp: 4999,
+        price: Math.round(basePrice * 1.6),
+        mrp: Math.round(baseMrp * 1.65),
         discount: '30% OFF',
         image: getPackImg(2),
         badge: 'SUPERSAVER • LUXURY',
@@ -242,8 +245,8 @@ export function getProductPacks(product: Product): ProductPack[] {
         name: 'Trial Pack',
         label: 'Trial Pack',
         quantityText: '15 Sticks Sampler (5 Classic + 5 Choco + 5 Berry)',
-        price: 999,
-        mrp: 1399,
+        price: Math.round(basePrice * 0.5),
+        mrp: Math.round(baseMrp * 0.52),
         discount: '28% OFF',
         image: getPackImg(0),
         badge: 'SAMPLER',
@@ -254,9 +257,9 @@ export function getProductPacks(product: Product): ProductPack[] {
         name: 'Most Popular Pack',
         label: 'Most Popular Pack',
         quantityText: '30 Sticks Trio (10 of each flavor)',
-        price: 1999,
-        mrp: 2699,
-        discount: '26% OFF',
+        price: basePrice,
+        mrp: baseMrp,
+        discount: product.discount || '26% OFF',
         image: getPackImg(1),
         badge: 'MOST POPULAR',
         savings: 'Save ₹700',
@@ -267,8 +270,8 @@ export function getProductPacks(product: Product): ProductPack[] {
         name: 'Supersaver Pack',
         label: 'Supersaver Pack',
         quantityText: '60 Sticks Mega Discovery (20 of each flavor)',
-        price: 3499,
-        mrp: 4999,
+        price: Math.round(basePrice * 1.75),
+        mrp: Math.round(baseMrp * 1.85),
         discount: '30% OFF',
         image: getPackImg(2),
         badge: 'SUPERSAVER • BEST VALUE',
@@ -278,11 +281,10 @@ export function getProductPacks(product: Product): ProductPack[] {
   }
 
   // Generic fallback for any other custom product created by admin
-  const basePrice = product.price || 1299;
   const trialPrice = Math.round(basePrice * 0.7);
   const trialMrp = Math.round(trialPrice * 1.4);
   const popularPrice = basePrice;
-  const popularMrp = product.mrp || Math.round(popularPrice * 1.35);
+  const popularMrp = baseMrp;
   const supersaverPrice = Math.round(basePrice * 1.75);
   const supersaverMrp = Math.round(supersaverPrice * 1.5);
 
@@ -325,6 +327,50 @@ export function getProductPacks(product: Product): ProductPack[] {
       savings: `Save ₹${supersaverMrp - supersaverPrice}`,
     },
   ];
+}
+
+/**
+ * Synchronizes all pack prices whenever an admin updates the product's base price or MRP
+ */
+export function syncPacksToProductPrice(product: Product, newPrice: number, newMrp?: number): ProductPack[] {
+  const currentPacks = (product.packs && product.packs.length > 0)
+    ? [...product.packs]
+    : getProductPacks(product);
+  const safeMrp = newMrp || Math.round(newPrice * 1.35);
+
+  return currentPacks.map((pack, idx) => {
+    if (pack.isPopular || idx === 1 || currentPacks.length === 1) {
+      const discountVal = safeMrp > newPrice ? `${Math.round(((safeMrp - newPrice) / safeMrp) * 100)}% OFF` : (pack.discount || '25% OFF');
+      return {
+        ...pack,
+        price: newPrice,
+        mrp: safeMrp,
+        discount: discountVal,
+        savings: safeMrp > newPrice ? `Save ₹${safeMrp - newPrice}` : pack.savings,
+        isPopular: true,
+      };
+    } else if (idx === 0) {
+      const trialPrice = Math.round(newPrice * 0.7);
+      const trialMrp = Math.round(safeMrp * 0.75);
+      return {
+        ...pack,
+        price: trialPrice,
+        mrp: trialMrp,
+        discount: trialMrp > trialPrice ? `${Math.round(((trialMrp - trialPrice) / trialMrp) * 100)}% OFF` : pack.discount,
+        savings: trialMrp > trialPrice ? `Save ₹${trialMrp - trialPrice}` : pack.savings,
+      };
+    } else {
+      const superPrice = Math.round(newPrice * 1.75);
+      const superMrp = Math.round(safeMrp * 1.8);
+      return {
+        ...pack,
+        price: superPrice,
+        mrp: superMrp,
+        discount: superMrp > superPrice ? `${Math.round(((superMrp - superPrice) / superMrp) * 100)}% OFF` : pack.discount,
+        savings: superMrp > superPrice ? `Save ₹${superMrp - superPrice}` : pack.savings,
+      };
+    }
+  });
 }
 
 /**

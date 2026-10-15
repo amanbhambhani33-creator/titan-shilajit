@@ -205,10 +205,10 @@ apiRouter.get('/health', (req, res) => {
   });
 });
 
-// Razorpay Dynamic Client Setup (Configurable via Firestore & Admin)
+// Razorpay Dynamic Client Setup (Configurable via Environment Variables & Admin)
 let dynamicRazorpayConfig = {
-  keyId: (process.env.RAZORPAY_KEY_ID || 'rzp_test_ThmxATMBoq6ZuU').trim(),
-  keySecret: (process.env.RAZORPAY_KEY_SECRET || 'g6iwTKVfDhWpWhw0qLZCov0y').trim(),
+  keyId: (process.env.RAZORPAY_KEY_ID || '').trim(),
+  keySecret: (process.env.RAZORPAY_KEY_SECRET || '').trim(),
 };
 
 let razorpayClient: Razorpay | null = null;
@@ -231,6 +231,9 @@ async function syncRazorpayConfig() {
 }
 
 function getRazorpayClient(): Razorpay {
+  if (!dynamicRazorpayConfig.keyId || !dynamicRazorpayConfig.keySecret) {
+    throw new Error('Razorpay credentials are not configured in environment variables or Admin Settings.');
+  }
   if (!razorpayClient) {
     razorpayClient = new Razorpay({
       key_id: dynamicRazorpayConfig.keyId,
@@ -279,6 +282,7 @@ apiRouter.post('/create-order', async (req, res) => {
     console.error('Razorpay create-order error:', error);
     const isAuthError =
       error?.statusCode === 401 ||
+      error?.message?.includes('not configured') ||
       (error?.error?.code === 'BAD_REQUEST_ERROR' &&
         (error?.error?.description?.toLowerCase().includes('auth') ||
           error?.error?.description?.toLowerCase().includes('key')));
@@ -287,7 +291,7 @@ apiRouter.post('/create-order', async (req, res) => {
       success: false,
       authFailed: isAuthError,
       error: isAuthError
-        ? 'Razorpay credentials not authorized. Please update Razorpay API Key ID & Secret in Admin Settings or choose Cash on Delivery.'
+        ? 'Razorpay credentials not authorized. Please verify RAZORPAY_KEY_ID & RAZORPAY_KEY_SECRET in .env or Admin Settings.'
         : error?.error?.description || error?.message || 'Failed to create Razorpay order.',
       key_id: dynamicRazorpayConfig.keyId,
     });
@@ -385,50 +389,32 @@ apiRouter.post('/verify-payment', async (req, res) => {
       order_data,
     } = req.body;
 
-    await syncRazorpayConfig();
-
-    let isVerified = false;
-
-    // 1. Standard HMAC-SHA256 signature verification
-    if (razorpay_order_id && razorpay_payment_id && razorpay_signature) {
-      const expectedSignature = crypto
-        .createHmac('sha256', dynamicRazorpayConfig.keySecret)
-        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-        .digest('hex');
-
-      if (expectedSignature === razorpay_signature) {
-        isVerified = true;
-      } else {
-        console.warn('HMAC mismatch, attempting Razorpay API fallback check:', {
-          received: razorpay_signature,
-          orderId: razorpay_order_id,
-        });
-      }
-    }
-
-    // 2. Direct payment verification fallback via Razorpay API
-    if (!isVerified && razorpay_payment_id && typeof razorpay_payment_id === 'string' && razorpay_payment_id.startsWith('pay_')) {
-      try {
-        const razorpay = getRazorpayClient();
-        const payRecord = await razorpay.payments.fetch(razorpay_payment_id);
-        if (payRecord && (payRecord.status === 'captured' || payRecord.status === 'authorized')) {
-          isVerified = true;
-        }
-      } catch (payFetchErr) {
-        console.warn('Direct payment fetch notice:', payFetchErr);
-      }
-    }
-
-    // 3. Test Mode Resilient Verification (when test keys are configured)
-    if (!isVerified && dynamicRazorpayConfig.keyId.startsWith('rzp_test_') && razorpay_payment_id) {
-      console.log('[Razorpay Test Mode] Verified payment in test mode:', razorpay_payment_id);
-      isVerified = true;
-    }
-
-    if (!isVerified) {
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return res.status(400).json({
         success: false,
-        error: 'Signature verification failed. Payment cannot be marked as verified.',
+        error: 'Missing required Razorpay verification parameters (razorpay_order_id, razorpay_payment_id, razorpay_signature).',
+      });
+    }
+
+    await syncRazorpayConfig();
+
+    if (!dynamicRazorpayConfig.keySecret) {
+      return res.status(500).json({
+        success: false,
+        error: 'Razorpay Key Secret is not configured on the server.',
+      });
+    }
+
+    // Standard HMAC-SHA256 signature verification using KEY_SECRET
+    const expectedSignature = crypto
+      .createHmac('sha256', dynamicRazorpayConfig.keySecret)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest('hex');
+
+    if (expectedSignature !== razorpay_signature) {
+      return res.status(400).json({
+        success: false,
+        error: 'Signature verification failed. Generated signature does not match.',
       });
     }
 
@@ -1123,6 +1109,24 @@ apiRouter.post('/store-content/products', async (req, res) => {
       success: ok,
       products: sanitizedProducts,
       message: ok ? 'Products catalog updated in Firestore.' : 'Failed to save products.',
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// Dedicated endpoint to delete a product by ID from catalog, disk cache, and Firestore
+apiRouter.delete('/store-content/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const currentProducts = (await getProductsFromFirestore()) || [];
+    const filtered = currentProducts.filter((p: any) => p.id !== id);
+    const ok = await saveProductsToFirestore(filtered);
+    syncProductsToSourceFile(filtered);
+    return res.json({
+      success: ok,
+      products: filtered,
+      message: `Product ${id} permanently removed.`,
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message });

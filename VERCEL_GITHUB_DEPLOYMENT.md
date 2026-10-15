@@ -51,11 +51,11 @@ While Firestore already stores and synchronizes the live credentials automatical
 
 | Variable Name | Value | Description |
 |---|---|---|
-| `RAZORPAY_KEY_ID` | `rzp_test_ThmxATMBoq6ZuU` (or your Live Key) | Razorpay Merchant Key ID |
-| `RAZORPAY_KEY_SECRET` | `g6iwTKVfDhWpWhw0qLZCov0y` (or your Live Secret) | Razorpay Secret |
-| `VITE_RAZORPAY_KEY_ID` | `rzp_test_ThmxATMBoq6ZuU` | Frontend Razorpay Client Key |
-| `DELHIVERY_TOKEN` | `a6b0c403ff9862f2736c43477df76d318bfd6809` | Delhivery API Token |
-| `DELHIVERY_PICKUP_LOCATION` | `SHRI RAM TRADERS 1 B2B` | Registered Delhi Fulfillment Hub |
+| `RAZORPAY_KEY_ID` | `rzp_test_...` (from your Razorpay Dashboard) | Razorpay Merchant Key ID |
+| `RAZORPAY_KEY_SECRET` | `your_secret` (from your Razorpay Dashboard) | Razorpay Secret (Backend only) |
+| `VITE_RAZORPAY_KEY_ID` | `rzp_test_...` (matches RAZORPAY_KEY_ID) | Frontend Razorpay Client Key |
+| `DELHIVERY_TOKEN` | Your Delhivery API Token | Delhivery API Token |
+| `DELHIVERY_PICKUP_LOCATION` | Registered Delhi Fulfillment Hub Name | Registered Delhi Fulfillment Hub |
 
 ---
 

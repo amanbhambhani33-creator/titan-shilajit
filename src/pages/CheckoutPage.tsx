@@ -189,7 +189,7 @@ export const CheckoutPage: React.FC = () => {
   });
 
   const [activeRazorpayKeyId, setActiveRazorpayKeyId] = useState<string>(
-    (import.meta as any).env?.VITE_RAZORPAY_KEY_ID || 'rzp_test_ThmxATMBoq6ZuU'
+    (import.meta as any).env?.VITE_RAZORPAY_KEY_ID || ''
   );
 
   // Load verified Razorpay Gateway credentials dynamically from backend/Firestore
@@ -611,36 +611,37 @@ export const CheckoutPage: React.FC = () => {
     try {
       // 1. Call Backend to Create Razorpay Order
       let razorpayOrderId: string | undefined;
-      let razorpayKeyId = activeRazorpayKeyId || (import.meta as any).env?.VITE_RAZORPAY_KEY_ID || 'rzp_test_ThmxATMBoq6ZuU';
+      let razorpayKeyId = activeRazorpayKeyId || (import.meta as any).env?.VITE_RAZORPAY_KEY_ID || '';
 
-      try {
-        const createRes = await fetch('/api/create-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amount: amountInPaise,
-            currency: 'INR',
-            receipt: `rcpt_${orderNumber}`,
-            notes: {
-              customerName: customerName.trim(),
-              customerPhone: customerPhone.trim(),
-              customerEmail: customerEmail.trim(),
-              orderNumber,
-            },
-          }),
-        });
+      const createRes = await fetch('/api/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: amountInPaise,
+          currency: 'INR',
+          receipt: `rcpt_${orderNumber}`,
+          notes: {
+            customerName: customerName.trim(),
+            customerPhone: customerPhone.trim(),
+            customerEmail: customerEmail.trim(),
+            orderNumber,
+          },
+        }),
+      });
 
-        if (createRes.ok) {
-          const orderData = await createRes.json();
-          if (orderData && orderData.success !== false && orderData.order_id) {
-            razorpayOrderId = orderData.order_id;
-          }
-          if (orderData?.key_id) {
-            razorpayKeyId = orderData.key_id.trim();
-          }
-        }
-      } catch (createErr) {
-        console.warn('Backend order-create network notice (proceeding with standard direct checkout):', createErr);
+      const orderData = await createRes.json().catch(() => ({}));
+
+      if (!createRes.ok || !orderData?.order_id) {
+        setIsProcessing(false);
+        setErrorMessage(
+          orderData?.error || 'Unable to create payment order. Please verify your connection or select Cash on Delivery.'
+        );
+        return;
+      }
+
+      razorpayOrderId = orderData.order_id;
+      if (orderData?.key_id) {
+        razorpayKeyId = orderData.key_id.trim();
       }
 
       // 2. Ensure Razorpay Checkout script is loaded
@@ -711,48 +712,48 @@ export const CheckoutPage: React.FC = () => {
                   gstin: billingGstin.trim(),
                 };
 
-            try {
-              const verifyRes = await fetch('/api/verify-payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                  order_data: {
-                    orderNumber,
-                    customerName: customerName.trim(),
-                    customerPhone: customerPhone.trim(),
-                    customerEmail: customerEmail.trim(),
-                    shippingAddress: {
-                      address: streetAddress.trim(),
-                      landmark: landmark.trim(),
-                      city: city.trim(),
-                      state: state.trim(),
-                      pincode: pincode.trim(),
-                    },
-                    billingAddress: effectiveBilling,
-                    billingSameAsShipping,
-                    items: items.map((i) => ({
-                      productId: i.product.id,
-                      productName: i.product.name,
-                      packName: i.selectedPack?.name || i.product.size,
-                      quantity: i.quantity,
-                      price: i.selectedPack ? i.selectedPack.price : i.product.price,
-                    })),
-                    total: finalTotal,
-                    discount: discountAmount,
-                    couponCode: appliedCoupon || undefined,
+            const verifyRes = await fetch('/api/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                order_data: {
+                  orderNumber,
+                  customerName: customerName.trim(),
+                  customerPhone: customerPhone.trim(),
+                  customerEmail: customerEmail.trim(),
+                  shippingAddress: {
+                    address: streetAddress.trim(),
+                    landmark: landmark.trim(),
+                    city: city.trim(),
+                    state: state.trim(),
+                    pincode: pincode.trim(),
                   },
-                }),
-              });
+                  billingAddress: effectiveBilling,
+                  billingSameAsShipping,
+                  items: items.map((i) => ({
+                    productId: i.product.id,
+                    productName: i.product.name,
+                    packName: i.selectedPack?.name || i.product.size,
+                    quantity: i.quantity,
+                    price: i.selectedPack ? i.selectedPack.price : i.product.price,
+                  })),
+                  total: finalTotal,
+                  discount: discountAmount,
+                  couponCode: appliedCoupon || undefined,
+                },
+              }),
+            });
 
-              if (verifyRes.ok) {
-                verifyData = await verifyRes.json();
-              }
-            } catch (vErr) {
-              console.warn('Backend payment verification notice:', vErr);
+            const verifyJson = await verifyRes.json().catch(() => ({}));
+            if (!verifyRes.ok || !verifyJson?.success) {
+              throw new Error(
+                verifyJson?.error || 'Payment signature verification failed. The transaction could not be verified.'
+              );
             }
+            verifyData = verifyJson;
 
             // Successfully Verified! Dispatch Delhivery and finalize
             const invoiceNum = verifyData?.invoice?.invoiceNumber || `INV-TITAN-${Date.now().toString().slice(-6)}`;

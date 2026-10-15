@@ -111,6 +111,7 @@ export const AdminDeskPage: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [selectedPackPhotoTab, setSelectedPackPhotoTab] = useState<number>(0);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
   // Master Security Passkey Clearance State (Required: titan@1234)
   const [isMasterUnlocked, setIsMasterUnlocked] = useState<boolean>(() => {
@@ -211,7 +212,7 @@ export const AdminDeskPage: React.FC = () => {
     }).filter((img) => img && !img.includes('unsplash.com'));
     const primaryImg = cleanImgs[0] || '';
 
-    // Clean up packs so no generic images remain and pricing packs always have the right images
+    // Clean up packs so no generic images remain and pricing packs always have the right images and synchronized pricing
     const currentPacks = (editingProduct.packs && editingProduct.packs.length > 0)
       ? editingProduct.packs
       : getProductPacks(editingProduct);
@@ -224,19 +225,23 @@ export const AdminDeskPage: React.FC = () => {
       const isGeneric = !pImg || pImg.includes('unsplash.com');
       return {
         ...pack,
+        price: Number(pack.price) || Number(editingProduct.price),
+        mrp: Number(pack.mrp) || Number(editingProduct.mrp) || Number(editingProduct.price),
         image: isGeneric || !pImg ? primaryImg : pImg,
       };
     });
 
     const updatedProduct: Product = {
       ...editingProduct,
+      price: Number(editingProduct.price),
+      mrp: editingProduct.mrp ? Number(editingProduct.mrp) : undefined,
       images: cleanImgs,
       packs: cleanPacks,
     };
 
     await updateProduct(updatedProduct.id, updatedProduct);
     setEditingProduct(null);
-    showToast('Product updated successfully and synced with pricing!');
+    showToast('Product and pricing updated successfully and synced to storefront!');
   };
 
   // Handle adding new product
@@ -1067,7 +1072,11 @@ export const AdminDeskPage: React.FC = () => {
                     <div className="p-4 bg-[#F7F3E8]/60 border-t border-[#10110F]/10 flex items-center justify-between gap-2">
                       <button
                         onClick={() => {
-                          setEditingProduct({ ...p });
+                          const currentP = {
+                            ...p,
+                            packs: (p.packs && p.packs.length > 0) ? p.packs : getProductPacks(p),
+                          };
+                          setEditingProduct(currentP);
                           setSelectedPackPhotoTab(0);
                         }}
                         className="px-3 py-2 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#D4B66A] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
@@ -1078,21 +1087,24 @@ export const AdminDeskPage: React.FC = () => {
                       </button>
 
                       <button
-                        onClick={() => setEditingProduct({ ...p })}
+                        onClick={() => {
+                          const currentP = {
+                            ...p,
+                            packs: (p.packs && p.packs.length > 0) ? p.packs : getProductPacks(p),
+                          };
+                          setEditingProduct(currentP);
+                          setSelectedPackPhotoTab(0);
+                        }}
                         className="flex-1 px-3 py-2 rounded-xs bg-[#10110F] hover:bg-[#183D27] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
-                        <span>Edit Product</span>
+                        <span>Edit Product &amp; Pricing</span>
                       </button>
 
                       <button
-                        onClick={() => {
-                          if (confirm(`Are you sure you want to delete "${p.name}"?`)) {
-                            deleteProduct(p.id);
-                            showToast('Product deleted.');
-                          }
-                        }}
-                        className="p-2 rounded-xs border border-red-200 text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        type="button"
+                        onClick={() => setProductToDelete(p)}
+                        className="p-2 rounded-xs border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors cursor-pointer"
                         title="Delete Product"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -1774,17 +1786,32 @@ export const AdminDeskPage: React.FC = () => {
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold uppercase text-[#10110F] mb-1">
-                    Price (₹)
+                    Storefront Price (₹)
                   </label>
                   <input
                     type="number"
                     value={editingProduct.price}
-                    onChange={(e) =>
-                      setEditingProduct({ ...editingProduct, price: Number(e.target.value) })
-                    }
-                    className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs font-bold"
+                    onChange={(e) => {
+                      const newPrice = Number(e.target.value);
+                      const current = (editingProduct.packs && editingProduct.packs.length > 0)
+                        ? [...editingProduct.packs]
+                        : getProductPacks(editingProduct);
+                      const targetIdx = current.findIndex((p) => p.isPopular) !== -1 ? current.findIndex((p) => p.isPopular) : 0;
+                      if (current[targetIdx]) {
+                        current[targetIdx] = { ...current[targetIdx], price: newPrice };
+                      }
+                      setEditingProduct({
+                        ...editingProduct,
+                        price: newPrice,
+                        packs: current,
+                      });
+                    }}
+                    className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs font-bold font-mono text-[#183D27] bg-[#F7F3E8]"
                     required
                   />
+                  <span className="text-[10px] text-[#66704B] block mt-0.5">
+                    Syncs to default pack &amp; storefront
+                  </span>
                 </div>
 
                 <div>
@@ -1793,13 +1820,28 @@ export const AdminDeskPage: React.FC = () => {
                   </label>
                   <input
                     type="number"
-                    value={editingProduct.mrp}
-                    onChange={(e) =>
-                      setEditingProduct({ ...editingProduct, mrp: Number(e.target.value) })
-                    }
-                    className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs"
+                    value={editingProduct.mrp || ''}
+                    onChange={(e) => {
+                      const newMrp = Number(e.target.value);
+                      const current = (editingProduct.packs && editingProduct.packs.length > 0)
+                        ? [...editingProduct.packs]
+                        : getProductPacks(editingProduct);
+                      const targetIdx = current.findIndex((p) => p.isPopular) !== -1 ? current.findIndex((p) => p.isPopular) : 0;
+                      if (current[targetIdx]) {
+                        current[targetIdx] = { ...current[targetIdx], mrp: newMrp };
+                      }
+                      setEditingProduct({
+                        ...editingProduct,
+                        mrp: newMrp,
+                        packs: current,
+                      });
+                    }}
+                    className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs font-mono"
                     required
                   />
+                  <span className="text-[10px] text-[#66704B] block mt-0.5">
+                    Strikethrough marked price
+                  </span>
                 </div>
 
                 <div>
@@ -1808,11 +1850,12 @@ export const AdminDeskPage: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    value={editingProduct.discount}
+                    value={editingProduct.discount || ''}
                     onChange={(e) =>
                       setEditingProduct({ ...editingProduct, discount: e.target.value })
                     }
-                    className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs"
+                    placeholder="e.g. 25% OFF"
+                    className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs font-bold"
                   />
                 </div>
               </div>
@@ -2055,7 +2098,85 @@ export const AdminDeskPage: React.FC = () => {
                                 reader.readAsDataURL(file);
                               }}
                             />
-                          </label>
+                        {/* Pack Pricing & Variant Details */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-black/10">
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[#10110F] mb-1">
+                              Pack Price (₹) *
+                            </label>
+                            <input
+                              type="number"
+                              value={activePack.price}
+                              onChange={(e) => {
+                                const val = Number(e.target.value);
+                                const updated = [...currentPacks];
+                                updated[safeActiveIdx] = { ...updated[safeActiveIdx], price: val };
+                                setEditingProduct({
+                                  ...editingProduct,
+                                  price: safeActiveIdx === 1 || currentPacks.length === 1 ? val : editingProduct.price,
+                                  packs: updated,
+                                });
+                              }}
+                              className="w-full px-2.5 py-1.5 rounded-xs border border-[#10110F]/20 text-xs font-bold font-mono text-[#183D27] bg-[#F7F3E8]"
+                              required
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[#10110F] mb-1">
+                              Pack MRP (₹) *
+                            </label>
+                            <input
+                              type="number"
+                              value={activePack.mrp}
+                              onChange={(e) => {
+                                const val = Number(e.target.value);
+                                const updated = [...currentPacks];
+                                updated[safeActiveIdx] = { ...updated[safeActiveIdx], mrp: val };
+                                setEditingProduct({
+                                  ...editingProduct,
+                                  mrp: safeActiveIdx === 1 || currentPacks.length === 1 ? val : editingProduct.mrp,
+                                  packs: updated,
+                                });
+                              }}
+                              className="w-full px-2.5 py-1.5 rounded-xs border border-[#10110F]/20 text-xs font-mono bg-[#F7F3E8]"
+                              required
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[#10110F] mb-1">
+                              Variant Name
+                            </label>
+                            <input
+                              type="text"
+                              value={activePack.name}
+                              onChange={(e) => {
+                                const updated = [...currentPacks];
+                                updated[safeActiveIdx] = { ...updated[safeActiveIdx], name: e.target.value };
+                                setEditingProduct({ ...editingProduct, packs: updated });
+                              }}
+                              className="w-full px-2.5 py-1.5 rounded-xs border border-[#10110F]/20 text-xs bg-[#F7F3E8]"
+                              required
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[#10110F] mb-1">
+                              Quantity / Serving
+                            </label>
+                            <input
+                              type="text"
+                              value={activePack.quantityText}
+                              onChange={(e) => {
+                                const updated = [...currentPacks];
+                                updated[safeActiveIdx] = { ...updated[safeActiveIdx], quantityText: e.target.value };
+                                setEditingProduct({ ...editingProduct, packs: updated });
+                              }}
+                              placeholder="e.g. 50g Jar"
+                              className="w-full px-2.5 py-1.5 rounded-xs border border-[#10110F]/20 text-xs bg-[#F7F3E8]"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -2776,6 +2897,68 @@ export const AdminDeskPage: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: CONFIRM PERMANENT PRODUCT DELETION */}
+      {/* ========================================================================= */}
+      {productToDelete && (
+        <div
+          className="fixed inset-0 z-50 bg-[#10110F]/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setProductToDelete(null)}
+        >
+          <div
+            className="w-full max-w-md bg-white rounded-sm shadow-2xl border-2 border-red-500 overflow-hidden p-6 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 text-red-600">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="font-serif text-lg font-bold text-[#10110F]">
+                  Permanently Delete Product?
+                </h3>
+                <span className="text-[11px] text-red-600 font-bold uppercase tracking-wider">
+                  Cannot be undone
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-[#10110F] leading-relaxed">
+              Are you sure you want to permanently delete{' '}
+              <strong className="text-red-700 font-bold">"{productToDelete.name}"</strong>?
+              This will immediately remove it from your live storefront, search results, and database.
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-black/10">
+              <button
+                type="button"
+                onClick={() => setProductToDelete(null)}
+                className="px-4 py-2 rounded-xs border border-gray-300 text-xs font-bold uppercase text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const targetId = productToDelete.id;
+                  const targetName = productToDelete.name;
+                  setProductToDelete(null);
+                  const success = await deleteProduct(targetId);
+                  if (success) {
+                    showToast(`Product "${targetName}" deleted successfully.`);
+                  } else {
+                    showToast(`Product "${targetName}" removed from store.`);
+                  }
+                }}
+                className="px-5 py-2 rounded-xs bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-sm"
+              >
+                Yes, Permanently Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

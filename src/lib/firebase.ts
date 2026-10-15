@@ -57,35 +57,18 @@ try {
 
 export const db = firestoreInstance;
 
-// Session & storage tracker to avoid retrying writes when Firestore quota is exhausted
-const QUOTA_STORAGE_KEY = 'titan_firestore_write_quota_reached';
-
-function checkInitialQuotaState(): boolean {
-  try {
-    const raw = localStorage.getItem(QUOTA_STORAGE_KEY);
-    if (raw) {
-      const timestamp = parseInt(raw, 10);
-      // Quotas in GCP reset daily (approx 24h, check 12h threshold)
-      if (Date.now() - timestamp < 12 * 60 * 60 * 1000) {
-        return true;
-      } else {
-        localStorage.removeItem(QUOTA_STORAGE_KEY);
-      }
-    }
-  } catch {}
-  return false;
-}
-
-let firestoreQuotaExhausted = checkInitialQuotaState();
+// Session & storage tracker to avoid aggressive retries while allowing manual user edits
+let firestoreQuotaExhaustedUntil = 0;
 
 export function isFirestoreQuotaExhausted(): boolean {
-  return firestoreQuotaExhausted;
+  return Date.now() < firestoreQuotaExhaustedUntil;
 }
 
 export function markFirestoreQuotaExhausted(): void {
-  firestoreQuotaExhausted = true;
+  // Back off for 20 seconds, then allow new write attempts
+  firestoreQuotaExhaustedUntil = Date.now() + 20 * 1000;
   try {
-    localStorage.setItem(QUOTA_STORAGE_KEY, Date.now().toString());
+    localStorage.removeItem('titan_firestore_write_quota_reached');
   } catch {}
 }
 
@@ -154,7 +137,7 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
  * Prevents queuing unfulfillable writes in the SDK that lead to continuous backoff loops.
  */
 export async function safeSetDoc(docRef: any, data: any, options?: any): Promise<boolean> {
-  if (firestoreQuotaExhausted) {
+  if (isFirestoreQuotaExhausted()) {
     return false;
   }
   try {

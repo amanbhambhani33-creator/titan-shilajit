@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import firebaseConfig from '../firebase-applet-config.json';
+import { PRODUCTS as DEFAULT_PRODUCTS } from '../src/data/products';
 
 const PROJECT_ID = firebaseConfig.projectId;
 const DATABASE_ID = firebaseConfig.firestoreDatabaseId || '(default)';
@@ -517,7 +518,7 @@ export async function getProductsFromFirestore(): Promise<any[] | null> {
       }
     }
   } catch {}
-  return diskProducts;
+  return diskProducts || DEFAULT_PRODUCTS;
 }
 
 export async function saveReviewsToFirestore(reviews: any[]): Promise<boolean> {

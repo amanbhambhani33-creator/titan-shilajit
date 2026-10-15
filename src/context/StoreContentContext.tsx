@@ -338,13 +338,29 @@ interface StoreContentContextType {
 
 const StoreContentContext = createContext<StoreContentContextType | undefined>(undefined);
 
-const PRODUCTS_STORAGE_KEY = 'titan_store_products_v2';
-const CONTENT_STORAGE_KEY = 'titan_store_content_v2';
-const REVIEWS_STORAGE_KEY = 'titan_store_reviews_v2';
+const PRODUCTS_STORAGE_KEY = 'titan_store_products_v5';
+const CONTENT_STORAGE_KEY = 'titan_store_content_v5';
+const REVIEWS_STORAGE_KEY = 'titan_store_reviews_v5';
 const SPLASH_SEEN_KEY = 'titan_splash_seen_session';
 const LAST_SYNC_STORAGE_KEY = 'titan_last_firestore_sync';
 
-// Utility to sanitize, normalize and purge all generic unsplash images from memory and persistence
+// Immediately purge stale legacy storage keys on boot so live Vercel deployments reflect the latest images
+try {
+  const legacyKeys = [
+    'titan_store_products_v1',
+    'titan_store_products_v2',
+    'titan_store_products_v3',
+    'titan_store_products_v4',
+    'titan_store_content_v1',
+    'titan_store_content_v2',
+    'titan_store_content_v3',
+    'titan_store_content_v4',
+    'titan_firestore_write_quota_reached',
+  ];
+  legacyKeys.forEach((key) => localStorage.removeItem(key));
+} catch {}
+
+// Utility to sanitize, normalize and preserve all direct image URLs
 function sanitizeProductsImages(items: Product[]): Product[] {
   if (!Array.isArray(items)) return [];
   return items.map((p) => {
@@ -353,12 +369,8 @@ function sanitizeProductsImages(items: Product[]): Product[] {
         return img.substring(img.indexOf('/uploads/'));
       }
       return img;
-    }).filter((img) => img && !img.includes('unsplash.com'));
+    }).filter(Boolean);
 
-    // Prevent accidental resin photo fallback on strawberry sticks
-    if (p.id === 'titan-honey-sticks-strawberry') {
-      cleanImgs = cleanImgs.filter((img) => !img.includes('shilajit-resin'));
-    }
     // If empty, fallback to authentic product defaults
     if (cleanImgs.length === 0) {
       const def = DEFAULT_PRODUCTS.find((d) => d.id === p.id);
@@ -372,10 +384,9 @@ function sanitizeProductsImages(items: Product[]): Product[] {
       if (typeof pkImg === 'string' && pkImg.includes('/uploads/')) {
         pkImg = pkImg.substring(pkImg.indexOf('/uploads/'));
       }
-      const isGeneric = !pkImg || pkImg.includes('unsplash.com') || (p.id === 'titan-honey-sticks-strawberry' && pkImg.includes('shilajit-resin'));
       return {
         ...pk,
-        image: isGeneric ? primaryImg : (pkImg || primaryImg),
+        image: pkImg || primaryImg,
       };
     });
     return {
@@ -410,18 +421,45 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
     return DEFAULT_REVIEWS;
   });
 
-  // Load products with fallback (strictly purging generic Unsplash images from memory)
+const DELETED_PRODUCTS_STORAGE_KEY = 'titan_deleted_product_ids_v2';
+
+function getDeletedProductIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(DELETED_PRODUCTS_STORAGE_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return new Set(arr);
+    }
+  } catch {}
+  return new Set();
+}
+
+function addDeletedProductId(id: string) {
+  try {
+    const set = getDeletedProductIds();
+    set.add(id);
+    localStorage.setItem(DELETED_PRODUCTS_STORAGE_KEY, JSON.stringify(Array.from(set)));
+  } catch {}
+}
+
+// Load products with fallback (strictly purging generic Unsplash images from memory)
   const [products, setProducts] = useState<Product[]>(() => {
+    const deletedIds = getDeletedProductIds();
     try {
       const saved = localStorage.getItem(PRODUCTS_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        return sanitizeProductsImages(parsed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const filtered = parsed.filter((p: Product) => !deletedIds.has(p.id));
+          if (filtered.length > 0) {
+            return sanitizeProductsImages(filtered);
+          }
+        }
       }
     } catch (e) {
       console.warn('Failed to load products from storage:', e);
     }
-    return sanitizeProductsImages(DEFAULT_PRODUCTS);
+    return sanitizeProductsImages(DEFAULT_PRODUCTS.filter((p) => !deletedIds.has(p.id)));
   });
 
   // Load content with fallback
@@ -556,12 +594,14 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
         (snap) => {
           if (snap.exists()) {
             const data = snap.data();
-            if (data && Array.isArray(data.items) && data.items.length > 0) {
-              const clean = sanitizeProductsImages(data.items);
+            if (data && Array.isArray(data.items)) {
               // Protect fresh user edits from being overwritten by stale remote snapshot
               if (Date.now() - lastLocalSaveTimeRef.current < 25000) {
                 return;
               }
+              const deletedIds = getDeletedProductIds();
+              const activeItems = data.items.filter((item: any) => !deletedIds.has(item?.id));
+              const clean = sanitizeProductsImages(activeItems);
               setProducts((prev) => {
                 // Keep local non-empty pictures if snapshot has empty images
                 return clean.map((cleanItem) => {
@@ -622,8 +662,13 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (data && data.success) {
-            if (Array.isArray(data.products) && data.products.length > 0) {
-              const clean = sanitizeProductsImages(data.products);
+            if (Array.isArray(data.products)) {
+              if (Date.now() - lastLocalSaveTimeRef.current < 25000) {
+                return;
+              }
+              const deletedIds = getDeletedProductIds();
+              const active = data.products.filter((p: any) => !deletedIds.has(p.id));
+              const clean = sanitizeProductsImages(active);
               setProducts(clean);
               try { localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(clean)); } catch {}
             }
@@ -928,7 +973,7 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
           return img.substring(img.indexOf('/uploads/'));
         }
         return img;
-      }).filter((img) => img && !img.includes('unsplash.com'));
+      }).filter(Boolean);
       const primaryImg = cleanImages[0] || '';
 
       const mergedPacks = updates.packs !== undefined ? updates.packs : item.packs;
@@ -937,10 +982,9 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
         if (typeof pkImg === 'string' && pkImg.includes('/uploads/')) {
           pkImg = pkImg.substring(pkImg.indexOf('/uploads/'));
         }
-        const isGeneric = !pkImg || pkImg.includes('unsplash.com') || (id === 'titan-honey-sticks-strawberry' && pkImg.includes('shilajit-resin'));
         return {
           ...pk,
-          image: isGeneric ? primaryImg : (pkImg || primaryImg),
+          image: pkImg || primaryImg,
         };
       });
 
@@ -1004,11 +1048,16 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
 
   const deleteProduct = async (id: string): Promise<boolean> => {
+    lastLocalSaveTimeRef.current = Date.now();
+    addDeletedProductId(id);
     const updated = products.filter((item) => item.id !== id);
     setProducts(updated);
     try { localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(updated)); } catch {}
     let success = false;
     try {
+      await fetch(`/api/store-content/products/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
       await fetch('/api/store-content/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1019,10 +1068,11 @@ export const StoreContentProvider: React.FC<{ children: ReactNode }> = ({ childr
     if (!isFirestoreQuotaExhausted()) {
       try {
         const productsDocRef = doc(db, 'store_content', 'products');
-        await safeSetDoc(productsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: true });
+        await safeSetDoc(productsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: false });
         success = true;
       } catch {}
     }
+    if (success) setIsFirebaseSynced(true);
     return success;
   };
 
