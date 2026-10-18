@@ -90,25 +90,25 @@ export const ProductDetailPage: React.FC = () => {
   // Selected thumbnail tracking
   const [isUserSelectedThumbnail, setIsUserSelectedThumbnail] = useState(false);
 
-  // Display image: strictly prioritize user-uploaded images or custom pack photo - zero generic unsplash images
+  // Display image: prioritize pack photo, user selected thumbnail, cover image, or first gallery image
   const cleanProductImages = (product.images || []).map((img) => {
     if (typeof img === 'string' && img.includes('/uploads/')) {
       return img.substring(img.indexOf('/uploads/'));
     }
     return img;
-  }).filter((img) => img && !img.includes('unsplash.com'));
+  }).filter(Boolean);
 
   let packImg = currentPack?.image || '';
   if (typeof packImg === 'string' && packImg.includes('/uploads/')) {
     packImg = packImg.substring(packImg.indexOf('/uploads/'));
   }
-  const currentPackImg = packImg && !packImg.includes('unsplash.com') ? packImg : null;
+  const currentPackImg = packImg || null;
 
   // If user explicitly clicked a thumbnail, strictly show that thumbnail.
-  // Otherwise show current pack photo if assigned, else cleanProductImages[0].
+  // Otherwise show current pack photo if assigned, else cleanProductImages[0] or cover image.
   const displayImage = isUserSelectedThumbnail && cleanProductImages[selectedImageIndex]
     ? cleanProductImages[selectedImageIndex]
-    : (currentPackImg || cleanProductImages[selectedImageIndex] || cleanProductImages[0] || '');
+    : (currentPackImg || cleanProductImages[selectedImageIndex] || product.image || cleanProductImages[0] || '');
 
   const displayPrice = currentPack ? currentPack.price : product.price;
   const displayMrp = currentPack ? currentPack.mrp : product.mrp;

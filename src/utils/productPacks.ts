@@ -4,7 +4,7 @@ const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1608571423902-
 
 export function getProductPacks(product: Product): ProductPack[] {
   const cleanImages = (product.images || []).filter(Boolean);
-  const primaryImg = cleanImages[0] || DEFAULT_FALLBACK_IMAGE;
+  const primaryImg = product.image || cleanImages[0] || DEFAULT_FALLBACK_IMAGE;
 
   // If product already has configured packs (e.g. from Admin Desk or store catalog)
   if (product.packs && product.packs.length > 0) {

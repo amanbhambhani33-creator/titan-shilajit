@@ -4,6 +4,8 @@ import { Upload, X, Image as ImageIcon, Plus, ArrowLeft, ArrowRight, Check, Star
 interface AdminProductImageUploaderProps {
   images: string[];
   onChange: (images: string[]) => void;
+  coverImage?: string;
+  onCoverChange?: (url: string) => void;
   maxImages?: number;
 }
 
@@ -12,7 +14,9 @@ const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1608571423902-
 export const AdminProductImageUploader: React.FC<AdminProductImageUploaderProps> = ({
   images,
   onChange,
-  maxImages = 5,
+  coverImage,
+  onCoverChange,
+  maxImages = 6,
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [urlInput, setUrlInput] = useState('');
@@ -23,6 +27,7 @@ export const AdminProductImageUploader: React.FC<AdminProductImageUploaderProps>
   const [expandedSlotIndex, setExpandedSlotIndex] = useState<number | null>(null);
 
   const safeImages = Array.isArray(images) ? images.filter(Boolean) : [];
+  const currentCover = coverImage || safeImages[0] || '';
 
   // Compress image file to lightweight canvas JPEG data URL
   const compressFile = (file: File): Promise<string> => {
@@ -101,6 +106,9 @@ export const AdminProductImageUploader: React.FC<AdminProductImageUploaderProps>
       }
       const updated = [...safeImages, ...processedUrls].slice(0, maxImages);
       onChange(updated);
+      if (onCoverChange && updated[0]) {
+        onCoverChange(updated[0]);
+      }
       setUploadNotice(`Saved ${processedUrls.length} image(s) successfully!`);
     } catch (err) {
       console.error('Error reading files:', err);
@@ -114,21 +122,38 @@ export const AdminProductImageUploader: React.FC<AdminProductImageUploaderProps>
     }
   };
 
+  // Add single or multiple image URLs (supports comma or newline separation)
   const handleAddUrl = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const clean = urlInput.trim();
-    if (!clean) return;
+    const raw = urlInput.trim();
+    if (!raw) return;
 
-    if (safeImages.length >= maxImages) {
+    const newUrls = raw
+      .split(/[\n,]+/)
+      .map((s) => s.trim())
+      .filter((s) => s.startsWith('http://') || s.startsWith('https://') || s.startsWith('/') || s.startsWith('data:image'));
+
+    if (newUrls.length === 0) {
+      setUploadNotice('Please enter a valid image URL starting with http:// or https://');
+      setTimeout(() => setUploadNotice(null), 3000);
+      return;
+    }
+
+    const availableSlots = maxImages - safeImages.length;
+    if (availableSlots <= 0) {
       setUploadNotice(`Maximum limit of ${maxImages} images reached.`);
       setTimeout(() => setUploadNotice(null), 3000);
       return;
     }
 
-    const updated = [...safeImages, clean].slice(0, maxImages);
+    const toAdd = newUrls.slice(0, availableSlots);
+    const updated = [...safeImages, ...toAdd];
     onChange(updated);
+    if (onCoverChange && updated[0]) {
+      onCoverChange(updated[0]);
+    }
     setUrlInput('');
-    setUploadNotice(`Image URL added (${updated.length}/${maxImages}).`);
+    setUploadNotice(`Added ${toAdd.length} image URL(s) successfully!`);
     setTimeout(() => setUploadNotice(null), 3000);
   };
 
@@ -136,11 +161,18 @@ export const AdminProductImageUploader: React.FC<AdminProductImageUploaderProps>
     const clean = newUrl.trim();
     const next = [...safeImages];
     if (clean) {
-      next[0] = clean;
+      if (next.length > 0) {
+        next[0] = clean;
+      } else {
+        next.push(clean);
+      }
     } else {
       next.splice(0, 1);
     }
     onChange(next);
+    if (onCoverChange) {
+      onCoverChange(clean);
+    }
   };
 
   const handleUpdateSlotUrl = (index: number, newUrl: string) => {
@@ -245,7 +277,7 @@ export const AdminProductImageUploader: React.FC<AdminProductImageUploaderProps>
             <div className="flex gap-2">
               <input
                 type="url"
-                value={safeImages[0] || ''}
+                value={currentCover || safeImages[0] || ''}
                 onChange={(e) => handleUpdateCoverUrl(e.target.value)}
                 placeholder="Paste direct Cover Image URL (e.g. https://.../image.jpg)"
                 className="flex-1 px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs bg-[#F7F3E8] focus:bg-white focus:border-[#183D27] outline-none font-mono"

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { StoreContentProvider } from './context/StoreContentContext';
@@ -32,7 +32,7 @@ export const App: React.FC = () => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  const isAdmin = location.pathname.startsWith('/admin-desk') || location.pathname.startsWith('/admin');
+  const isAdmin = location.pathname.startsWith('/supreme-titanadmin');
 
   return (
     <AuthProvider>
@@ -69,8 +69,11 @@ export const App: React.FC = () => {
                 <Route path="/privacy-policy" element={<PolicyPage />} />
                 <Route path="/terms-and-conditions" element={<PolicyPage />} />
                 <Route path="/disclaimer" element={<PolicyPage />} />
-                <Route path="/admin-desk" element={<AdminDeskPage />} />
-                <Route path="/admin" element={<AdminDeskPage />} />
+                <Route path="/supreme-titanadmin/*" element={<AdminDeskPage />} />
+                <Route path="/supreme-titanadmin" element={<AdminDeskPage />} />
+                {/* Obscure and protect admin desk: redirect legacy /admin and /admin-desk to storefront */}
+                <Route path="/admin-desk" element={<Navigate to="/" replace />} />
+                <Route path="/admin" element={<Navigate to="/" replace />} />
                 <Route path="*" element={<HomePage />} />
               </Routes>
             </main>

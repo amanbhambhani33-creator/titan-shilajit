@@ -55,6 +55,7 @@ export interface Product {
   inStock: boolean;
   stockQty?: number;
   images: string[];
+  image?: string; // Cover image (first image/storefront primary image)
   packs?: ProductPack[];
   sizeVariants?: ProductSizeVariant[];
   shortDescription: string;

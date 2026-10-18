@@ -37,10 +37,14 @@ import {
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT
+  ? isNaN(Number(process.env.PORT))
+    ? process.env.PORT
+    : Number(process.env.PORT)
+  : 3000;
 const apiRouter = express.Router();
 
-// Universal CORS & Pre-flight Support for Vercel and External Clients
+// Universal CORS & Pre-flight Support for Hostinger, Vercel and External Clients
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
@@ -52,7 +56,7 @@ app.use((req, res, next) => {
 });
 
 app.use((req, res, next) => {
-  // If req.body is already an object (e.g. parsed upstream by Vercel serverless runtime), skip body parser
+  // If req.body is already an object (e.g. parsed upstream by reverse proxy runtime), skip body parser
   if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
     return next();
   }
@@ -60,8 +64,9 @@ app.use((req, res, next) => {
 });
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Ensure public/uploads directory exists and is statically served
-const UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads');
+// Ensure persistent uploads directory exists and is statically served
+// Supports custom persistent paths (e.g. Hostinger volume /var/www/uploads or /home/uXXXX/uploads)
+const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(process.cwd(), 'public', 'uploads');
 try {
   if (!fs.existsSync(UPLOADS_DIR)) {
     fs.mkdirSync(UPLOADS_DIR, { recursive: true });
@@ -70,6 +75,16 @@ try {
   console.warn('[Server] Could not create uploads dir:', e);
 }
 app.use('/uploads', express.static(UPLOADS_DIR, { maxAge: '7d' }));
+
+// Also serve compiled static uploads from dist/uploads if different from UPLOADS_DIR
+const COMPILED_UPLOADS = path.join(process.cwd(), 'dist', 'uploads');
+if (path.resolve(COMPILED_UPLOADS) !== path.resolve(UPLOADS_DIR)) {
+  try {
+    if (fs.existsSync(COMPILED_UPLOADS)) {
+      app.use('/uploads', express.static(COMPILED_UPLOADS, { maxAge: '7d' }));
+    }
+  } catch {}
+}
 
 // Helper to save base64 data URLs as permanent static image files
 function saveBase64ToUploadFile(dataUrl: string, prefix = 'product'): string {
@@ -1119,13 +1134,18 @@ apiRouter.post('/store-content/products', async (req, res) => {
 apiRouter.delete('/store-content/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const currentProducts = (await getProductsFromFirestore()) || [];
-    const filtered = currentProducts.filter((p: any) => p.id !== id);
-    const ok = await saveProductsToFirestore(filtered);
-    syncProductsToSourceFile(filtered);
+    let productsToSave: any[];
+    if (Array.isArray(req.body?.products)) {
+      productsToSave = req.body.products.filter((p: any) => p.id !== id);
+    } else {
+      const currentProducts = (await getProductsFromFirestore()) || [];
+      productsToSave = currentProducts.filter((p: any) => p.id !== id);
+    }
+    const ok = await saveProductsToFirestore(productsToSave);
+    syncProductsToSourceFile(productsToSave);
     return res.json({
       success: ok,
-      products: filtered,
+      products: productsToSave,
       message: `Product ${id} permanently removed.`,
     });
   } catch (err: any) {
@@ -1434,21 +1454,29 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Titan Shilajit server running at http://0.0.0.0:${PORT}`);
-  });
+  if (typeof PORT === 'number') {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Titan Shilajit server running at http://0.0.0.0:${PORT}`);
+    });
+  } else {
+    app.listen(PORT, () => {
+      console.log(`Titan Shilajit server running on socket ${PORT}`);
+    });
+  }
 }
 
-// In local dev and standard Node runtime, start the server
+// In local dev and standard Node runtime (including Hostinger VPS / PM2 / Node.js manager), start the server
 // On Vercel, the exported app is invoked as a serverless function
 const isMain = Boolean(
   process.argv[1] &&
     (process.argv[1].endsWith('server.ts') ||
       process.argv[1].endsWith('server.cjs') ||
-      process.argv[1].endsWith('server.js'))
+      process.argv[1].endsWith('server.js') ||
+      process.argv[1].endsWith('app.js') ||
+      process.argv[1].endsWith('app.cjs'))
 );
 
-if (isMain && !process.env.VERCEL) {
+if ((isMain || process.env.NODE_ENV === 'production') && !process.env.VERCEL) {
   startServer();
 }
 

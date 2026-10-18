@@ -165,6 +165,7 @@ export const AdminDeskPage: React.FC = () => {
     reviewCount: 1,
     inStock: true,
     stockQty: 50,
+    image: '',
     images: [],
     shortDescription: '',
     description: '',
@@ -209,10 +210,15 @@ export const AdminDeskPage: React.FC = () => {
         return img.substring(img.indexOf('/uploads/'));
       }
       return img;
-    }).filter((img) => img && !img.includes('unsplash.com'));
-    const primaryImg = cleanImgs[0] || '';
+    }).filter(Boolean);
 
-    // Clean up packs so no generic images remain and pricing packs always have the right images and synchronized pricing
+    // If explicit cover image is given, make sure it is at position 0
+    const primaryImg = editingProduct.image || cleanImgs[0] || '';
+    if (primaryImg && !cleanImgs.includes(primaryImg)) {
+      cleanImgs.unshift(primaryImg);
+    }
+
+    // Clean up packs so pricing packs always have the right images and synchronized pricing
     const currentPacks = (editingProduct.packs && editingProduct.packs.length > 0)
       ? editingProduct.packs
       : getProductPacks(editingProduct);
@@ -222,12 +228,11 @@ export const AdminDeskPage: React.FC = () => {
       if (typeof pImg === 'string' && pImg.includes('/uploads/')) {
         pImg = pImg.substring(pImg.indexOf('/uploads/'));
       }
-      const isGeneric = !pImg || pImg.includes('unsplash.com');
       return {
         ...pack,
         price: Number(pack.price) || Number(editingProduct.price),
-        mrp: Number(pack.mrp) || Number(editingProduct.mrp) || Number(editingProduct.price),
-        image: isGeneric || !pImg ? primaryImg : pImg,
+        mrp: Number(pack.mrp) || Number(editingProduct.mrp) || Math.round(Number(pack.price || editingProduct.price) * 1.35),
+        image: pImg || primaryImg,
       };
     });
 
@@ -235,6 +240,7 @@ export const AdminDeskPage: React.FC = () => {
       ...editingProduct,
       price: Number(editingProduct.price),
       mrp: editingProduct.mrp ? Number(editingProduct.mrp) : undefined,
+      image: primaryImg,
       images: cleanImgs,
       packs: cleanPacks,
     };
@@ -257,15 +263,23 @@ export const AdminDeskPage: React.FC = () => {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
 
-    const primaryImg = newProductForm.images?.[0] || '';
+    const cleanImages = (newProductForm.images || []).filter(Boolean);
+    const primaryImg = newProductForm.image || cleanImages[0] || '';
+    if (primaryImg && !cleanImages.includes(primaryImg)) {
+      cleanImages.unshift(primaryImg);
+    }
+
+    const basePrice = Number(newProductForm.price) || 1499;
+    const baseMrp = Number(newProductForm.mrp) || Math.round(basePrice * 1.35);
+
     const initialPacks: ProductPack[] = [
       {
         id: 'trial',
         name: 'Trial Pack',
         label: 'Trial Pack',
         quantityText: `${newProductForm.size || 'Standard'} (Trial)`,
-        price: Math.round(Number(newProductForm.price) * 0.7),
-        mrp: Math.round(Number(newProductForm.price) * 0.7 * 1.4),
+        price: Math.round(basePrice * 0.7),
+        mrp: Math.round(basePrice * 0.7 * 1.4),
         discount: '30% OFF',
         image: primaryImg,
         badge: 'STARTER TRIAL',
@@ -276,8 +290,8 @@ export const AdminDeskPage: React.FC = () => {
         name: 'Most Popular Pack',
         label: 'Most Popular Pack',
         quantityText: `${newProductForm.size || 'Standard'} (Most Popular)`,
-        price: Number(newProductForm.price),
-        mrp: Number(newProductForm.mrp) || Math.round(Number(newProductForm.price) * 1.35),
+        price: basePrice,
+        mrp: baseMrp,
         discount: newProductForm.discount || '25% OFF',
         image: primaryImg,
         badge: 'MOST POPULAR',
@@ -289,8 +303,8 @@ export const AdminDeskPage: React.FC = () => {
         name: 'Supersaver Pack',
         label: 'Supersaver Pack',
         quantityText: `Dual Value Pack (2x ${newProductForm.size || 'Standard'})`,
-        price: Math.round(Number(newProductForm.price) * 1.75),
-        mrp: Math.round(Number(newProductForm.price) * 1.75 * 1.45),
+        price: Math.round(basePrice * 1.75),
+        mrp: Math.round(basePrice * 1.75 * 1.45),
         discount: '35% OFF',
         image: primaryImg,
         badge: 'SUPERSAVER',
@@ -304,8 +318,8 @@ export const AdminDeskPage: React.FC = () => {
       slug: generatedSlug,
       category: (newProductForm.category as any) || 'resin',
       tagline: newProductForm.tagline || 'Pure Power of the Himalayas',
-      price: Number(newProductForm.price) || 1499,
-      mrp: Number(newProductForm.mrp) || 1999,
+      price: basePrice,
+      mrp: baseMrp,
       discount: newProductForm.discount || '25% OFF',
       size: newProductForm.size || 'Standard Size',
       servings: newProductForm.servings || '30 Servings',
@@ -313,7 +327,8 @@ export const AdminDeskPage: React.FC = () => {
       reviewCount: Number(newProductForm.reviewCount) || 1,
       inStock: newProductForm.inStock !== false && (Number(newProductForm.stockQty) > 0 || newProductForm.stockQty === undefined),
       stockQty: newProductForm.stockQty !== undefined ? Number(newProductForm.stockQty) : 50,
-      images: newProductForm.images?.length ? newProductForm.images : [],
+      image: primaryImg,
+      images: cleanImages,
       packs: initialPacks,
       shortDescription: newProductForm.shortDescription || 'Pure Himalayan Shilajit formulation.',
       description: newProductForm.description || 'Harvested from extreme Himalayan altitudes and purified using traditional Ayurvedic methods.',
@@ -1863,8 +1878,24 @@ export const AdminDeskPage: React.FC = () => {
               <div>
                 <AdminProductImageUploader
                   images={editingProduct.images || []}
+                  coverImage={editingProduct.image || editingProduct.images?.[0] || ''}
+                  onCoverChange={(coverUrl) => {
+                    const cleanImgs = [...(editingProduct.images || [])];
+                    if (coverUrl) {
+                      if (cleanImgs.length > 0) {
+                        cleanImgs[0] = coverUrl;
+                      } else {
+                        cleanImgs.push(coverUrl);
+                      }
+                    }
+                    setEditingProduct({
+                      ...editingProduct,
+                      image: coverUrl,
+                      images: cleanImgs,
+                    });
+                  }}
                   onChange={(imgs) => {
-                    const cleanImgs = (imgs || []).filter((img) => img && !img.includes('unsplash.com'));
+                    const cleanImgs = (imgs || []).filter(Boolean);
                     const newPrimary = cleanImgs[0] || '';
                     const oldPrimary = editingProduct.images?.[0] || '';
 
@@ -1872,9 +1903,8 @@ export const AdminDeskPage: React.FC = () => {
                       ? editingProduct.packs
                       : getProductPacks(editingProduct);
 
-                    // Strictly preserve custom distinct pack photos, only update packs that were using the primary image
                     const updatedPacks = currentPacks.map((pack) => {
-                      const wasUsingPrimary = !pack.image || pack.image.includes('unsplash.com') || pack.image === oldPrimary;
+                      const wasUsingPrimary = !pack.image || pack.image === oldPrimary;
                       return {
                         ...pack,
                         image: wasUsingPrimary ? newPrimary : pack.image,
@@ -1883,11 +1913,12 @@ export const AdminDeskPage: React.FC = () => {
 
                     setEditingProduct({
                       ...editingProduct,
+                      image: newPrimary,
                       images: cleanImgs,
                       packs: updatedPacks,
                     });
                   }}
-                  maxImages={5}
+                  maxImages={6}
                 />
               </div>
 
@@ -2098,6 +2129,9 @@ export const AdminDeskPage: React.FC = () => {
                                 reader.readAsDataURL(file);
                               }}
                             />
+                          </label>
+                        </div>
+
                         {/* Pack Pricing & Variant Details */}
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-black/10">
                           <div>
@@ -2436,9 +2470,15 @@ export const AdminDeskPage: React.FC = () => {
                             type="number"
                             value={pack.price}
                             onChange={(e) => {
+                              const val = Number(e.target.value);
                               const current = (editingProduct.packs && editingProduct.packs.length > 0) ? [...editingProduct.packs] : getProductPacks(editingProduct);
-                              current[pIdx] = { ...current[pIdx], price: Number(e.target.value) };
-                              setEditingProduct({ ...editingProduct, packs: current });
+                              current[pIdx] = { ...current[pIdx], price: val };
+                              const isTargetPopular = current[pIdx]?.isPopular || pIdx === 0 || current.length === 1;
+                              setEditingProduct({
+                                ...editingProduct,
+                                price: isTargetPopular ? val : editingProduct.price,
+                                packs: current,
+                              });
                             }}
                             className="w-full px-2 py-1.5 rounded-xs border border-[#10110F]/20 text-xs font-bold bg-white"
                           />
@@ -2449,9 +2489,15 @@ export const AdminDeskPage: React.FC = () => {
                             type="number"
                             value={pack.mrp}
                             onChange={(e) => {
+                              const val = Number(e.target.value);
                               const current = (editingProduct.packs && editingProduct.packs.length > 0) ? [...editingProduct.packs] : getProductPacks(editingProduct);
-                              current[pIdx] = { ...current[pIdx], mrp: Number(e.target.value) };
-                              setEditingProduct({ ...editingProduct, packs: current });
+                              current[pIdx] = { ...current[pIdx], mrp: val };
+                              const isTargetPopular = current[pIdx]?.isPopular || pIdx === 0 || current.length === 1;
+                              setEditingProduct({
+                                ...editingProduct,
+                                mrp: isTargetPopular ? val : editingProduct.mrp,
+                                packs: current,
+                              });
                             }}
                             className="w-full px-2 py-1.5 rounded-xs border border-[#10110F]/20 text-xs bg-white"
                           />
@@ -2609,21 +2655,37 @@ export const AdminDeskPage: React.FC = () => {
               </div>
 
               {/* Modal Buttons */}
-              <div className="pt-4 border-t border-[#10110F]/10 flex justify-end gap-3">
+              <div className="pt-4 border-t border-[#10110F]/10 flex flex-wrap items-center justify-between gap-3">
                 <button
                   type="button"
-                  onClick={() => setEditingProduct(null)}
-                  className="px-4 py-2 rounded-xs border border-[#10110F]/20 text-xs font-bold uppercase"
+                  onClick={() => {
+                    const toDel = editingProduct;
+                    setEditingProduct(null);
+                    setProductToDelete(toDel);
+                  }}
+                  className="px-4 py-2 rounded-xs border border-red-300 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Permanently remove this product from store"
                 >
-                  Cancel
+                  <Trash2 className="w-4 h-4 text-red-600" />
+                  <span>Delete Product</span>
                 </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm"
-                >
-                  <Save className="w-3.5 h-3.5 text-[#D4B66A]" />
-                  <span>Save Changes</span>
-                </button>
+
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setEditingProduct(null)}
+                    className="px-4 py-2 rounded-xs border border-[#10110F]/20 text-xs font-bold uppercase hover:bg-gray-100 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-colors cursor-pointer"
+                  >
+                    <Save className="w-3.5 h-3.5 text-[#D4B66A]" />
+                    <span>Save Changes</span>
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -2744,13 +2806,31 @@ export const AdminDeskPage: React.FC = () => {
               <div>
                 <AdminProductImageUploader
                   images={newProductForm.images || []}
-                  onChange={(imgs) =>
+                  coverImage={newProductForm.image || newProductForm.images?.[0] || ''}
+                  onCoverChange={(coverUrl) => {
+                    const currentImgs = [...(newProductForm.images || [])];
+                    if (coverUrl) {
+                      if (currentImgs.length > 0) {
+                        currentImgs[0] = coverUrl;
+                      } else {
+                        currentImgs.push(coverUrl);
+                      }
+                    }
                     setNewProductForm({
                       ...newProductForm,
-                      images: imgs,
-                    })
-                  }
-                  maxImages={5}
+                      image: coverUrl,
+                      images: currentImgs,
+                    });
+                  }}
+                  onChange={(imgs) => {
+                    const cleanImgs = (imgs || []).filter(Boolean);
+                    setNewProductForm({
+                      ...newProductForm,
+                      image: cleanImgs[0] || '',
+                      images: cleanImgs,
+                    });
+                  }}
+                  maxImages={6}
                 />
               </div>
 
@@ -2947,6 +3027,9 @@ export const AdminDeskPage: React.FC = () => {
                   const targetId = productToDelete.id;
                   const targetName = productToDelete.name;
                   setProductToDelete(null);
+                  if (editingProduct?.id === targetId) {
+                    setEditingProduct(null);
+                  }
                   const success = await deleteProduct(targetId);
                   if (success) {
                     showToast(`Product "${targetName}" deleted successfully.`);

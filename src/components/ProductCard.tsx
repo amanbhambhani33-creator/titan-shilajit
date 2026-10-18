@@ -23,8 +23,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   // Stock status check
   const isOutOfStock = !product.inStock || (product.stockQty !== undefined && product.stockQty <= 0);
 
-  // Default to Most Popular pack (index 1) or first available
-  const [selectedPackIndex, setSelectedPackIndex] = useState(1);
+  // Default to Most Popular pack if available, otherwise first pack
+  const popularPackIdx = packs.findIndex((p) => p.isPopular);
+  const initialPackIdx = popularPackIdx !== -1 ? popularPackIdx : 0;
+  const [selectedPackIndex, setSelectedPackIndex] = useState(initialPackIdx);
   const currentPack: ProductPack = packs[selectedPackIndex] || packs[0];
 
   // Cart quantity synchronization (Requirement 3: sync with cart so increasing doesn't sum up incorrectly)
@@ -40,28 +42,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   }, [product.id, currentPack.id, getItemQuantity]);
 
   // Dynamic image, price, mrp, and quantity based on active pack
-  // Strictly prefer user-uploaded primary image or explicit custom pack photos - zero generic unsplash photos
   const cleanProductImages = (product.images || []).map((img) => {
     if (typeof img === 'string' && img.includes('/uploads/')) {
       return img.substring(img.indexOf('/uploads/'));
     }
     return img;
-  }).filter((img) => img && !img.includes('unsplash.com'));
+  }).filter(Boolean);
 
   let packImg = currentPack.image || '';
   if (typeof packImg === 'string' && packImg.includes('/uploads/')) {
     packImg = packImg.substring(packImg.indexOf('/uploads/'));
   }
-  const hasCustomPackImg = Boolean(
-    packImg &&
-    !packImg.includes('unsplash.com') &&
-    packImg.trim() !== ''
-  );
-  const displayImage = hasCustomPackImg
-    ? packImg
-    : (cleanProductImages[0] || '');
-  const displayPrice = currentPack.price;
-  const displayMrp = currentPack.mrp;
+  const displayImage = packImg || product.image || cleanProductImages[0] || '';
+  const displayPrice = currentPack?.price ?? product.price;
+  const displayMrp = currentPack?.mrp ?? product.mrp;
   const displayQuantityText = currentPack.quantityText;
 
   const handleSelectPack = (idx: number) => {

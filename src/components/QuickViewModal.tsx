@@ -58,18 +58,16 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, 
       return img.substring(img.indexOf('/uploads/'));
     }
     return img;
-  }).filter((img) => img && !img.includes('unsplash.com'));
+  }).filter(Boolean);
 
   let packImg = currentPack.image || '';
   if (typeof packImg === 'string' && packImg.includes('/uploads/')) {
     packImg = packImg.substring(packImg.indexOf('/uploads/'));
   }
-  const isGenericPackImg = !packImg || packImg.includes('unsplash.com');
-  const activePackImg = (!isGenericPackImg && packImg) ? packImg : '';
 
-  const displayImage = cleanProductImages[selectedImageIndex] || activePackImg || cleanProductImages[0] || '';
-  const displayPrice = currentPack.price;
-  const displayMrp = currentPack.mrp;
+  const displayImage = cleanProductImages[selectedImageIndex] || packImg || product.image || cleanProductImages[0] || '';
+  const displayPrice = currentPack ? currentPack.price : product.price;
+  const displayMrp = currentPack ? currentPack.mrp : product.mrp;
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;

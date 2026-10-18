@@ -371,14 +371,23 @@ function sanitizeProductsImages(items: Product[]): Product[] {
       return img;
     }).filter(Boolean);
 
+    // If product has a cover image specified, ensure it is the first image in images
+    if (p.image && !cleanImgs.includes(p.image)) {
+      cleanImgs.unshift(p.image);
+    }
+
     // If empty, fallback to authentic product defaults
     if (cleanImgs.length === 0) {
-      const def = DEFAULT_PRODUCTS.find((d) => d.id === p.id);
-      if (def && Array.isArray(def.images) && def.images.length > 0) {
-        cleanImgs = [...def.images];
+      if (p.image) {
+        cleanImgs = [p.image];
+      } else {
+        const def = DEFAULT_PRODUCTS.find((d) => d.id === p.id);
+        if (def && Array.isArray(def.images) && def.images.length > 0) {
+          cleanImgs = [...def.images];
+        }
       }
     }
-    const primaryImg = cleanImgs[0] || '';
+    const primaryImg = p.image || cleanImgs[0] || '';
     const cleanPacks = (p.packs || []).map((pk) => {
       let pkImg = pk.image || '';
       if (typeof pkImg === 'string' && pkImg.includes('/uploads/')) {
@@ -391,6 +400,7 @@ function sanitizeProductsImages(items: Product[]): Product[] {
     });
     return {
       ...p,
+      image: primaryImg,
       images: cleanImgs,
       packs: cleanPacks,
     };
@@ -991,6 +1001,7 @@ function addDeletedProductId(id: string) {
       const updatedObj: Product = {
         ...item,
         ...updates,
+        image: updates.image || primaryImg || item.image || '',
         images: cleanImages,
         packs: cleanPacks,
         stockQty: nextStock,
@@ -1027,7 +1038,7 @@ function addDeletedProductId(id: string) {
     if (!isFirestoreQuotaExhausted()) {
       try {
         const productsDocRef = doc(db, 'store_content', 'products');
-        await safeSetDoc(productsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: true });
+        await safeSetDoc(productsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: false });
         success = true;
       } catch {}
     }
@@ -1055,15 +1066,12 @@ function addDeletedProductId(id: string) {
     try { localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(updated)); } catch {}
     let success = false;
     try {
-      await fetch(`/api/store-content/products/${encodeURIComponent(id)}`, {
+      const res = await fetch(`/api/store-content/products/${encodeURIComponent(id)}`, {
         method: 'DELETE',
-      });
-      await fetch('/api/store-content/products', {
-        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ products: updated }),
       });
-      success = true;
+      if (res.ok) success = true;
     } catch {}
     if (!isFirestoreQuotaExhausted()) {
       try {

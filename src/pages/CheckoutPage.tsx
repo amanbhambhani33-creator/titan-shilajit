@@ -1049,13 +1049,6 @@ export const CheckoutPage: React.FC = () => {
                   <span>Track on Delhivery</span>
                   <ExternalLink className="w-3.5 h-3.5 text-[#D4B66A]" />
                 </a>
-                <Link
-                  to="/admin-desk?tab=orders"
-                  className="px-4 py-2.5 rounded-xs bg-[#10110F]/10 hover:bg-[#10110F]/20 text-[#10110F] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border border-[#10110F]/20 transition-all"
-                >
-                  <span>Delivery Dashboard</span>
-                  <ExternalLink className="w-3.5 h-3.5 text-[#183D27]" />
-                </Link>
               </div>
             </div>
           </div>
