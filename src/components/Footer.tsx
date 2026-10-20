@@ -40,17 +40,28 @@ export const Footer: React.FC = () => {
           {/* Brand Col */}
           <div className="lg:col-span-2 flex flex-col gap-5">
             <Link to="/" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-sm bg-[#183D27] text-[#B88A32] border border-[#B88A32]/40 flex items-center justify-center font-serif font-bold text-lg">
-                T
-              </div>
-              <div className="flex flex-col">
-                <span className="font-serif tracking-tight font-bold text-xl text-[#F7F3E8] uppercase">
-                  Titan Shilajit
-                </span>
-                <span className="text-[9px] tracking-[0.3em] uppercase text-[#D4B66A] font-medium font-sans">
-                  Pure Power of the Himalayas
-                </span>
-              </div>
+              {content.logo?.useCustomImage && content.logo?.imageUrl ? (
+                <img
+                  src={content.logo.imageUrl}
+                  alt={content.logo.titlePrefix ? `${content.logo.titlePrefix}${content.logo.titleSuffix || ''}` : 'Titan Shilajit'}
+                  style={{ height: `${Math.min(content.logo.heightPx || 44, 40)}px` }}
+                  className="w-auto object-contain brightness-110"
+                />
+              ) : (
+                <>
+                  <div className="w-8 h-8 rounded-sm bg-[#183D27] text-[#B88A32] border border-[#B88A32]/40 flex items-center justify-center font-serif font-bold text-lg">
+                    {content.logo?.symbolText || 'T'}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-serif tracking-tight font-bold text-xl text-[#F7F3E8] uppercase">
+                      {(content.logo?.titlePrefix || 'Titan ') + (content.logo?.titleSuffix || 'Shilajit')}
+                    </span>
+                    <span className="text-[9px] tracking-[0.3em] uppercase text-[#D4B66A] font-medium font-sans">
+                      {content.logo?.tagline || 'Pure Power of the Himalayas'}
+                    </span>
+                  </div>
+                </>
+              )}
             </Link>
 
             <p className="text-xs sm:text-sm text-[#EEE8D7]/75 font-sans leading-relaxed max-w-sm font-light">

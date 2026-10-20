@@ -123,6 +123,16 @@ export interface QualityTrustConfig {
   cards: QualityTrustCard[];
 }
 
+export interface BrandLogoConfig {
+  imageUrl?: string;
+  useCustomImage: boolean;
+  symbolText?: string;
+  titlePrefix?: string;
+  titleSuffix?: string;
+  tagline?: string;
+  heightPx?: number;
+}
+
 export interface HeroSlideImage {
   id: string;
   imageUrl: string;

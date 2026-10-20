@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ShoppingBag, Search, Menu, X, ShieldCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useStoreContent } from '../context/StoreContentContext';
 import { BRAND_CONTACT } from '../data/content';
 import { AnnouncementBar } from './AnnouncementBar';
 import { AmazonFlipkartBadge } from './AmazonFlipkartBadge';
@@ -14,6 +15,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { totalItems, openCart } = useCart();
+  const { content } = useStoreContent();
+  const logoConfig = content.logo;
   const location = useLocation();
 
   const isHome = location.pathname === '/';
@@ -74,25 +77,42 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch }) => {
         </div>
 
         <div className="h-16 sm:h-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 flex items-center justify-between">
-          {/* Logo with Gold & White Mixed Headline Typography */}
+          {/* Dynamic Brand Logo (Custom Image or Vector Mark) */}
           <Link
             to="/"
             id="brand-logo-link"
             onClick={() => handleNavClick('/')}
             className="flex items-center gap-2 sm:gap-2.5 group focus:outline-none min-h-[44px] cursor-pointer"
           >
-            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-[#183D27] border border-[#B88A32]/40 flex items-center justify-center rounded-sm shadow-xs transition-transform group-hover:scale-105 shrink-0">
-              <span className="text-[#D4B66A] font-serif text-lg sm:text-xl font-bold">T</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-serif text-base sm:text-xl font-bold tracking-tight uppercase leading-none">
-                <span className="text-[#10110F] group-hover:text-[#183D27] transition-colors">TITAN </span>
-                <span className="text-[#B88A32] drop-shadow-xs">SHILAJIT</span>
-              </span>
-              <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.25em] text-[#183D27] font-semibold mt-0.5 opacity-80 block">
-                Himalayan Apothecary
-              </span>
-            </div>
+            {logoConfig?.useCustomImage && logoConfig?.imageUrl ? (
+              <img
+                src={logoConfig.imageUrl}
+                alt={logoConfig.titlePrefix ? `${logoConfig.titlePrefix}${logoConfig.titleSuffix || ''}` : 'Titan Shilajit'}
+                style={{ height: `${logoConfig.heightPx || 44}px` }}
+                className="w-auto max-w-[240px] sm:max-w-[290px] object-contain transition-transform group-hover:scale-105"
+              />
+            ) : (
+              <>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-[#183D27] border border-[#B88A32]/40 flex items-center justify-center rounded-sm shadow-xs transition-transform group-hover:scale-105 shrink-0">
+                  <span className="text-[#D4B66A] font-serif text-lg sm:text-xl font-bold">
+                    {logoConfig?.symbolText || 'T'}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-serif text-base sm:text-xl font-bold tracking-tight uppercase leading-none">
+                    <span className="text-[#10110F] group-hover:text-[#183D27] transition-colors">
+                      {logoConfig?.titlePrefix || 'TITAN '}
+                    </span>
+                    <span className="text-[#B88A32] drop-shadow-xs">
+                      {logoConfig?.titleSuffix || 'SHILAJIT'}
+                    </span>
+                  </span>
+                  <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.25em] text-[#183D27] font-semibold mt-0.5 opacity-80 block">
+                    {logoConfig?.tagline || 'Himalayan Apothecary'}
+                  </span>
+                </div>
+              </>
+            )}
           </Link>
 
           {/* Desktop Navigation */}

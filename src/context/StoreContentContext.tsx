@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage, OrderRecord, Review } from '../types';
+import { Product, BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage, OrderRecord, Review, BrandLogoConfig } from '../types';
 import { PRODUCTS as DEFAULT_PRODUCTS } from '../data/products';
 import { REVIEWS as DEFAULT_REVIEWS } from '../data/reviews';
 import { TRUST_STRIP_ITEMS, BRAND_CONTACT } from '../data/content';
 import { db, doc, getDoc, setDoc, safeSetDoc, isFirestoreQuotaExhausted, onSnapshot, collection, getDocs, query, where } from '../lib/firebase';
 
-export type { BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage };
+export type { BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage, BrandLogoConfig };
 
 export interface HeroBannerConfig {
   kicker: string;
@@ -63,6 +63,7 @@ export interface BrandStoryConfig {
 }
 
 export interface PageContentConfig {
+  logo?: BrandLogoConfig;
   announcement: AnnouncementBarConfig;
   hero: HeroBannerConfig;
   launchBanner: LaunchBannerConfig;
@@ -258,7 +259,18 @@ const DEFAULT_BRAND_STORY: BrandStoryConfig = {
   badgeSubtitle: 'Granite Ridge Wild Foraging',
 };
 
+export const DEFAULT_BRAND_LOGO: BrandLogoConfig = {
+  imageUrl: '/assets/aistudio/image_29351190.png',
+  useCustomImage: true,
+  symbolText: 'T',
+  titlePrefix: 'TITAN ',
+  titleSuffix: 'SHILAJIT',
+  tagline: 'Himalayan Apothecary',
+  heightPx: 44,
+};
+
 const DEFAULT_PAGE_CONTENT: PageContentConfig = {
+  logo: DEFAULT_BRAND_LOGO,
   announcement: DEFAULT_ANNOUNCEMENT,
   hero: DEFAULT_HERO,
   launchBanner: DEFAULT_LAUNCH_BANNER,
@@ -312,7 +324,8 @@ interface StoreContentContextType {
   orders: OrderRecord[];
   recordOrder: (order: Omit<OrderRecord, 'id' | 'createdAt'>) => Promise<string>;
   checkCustomerFirstOrder: (mobileOrEmail: string) => Promise<{ isFirstOrder: boolean; previousOrderCount: number; message?: string }>;
-  // Banner and content actions
+  // Banner, logo and content actions
+  updateBrandLogo: (updates: Partial<BrandLogoConfig>) => void;
   updateHeroBanner: (updates: Partial<HeroBannerConfig>) => void;
   updateLaunchBanner: (updates: Partial<LaunchBannerConfig>) => void;
   updateAnnouncementBar: (updates: Partial<AnnouncementBarConfig>) => void;
@@ -507,9 +520,14 @@ function addDeletedProductId(id: string) {
             }
           : DEFAULT_QUALITY_TRUST;
 
+        const logoData = parsed.logo
+          ? { ...DEFAULT_BRAND_LOGO, ...parsed.logo }
+          : DEFAULT_BRAND_LOGO;
+
         return {
           ...DEFAULT_PAGE_CONTENT,
           ...parsed,
+          logo: logoData,
           hero: heroData,
           launchBanner: { ...DEFAULT_PAGE_CONTENT.launchBanner, ...parsed.launchBanner },
           announcement: announcementData,
@@ -562,6 +580,11 @@ function addDeletedProductId(id: string) {
             setContent((prev) => ({
               ...prev,
               ...data,
+              logo: {
+                ...DEFAULT_BRAND_LOGO,
+                ...(prev.logo || {}),
+                ...(data.logo || {}),
+              },
               hero: {
                 ...prev.hero,
                 ...(data.hero || {}),
@@ -1375,6 +1398,17 @@ function addDeletedProductId(id: string) {
     return await updateQualityTrust({ cards: updatedCards });
   };
 
+  const updateBrandLogo = (updates: Partial<BrandLogoConfig>) => {
+    const currentLogo = content.logo || DEFAULT_BRAND_LOGO;
+    const newLogo: BrandLogoConfig = { ...currentLogo, ...updates };
+    const newContent: PageContentConfig = {
+      ...content,
+      logo: newLogo,
+    };
+    setContent(newContent);
+    syncContentToFirestore(newContent);
+  };
+
   const updatePageContent = <K extends keyof PageContentConfig>(
     section: K,
     updates: Partial<PageContentConfig[K]>
@@ -1414,6 +1448,7 @@ function addDeletedProductId(id: string) {
         orders,
         recordOrder,
         checkCustomerFirstOrder,
+        updateBrandLogo,
         updateHeroBanner,
         updateLaunchBanner,
         updateAnnouncementBar,

@@ -50,6 +50,7 @@ import { AdminPictureTransitionSection } from '../components/AdminPictureTransit
 import { AdminReviewsSection } from '../components/AdminReviewsSection';
 import { AdminProductImageUploader } from '../components/AdminProductImageUploader';
 import { AdminOrdersSection } from '../components/AdminOrdersSection';
+import { AdminBrandLogoSection } from '../components/AdminBrandLogoSection';
 
 export const AdminDeskPage: React.FC = () => {
   const {
@@ -763,7 +764,7 @@ export const AdminDeskPage: React.FC = () => {
               badge: lowStockCount > 0 ? `${lowStockCount} Low Stock` : undefined,
               icon: Package,
             },
-            { id: 'banners', label: 'Banners & Launches', icon: ImageIcon },
+            { id: 'banners', label: 'Brand Logo & Banners', icon: ImageIcon },
             {
               id: 'reviews',
               label: `Customer Reviews (${reviews.length})`,
@@ -1137,6 +1138,9 @@ export const AdminDeskPage: React.FC = () => {
         {/* ========================================================================= */}
         {activeTab === 'banners' && (
           <div className="space-y-8">
+            {/* Storefront Brand Logo & Visual Identity */}
+            <AdminBrandLogoSection onToast={showToast} />
+
             {/* Top Announcement Bar Editor */}
             <div className="bg-white p-6 rounded-xs border border-[#10110F]/10 shadow-xs space-y-4">
               <div className="flex items-center justify-between border-b border-[#10110F]/10 pb-3">

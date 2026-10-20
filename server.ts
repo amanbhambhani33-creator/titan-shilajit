@@ -37,11 +37,14 @@ import {
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT
-  ? isNaN(Number(process.env.PORT))
-    ? process.env.PORT
-    : Number(process.env.PORT)
-  : 3000;
+// In dev, AI Studio preview environment requires port 3000.
+// In production on Hostinger / VPS, process.env.PORT is used if assigned.
+const PORT =
+  process.env.NODE_ENV === 'production' && process.env.PORT
+    ? isNaN(Number(process.env.PORT))
+      ? process.env.PORT
+      : Number(process.env.PORT)
+    : 3000;
 const apiRouter = express.Router();
 
 // Universal CORS & Pre-flight Support for Hostinger, Vercel and External Clients
@@ -1466,17 +1469,8 @@ async function startServer() {
 }
 
 // In local dev and standard Node runtime (including Hostinger VPS / PM2 / Node.js manager), start the server
-// On Vercel, the exported app is invoked as a serverless function
-const isMain = Boolean(
-  process.argv[1] &&
-    (process.argv[1].endsWith('server.ts') ||
-      process.argv[1].endsWith('server.cjs') ||
-      process.argv[1].endsWith('server.js') ||
-      process.argv[1].endsWith('app.js') ||
-      process.argv[1].endsWith('app.cjs'))
-);
-
-if ((isMain || process.env.NODE_ENV === 'production') && !process.env.VERCEL) {
+// On Vercel, the exported app is invoked as a serverless function handler
+if (!process.env.VERCEL) {
   startServer();
 }
 
