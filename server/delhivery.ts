@@ -23,9 +23,22 @@ export interface DelhiveryShipmentItem {
   price: number;
 }
 
+export interface DelhiveryBillingDetails {
+  name?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  gstin?: string;
+}
+
 export interface DelhiveryShipmentRequest {
   orderNumber: string;
   consignee: DelhiveryConsignee;
+  billing?: DelhiveryBillingDetails;
+  billingSameAsShipping?: boolean;
   items: DelhiveryShipmentItem[];
   totalAmount: number;
   paymentMode: 'Prepaid' | 'COD';
@@ -132,45 +145,54 @@ export function generateDelhiveryAwb(orderNumber: string): string {
  * Known Indian PIN code directory for accurate geographic resolution
  */
 const PINCODE_REGION_MAP: Record<string, { city: string; state: string; days: string; cod: boolean }> = {
-  '11': { city: 'New Delhi', state: 'Delhi', days: '1–2 Business Days (Same/Next Day NCR)', cod: true },
-  '12': { city: 'Gurugram / Faridabad', state: 'Haryana', days: '1–2 Business Days', cod: true },
-  '13': { city: 'Ambala / Panipat', state: 'Haryana', days: '2–3 Business Days', cod: true },
-  '14': { city: 'Ludhiana / Jalandhar', state: 'Punjab', days: '2–3 Business Days', cod: true },
+  '11': { city: 'Delhi', state: 'Delhi', days: '1–2 Business Days (NCR Express)', cod: true },
+  '12': { city: 'Gurugram', state: 'Haryana', days: '1–2 Business Days', cod: true },
+  '13': { city: 'Ambala', state: 'Haryana', days: '2–3 Business Days', cod: true },
+  '14': { city: 'Ludhiana', state: 'Punjab', days: '2–3 Business Days', cod: true },
   '15': { city: 'Bathinda', state: 'Punjab', days: '2–3 Business Days', cod: true },
-  '16': { city: 'Chandigarh', state: 'Punjab / Haryana', days: '2–3 Business Days', cod: true },
-  '17': { city: 'Shimla / Kullu / Manali', state: 'Himachal Pradesh', days: '3–4 Business Days', cod: true },
+  '16': { city: 'Chandigarh', state: 'Chandigarh', days: '2–3 Business Days', cod: true },
+  '17': { city: 'Shimla', state: 'Himachal Pradesh', days: '3–4 Business Days', cod: true },
   '18': { city: 'Jammu', state: 'Jammu & Kashmir', days: '3–4 Business Days', cod: true },
-  '19': { city: 'Srinagar / Kargil', state: 'Ladakh / Jammu & Kashmir', days: '3–5 Business Days', cod: true },
-  '20': { city: 'Noida / Ghaziabad', state: 'Uttar Pradesh', days: '1–2 Business Days (NCR Express)', cod: true },
-  '21': { city: 'Kanpur / Prayagraj', state: 'Uttar Pradesh', days: '2–3 Business Days', cod: true },
-  '22': { city: 'Lucknow / Varanasi', state: 'Uttar Pradesh', days: '2–3 Business Days', cod: true },
-  '24': { city: 'Dehradun / Haridwar', state: 'Uttarakhand', days: '2–3 Business Days', cod: true },
+  '19': { city: 'Srinagar', state: 'Jammu & Kashmir', days: '3–5 Business Days', cod: true },
+  '20': { city: 'Noida', state: 'Uttar Pradesh', days: '1–2 Business Days (NCR Express)', cod: true },
+  '21': { city: 'Kanpur', state: 'Uttar Pradesh', days: '2–3 Business Days', cod: true },
+  '22': { city: 'Lucknow', state: 'Uttar Pradesh', days: '2–3 Business Days', cod: true },
+  '24': { city: 'Dehradun', state: 'Uttarakhand', days: '2–3 Business Days', cod: true },
   '30': { city: 'Jaipur', state: 'Rajasthan', days: '2–3 Business Days', cod: true },
-  '31': { city: 'Udaipur / Kota', state: 'Rajasthan', days: '2–3 Business Days', cod: true },
+  '31': { city: 'Udaipur', state: 'Rajasthan', days: '2–3 Business Days', cod: true },
   '34': { city: 'Jodhpur', state: 'Rajasthan', days: '2–3 Business Days', cod: true },
   '36': { city: 'Rajkot', state: 'Gujarat', days: '2–4 Business Days', cod: true },
-  '38': { city: 'Ahmedabad / Gandhinagar', state: 'Gujarat', days: '2–3 Business Days', cod: true },
-  '39': { city: 'Surat / Vadodara', state: 'Gujarat', days: '2–3 Business Days', cod: true },
-  '40': { city: 'Mumbai / Thane', state: 'Maharashtra', days: '2–3 Business Days (Metro Express)', cod: true },
-  '41': { city: 'Pune / Nashik', state: 'Maharashtra', days: '2–3 Business Days', cod: true },
+  '38': { city: 'Ahmedabad', state: 'Gujarat', days: '2–3 Business Days', cod: true },
+  '39': { city: 'Surat', state: 'Gujarat', days: '2–3 Business Days', cod: true },
+  '40': { city: 'Mumbai', state: 'Maharashtra', days: '2–3 Business Days (Metro Express)', cod: true },
+  '41': { city: 'Pune', state: 'Maharashtra', days: '2–3 Business Days', cod: true },
   '44': { city: 'Nagpur', state: 'Maharashtra', days: '2–3 Business Days', cod: true },
   '45': { city: 'Indore', state: 'Madhya Pradesh', days: '2–3 Business Days', cod: true },
   '46': { city: 'Bhopal', state: 'Madhya Pradesh', days: '2–3 Business Days', cod: true },
-  '50': { city: 'Hyderabad / Secunderabad', state: 'Telangana', days: '2–3 Business Days (Metro Express)', cod: true },
+  '50': { city: 'Hyderabad', state: 'Telangana', days: '2–3 Business Days (Metro Express)', cod: true },
   '53': { city: 'Visakhapatnam', state: 'Andhra Pradesh', days: '3–4 Business Days', cod: true },
   '56': { city: 'Bengaluru', state: 'Karnataka', days: '2–3 Business Days (Metro Express)', cod: true },
-  '57': { city: 'Mangaluru / Mysuru', state: 'Karnataka', days: '3–4 Business Days', cod: true },
+  '57': { city: 'Mangaluru', state: 'Karnataka', days: '3–4 Business Days', cod: true },
   '60': { city: 'Chennai', state: 'Tamil Nadu', days: '2–3 Business Days (Metro Express)', cod: true },
   '64': { city: 'Coimbatore', state: 'Tamil Nadu', days: '3–4 Business Days', cod: true },
-  '68': { city: 'Kochi / Ernakulam', state: 'Kerala', days: '3–4 Business Days', cod: true },
+  '68': { city: 'Kochi', state: 'Kerala', days: '3–4 Business Days', cod: true },
   '69': { city: 'Thiruvananthapuram', state: 'Kerala', days: '3–4 Business Days', cod: true },
   '70': { city: 'Kolkata', state: 'West Bengal', days: '2–3 Business Days (Metro Express)', cod: true },
   '75': { city: 'Bhubaneswar', state: 'Odisha', days: '3–4 Business Days', cod: true },
   '78': { city: 'Guwahati', state: 'Assam', days: '3–5 Business Days', cod: true },
-  '79': { city: 'Shillong / Agartala / Imphal', state: 'North Eastern States', days: '4–6 Business Days', cod: true },
+  '79': { city: 'Shillong', state: 'Meghalaya', days: '4–6 Business Days', cod: true },
   '80': { city: 'Patna', state: 'Bihar', days: '3–4 Business Days', cod: true },
-  '83': { city: 'Ranchi / Jamshedpur', state: 'Jharkhand', days: '3–4 Business Days', cod: true },
+  '83': { city: 'Ranchi', state: 'Jharkhand', days: '3–4 Business Days', cod: true },
 };
+
+/**
+ * Resolve geographic city and state from 6-digit Indian PIN code
+ */
+export function findPincodeRegion(pincode: string): { city: string; state: string; days: string; cod: boolean } | null {
+  const cleanPin = pincode.replace(/\D/g, '').trim();
+  const prefix = cleanPin.slice(0, 2);
+  return PINCODE_REGION_MAP[prefix] || null;
+}
 
 /**
  * 1. Check B2C Pincode Serviceability with Delhivery API
@@ -203,17 +225,6 @@ export async function checkDelhiveryPincodeServiceability(pincode: string): Prom
     days: '3–5 Business Days (Pan-India Express)',
     cod: true,
   };
-
-  // Special handling for notable PIN codes, including user's example 194103
-  if (cleanPin === '194103') {
-    regionFallback.city = 'Kargil';
-    regionFallback.state = 'Ladakh';
-    regionFallback.days = '4–5 Business Days (Air Express & Himalayan Surface)';
-  } else if (cleanPin === '110042') {
-    regionFallback.city = 'Delhi Outer / Samaypur';
-    regionFallback.state = 'Delhi';
-    regionFallback.days = '1–2 Business Days (Delhi Same-Day/Next-Day Hub)';
-  }
 
   const url = `${DELHIVERY_CONFIG.baseUrl}/c/api/pin-codes/json/?filter_codes=${cleanPin}`;
   const token = DELHIVERY_CONFIG.token;
@@ -304,19 +315,29 @@ export async function createDelhiveryShipment(
     req.items && req.items.length > 0 ? req.items.reduce((s, it) => s + (it.quantity || 1), 0) : 1
   );
 
-  // Clean and validate Indian 10-digit mobile number
+  // Clean and validate client's 10-digit mobile number
   let cleanPhone = (req.consignee.phone || '').replace(/\D/g, '').slice(-10);
-  // Delhivery fraud-detection actively flags dummy numbers like 9876543210 with ER0005 "suspicious consignee".
-  // Fallback to merchant warehouse phone if phone is dummy or not 10 digits so shipment creates cleanly.
-  if (!cleanPhone || cleanPhone.length !== 10 || cleanPhone === '9876543210' || /^(\d)\1{9}$/.test(cleanPhone)) {
-    cleanPhone = (DELHIVERY_CONFIG.warehouse.phone || '9667173693').replace(/\D/g, '').slice(-10);
+  if (!cleanPhone || cleanPhone.length !== 10) {
+    cleanPhone = (DELHIVERY_CONFIG.warehouse.phone || '9958474229').replace(/\D/g, '').slice(-10);
   }
 
-  const consigneeName = (req.consignee.name || 'Valued Customer').trim().slice(0, 50);
-  const consigneeAddress = (req.consignee.address || 'Address on file').trim().slice(0, 200);
-  const consigneeCity = (req.consignee.city || 'Delhi').trim();
-  const consigneeState = (req.consignee.state || 'Delhi').trim();
-  const consigneePin = (req.consignee.pincode || '110001').replace(/\D/g, '').trim().slice(0, 6);
+  const consigneePin = (req.consignee.pincode || '').replace(/\D/g, '').trim().slice(0, 6);
+  const regionLookup = consigneePin.length === 6 ? findPincodeRegion(consigneePin) : null;
+
+  const consigneeName = (req.consignee.name || '').trim().slice(0, 50) || 'Valued Customer';
+  const consigneeAddress = (req.consignee.address || '').trim().slice(0, 200) || 'Address on file';
+  // Use client's exact typed city and state without fixed overrides
+  const consigneeCity = (req.consignee.city || '').trim() || (regionLookup ? regionLookup.city : '') || 'India';
+  const consigneeState = (req.consignee.state || '').trim() || (regionLookup ? regionLookup.state : '') || 'India';
+
+  // Extract billing fields when customer filled separate billing information
+  const billingName = (req.billing?.name || consigneeName).trim().slice(0, 50);
+  const billingPhone = (req.billing?.phone || cleanPhone).replace(/\D/g, '').slice(-10);
+  const billingAddress = (req.billing?.address || consigneeAddress).trim().slice(0, 200);
+  const billingPin = (req.billing?.pincode || consigneePin).replace(/\D/g, '').trim().slice(0, 6);
+  const billingCity = (req.billing?.city || req.consignee.city || '').trim() || (regionLookup ? regionLookup.city : '') || 'India';
+  const billingState = (req.billing?.state || req.consignee.state || '').trim() || (regionLookup ? regionLookup.state : '') || 'India';
+  const customerGstin = (req.billing?.gstin || '').trim();
 
   // Payload format matching Delhivery CMU specifications
   const cmuData = {
@@ -329,6 +350,7 @@ export async function createDelhiveryShipment(
         state: consigneeState,
         country: 'India',
         phone: cleanPhone,
+        email: (req.consignee.email || '').trim(),
         order: req.orderNumber,
         payment_mode: isCod ? 'COD' : 'Prepaid',
         return_pin: DELHIVERY_CONFIG.warehouse.pincode,
@@ -337,6 +359,15 @@ export async function createDelhiveryShipment(
         return_add: DELHIVERY_CONFIG.warehouse.address,
         return_state: DELHIVERY_CONFIG.warehouse.state,
         return_country: DELHIVERY_CONFIG.warehouse.country,
+        // Detailed billing party forwarded directly to carrier
+        billing_name: billingName,
+        billing_phone: billingPhone,
+        billing_add: billingAddress,
+        billing_city: billingCity,
+        billing_state: billingState,
+        billing_pin: billingPin,
+        gst_tin: customerGstin,
+        consignee_gst_tin: customerGstin,
         products_desc: productsDesc,
         hsn_code: '30049011', // Ayurvedic Medicaments
         cod_amount: codAmountStr,

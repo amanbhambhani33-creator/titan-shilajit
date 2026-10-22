@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth, ADMIN_REQUIRED_PASSWORD, PERMANENT_SUPER_ADMIN_EMAILS } from '../context/AuthContext';
+import { useStoreContent } from '../context/StoreContentContext';
 import { AdminRole, AccessRequestRecord } from '../types';
 
 interface AdminLoginGateProps {
@@ -34,6 +35,7 @@ export const AdminLoginGate: React.FC<AdminLoginGateProps> = ({ onSuccessToast }
     authError,
     clearAuthError,
   } = useAuth();
+  const { content } = useStoreContent();
 
   const [activeTab, setActiveTab] = useState<'signin' | 'request' | 'status'>('signin');
 
@@ -169,9 +171,20 @@ export const AdminLoginGate: React.FC<AdminLoginGateProps> = ({ onSuccessToast }
 
         {/* Logo & Header */}
         <div className="text-center mb-6 relative z-10">
-          <div className="w-12 h-12 mx-auto bg-[#183D27] border border-[#B88A32] rounded-xs flex items-center justify-center mb-3 shadow-lg">
-            <Lock className="w-6 h-6 text-[#D4B66A]" />
-          </div>
+          {content.logo?.useCustomImage && content.logo?.imageUrl ? (
+            <div className="mb-4 flex items-center justify-center">
+              <img
+                src={content.logo.imageUrl}
+                alt="Titan Shilajit Logo"
+                style={{ height: '48px' }}
+                className="w-auto object-contain brightness-110 drop-shadow-md"
+              />
+            </div>
+          ) : (
+            <div className="w-12 h-12 mx-auto bg-[#183D27] border border-[#B88A32] rounded-xs flex items-center justify-center mb-3 shadow-lg">
+              <Lock className="w-6 h-6 text-[#D4B66A]" />
+            </div>
+          )}
           <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4B66A] font-bold block mb-1">
             TITAN SHILAJIT CMS &amp; RBAC PORTAL
           </span>

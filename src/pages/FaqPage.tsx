@@ -78,7 +78,7 @@ const EXTENDED_FAQS: ExtendedFaq[] = [
   {
     question: 'How are orders placed and tracked?',
     answer:
-      'You can place your order directly through our secure online store with zero extra fees. We offer instant Cash on Delivery (COD) and encrypted Razorpay options. All orders are assigned an official continuous Tax Invoice and a Delhivery AWB number, allowing you to track your delivery in real time via SMS and online dashboard.',
+      'You can place your order directly through our secure online store with zero extra fees. We offer instant Cash on Delivery (COD) and encrypted (upi/card/netbankin) options. All orders are assigned an official continuous Tax Invoice and a Delhivery AWB number, allowing you to track your delivery in real time via SMS and online dashboard.',
     category: 'shipping',
   },
   {

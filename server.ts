@@ -443,17 +443,30 @@ apiRouter.post('/verify-payment', async (req, res) => {
     if (order_data) {
       await syncDelhiveryConfig();
 
-      const customerName = (order_data.customerName || 'Valued Customer').trim();
+      const customerName = (order_data.customerName || '').trim() || 'Valued Customer';
       const customerPhone = (order_data.customerPhone || '').trim();
       const customerEmail = (order_data.customerEmail || '').trim();
       const shippingAddress = order_data.shippingAddress || {};
       const billingAddress = order_data.billingAddress || shippingAddress;
       const billingSameAsShipping = order_data.billingSameAsShipping !== false;
 
-      const fullShippingAddressStr = `${shippingAddress.address || ''}${shippingAddress.landmark ? `, Near ${shippingAddress.landmark}` : ''}, ${shippingAddress.city || 'Delhi'}, ${shippingAddress.state || 'Delhi'} - ${shippingAddress.pincode || '110001'}`;
+      const shipAdd = (shippingAddress.address || '').trim();
+      const shipLandmark = (shippingAddress.landmark || '').trim();
+      const shipCity = (shippingAddress.city || '').trim();
+      const shipState = (shippingAddress.state || '').trim();
+      const shipPin = (shippingAddress.pincode || '').replace(/\D/g, '').trim();
+
+      const fullShippingAddressStr = `${shipAdd}${shipLandmark ? `, Near ${shipLandmark}` : ''}, ${shipCity}, ${shipState} - ${shipPin}`;
+
+      const billAdd = (billingAddress.address || shipAdd).trim();
+      const billLandmark = (billingAddress.landmark || shipLandmark).trim();
+      const billCity = (billingAddress.city || shipCity).trim();
+      const billState = (billingAddress.state || shipState).trim();
+      const billPin = (billingAddress.pincode || shipPin).replace(/\D/g, '').trim();
+
       const fullBillingAddressStr = billingSameAsShipping
         ? fullShippingAddressStr
-        : `${billingAddress.address || ''}${billingAddress.landmark ? `, Near ${billingAddress.landmark}` : ''}, ${billingAddress.city || 'Delhi'}, ${billingAddress.state || 'Delhi'} - ${billingAddress.pincode || '110001'}`;
+        : `${billAdd}${billLandmark ? `, Near ${billLandmark}` : ''}, ${billCity}, ${billState} - ${billPin}`;
 
       const invoiceNumber = await getNextContinuousInvoiceNumber();
       const invoiceDate = new Date().toLocaleDateString('en-IN', {
@@ -462,7 +475,7 @@ apiRouter.post('/verify-payment', async (req, res) => {
         year: 'numeric',
       });
 
-      // Automatic order dispatch to Delhivery One
+      // Automatic order dispatch to Delhivery One with client's exact delivery destination
       try {
         shipmentResult = await createDelhiveryShipment({
           orderNumber: order_data.orderNumber || `TITAN-${Date.now().toString().slice(-6)}`,
@@ -470,11 +483,22 @@ apiRouter.post('/verify-payment', async (req, res) => {
             name: customerName,
             phone: customerPhone,
             email: customerEmail,
-            address: `${shippingAddress.address || ''}${shippingAddress.landmark ? `, Near ${shippingAddress.landmark}` : ''}`,
-            city: shippingAddress.city || 'Delhi',
-            state: shippingAddress.state || 'Delhi',
-            pincode: shippingAddress.pincode || '110001',
+            address: `${shipAdd}${shipLandmark ? `, Near ${shipLandmark}` : ''}`,
+            city: shipCity,
+            state: shipState,
+            pincode: shipPin,
           },
+          billing: {
+            name: (billingAddress?.name || customerName).trim(),
+            phone: (billingAddress?.phone || customerPhone).trim(),
+            email: (billingAddress?.email || customerEmail).trim(),
+            address: `${billAdd}${billLandmark ? `, Near ${billLandmark}` : ''}`,
+            city: billCity,
+            state: billState,
+            pincode: billPin,
+            gstin: (billingAddress?.gstin || '').trim(),
+          },
+          billingSameAsShipping,
           items: (order_data.items || []).map((i: any) => ({
             name: `${i.productName} (${i.packName || 'Standard'})`,
             quantity: i.quantity,
@@ -507,7 +531,7 @@ apiRouter.post('/verify-payment', async (req, res) => {
         invoiceNumber,
         invoiceDate,
         paymentStatus: 'PAID',
-        paymentMethod: 'Razorpay Online (UPI/Cards)',
+        paymentMethod: 'Online Payment (UPI / Card / Netbanking)',
         razorpayPaymentId: razorpay_payment_id,
         razorpayOrderId: razorpay_order_id,
         trackingNumber: shipmentResult.waybill,
@@ -627,12 +651,25 @@ apiRouter.post('/orders/confirm', async (req, res) => {
       year: 'numeric',
     });
 
-    const fullShippingAddressStr = `${shippingAddress.address}${shippingAddress.landmark ? `, Near ${shippingAddress.landmark}` : ''}, ${shippingAddress.city || 'Delhi'}, ${shippingAddress.state || 'Delhi'} - ${shippingAddress.pincode}`;
+    const shipAdd = (shippingAddress.address || '').trim();
+    const shipLandmark = (shippingAddress.landmark || '').trim();
+    const shipCity = (shippingAddress.city || '').trim();
+    const shipState = (shippingAddress.state || '').trim();
+    const shipPin = (shippingAddress.pincode || '').replace(/\D/g, '').trim();
+
+    const fullShippingAddressStr = `${shipAdd}${shipLandmark ? `, Near ${shipLandmark}` : ''}, ${shipCity}, ${shipState} - ${shipPin}`;
+
+    const billAdd = (effectiveBilling.address || shipAdd).trim();
+    const billLandmark = (effectiveBilling.landmark || shipLandmark).trim();
+    const billCity = (effectiveBilling.city || shipCity).trim();
+    const billState = (effectiveBilling.state || shipState).trim();
+    const billPin = (effectiveBilling.pincode || shipPin).replace(/\D/g, '').trim();
+
     const fullBillingAddressStr = billingSameAsShipping
       ? fullShippingAddressStr
-      : `${effectiveBilling.address}${effectiveBilling.landmark ? `, Near ${effectiveBilling.landmark}` : ''}, ${effectiveBilling.city || 'Delhi'}, ${effectiveBilling.state || 'Delhi'} - ${effectiveBilling.pincode}`;
+      : `${billAdd}${billLandmark ? `, Near ${billLandmark}` : ''}, ${billCity}, ${billState} - ${billPin}`;
 
-    // Automatic dispatch to delivery partner (Delhivery One) with resilient queuing
+    // Automatic dispatch to delivery partner (Delhivery One) with client's exact location
     let shipmentResult: any;
     try {
       shipmentResult = await createDelhiveryShipment({
@@ -641,11 +678,22 @@ apiRouter.post('/orders/confirm', async (req, res) => {
           name: customerName,
           phone: customerPhone,
           email: customerEmail,
-          address: `${shippingAddress.address}${shippingAddress.landmark ? `, Near ${shippingAddress.landmark}` : ''}`,
-          city: shippingAddress.city || 'Delhi',
-          state: shippingAddress.state || 'Delhi',
-          pincode: shippingAddress.pincode,
+          address: `${shipAdd}${shipLandmark ? `, Near ${shipLandmark}` : ''}`,
+          city: shipCity,
+          state: shipState,
+          pincode: shipPin,
         },
+        billing: {
+          name: (effectiveBilling?.name || customerName).trim(),
+          phone: (effectiveBilling?.phone || customerPhone).trim(),
+          email: (effectiveBilling?.email || customerEmail).trim(),
+          address: `${billAdd}${billLandmark ? `, Near ${billLandmark}` : ''}`,
+          city: billCity,
+          state: billState,
+          pincode: billPin,
+          gstin: (effectiveBilling?.gstin || '').trim(),
+        },
+        billingSameAsShipping,
         items: items.map((i: any) => ({
           name: `${i.productName} (${i.packName || 'Standard Pack'})`,
           quantity: i.quantity,

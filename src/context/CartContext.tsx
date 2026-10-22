@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CartItem, Product, ProductPack } from '../types';
+import { trackAddToCart } from '../utils/metaPixel';
 
 interface CartContextType {
   items: CartItem[];
@@ -85,6 +86,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       ];
     });
+
+    const price = selectedPack ? selectedPack.price : product.price;
+    trackAddToCart({
+      id: itemKey,
+      name: product.name,
+      price,
+      quantity,
+      packName: selectedPack ? selectedPack.name : undefined,
+    });
+
     setIsOpen(true);
   };
 

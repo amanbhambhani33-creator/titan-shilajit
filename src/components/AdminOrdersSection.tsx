@@ -1622,7 +1622,7 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
           <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
             {[
               { id: 'all', label: `All (${orders.length})` },
-              { id: 'online', label: `Razorpay Online (${onlineOrders.length})` },
+              { id: 'online', label: `UPI / Card / NetBanking (${onlineOrders.length})` },
               { id: 'cod', label: `Cash on Delivery (${codOrders.length})` },
             ].map((btn) => (
               <button
@@ -1691,7 +1691,7 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
                                 : 'bg-amber-100 text-amber-900 border border-amber-300'
                             }`}
                           >
-                            {isPaid ? 'PAID VIA RAZORPAY' : 'CASH ON DELIVERY'}
+                            {isPaid ? 'PAID (UPI / CARD / NETBANKING)' : 'CASH ON DELIVERY'}
                           </span>
                           {order.invoiceNumber && (
                             <span className="text-[10px] font-mono text-[#66704B] bg-[#F7F3E8] px-1.5 py-0.5 rounded-xs">
@@ -1858,7 +1858,7 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
                           <div className="flex justify-between">
                             <span className="text-[#66704B]">Payment Gateway:</span>
                             <strong className="text-[#10110F]">
-                              {isPaid ? 'Razorpay Standard Checkout' : 'Cash on Delivery (Doorstep)'}
+                              {isPaid ? 'UPI / Card / NetBanking Online' : 'Cash on Delivery (Doorstep)'}
                             </strong>
                           </div>
                           {order.razorpayDetails?.paymentId && (

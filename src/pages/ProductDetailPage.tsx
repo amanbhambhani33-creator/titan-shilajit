@@ -27,6 +27,7 @@ import { useCart } from '../context/CartContext';
 import { Product, ProductPack } from '../types';
 import { getProductPacks, getPackShortBadge, getPackShortName, getPackShortQuantity } from '../utils/productPacks';
 import { AmazonFlipkartBadge } from '../components/AmazonFlipkartBadge';
+import { trackViewContent } from '../utils/metaPixel';
 
 export const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -69,6 +70,13 @@ export const ProductDetailPage: React.FC = () => {
       if (existing > 0) {
         setQuantity(existing);
       }
+      trackViewContent({
+        id: product.id,
+        name: product.name,
+        price: currentPack ? currentPack.price : product.price,
+        category: product.category,
+        slug: product.slug,
+      });
     }
   }, [product?.id, currentPack?.id, getItemQuantity]);
 
@@ -489,7 +497,7 @@ export const ProductDetailPage: React.FC = () => {
               <div className="flex items-center justify-center gap-2 text-[10.5px] font-bold uppercase tracking-wider text-[#66704B] pt-1">
                 <span>Cash on Delivery</span>
                 <span>•</span>
-                <span>UPI & Cards (Razorpay)</span>
+                <span>(upi/card/netbankin)</span>
                 <span>•</span>
                 <span>Delhivery Express</span>
               </div>

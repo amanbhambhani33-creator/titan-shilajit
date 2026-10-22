@@ -206,7 +206,7 @@ export const FAQS = [
   },
   {
     question: 'How do I place an order?',
-    answer: 'Select your preferred Shilajit resin or honey sticks pack on our store, click "ADD TO CART" or "BUY NOW", and proceed through our fast 1-page checkout. We provide instant Cash on Delivery (COD) as well as secure prepaid options (UPI, Cards, NetBanking via Razorpay) with complimentary Pan-India Delhivery express dispatch.'
+    answer: 'Select your preferred Shilajit resin or honey sticks pack on our store, click "ADD TO CART" or "BUY NOW", and proceed through our fast 1-page checkout. We provide instant Cash on Delivery (COD) as well as secure prepaid options (upi/card/netbankin) with complimentary Pan-India Delhivery express dispatch.'
   },
   {
     question: 'Can women take Titan Shilajit?',

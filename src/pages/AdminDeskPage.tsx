@@ -686,11 +686,21 @@ export const AdminDeskPage: React.FC = () => {
                 </span>
               )}
             </div>
-            <h1 className="font-serif text-xl sm:text-3xl md:text-4xl font-bold tracking-tight text-[#F7F3E8]">
-              TITAN STORE MANAGER
-            </h1>
+            <div className="flex items-center gap-3.5 mt-1">
+              {content.logo?.useCustomImage && content.logo?.imageUrl && (
+                <img
+                  src={content.logo.imageUrl}
+                  alt="Store Logo"
+                  style={{ height: '38px' }}
+                  className="w-auto object-contain brightness-110 rounded-xs hidden sm:block border border-white/10 p-0.5 bg-black/30"
+                />
+              )}
+              <h1 className="font-serif text-xl sm:text-3xl md:text-4xl font-bold tracking-tight text-[#F7F3E8]">
+                TITAN STORE MANAGER
+              </h1>
+            </div>
             <p className="text-[11px] sm:text-xs text-[#EEE8D7]/75 font-sans mt-1">
-              Logged in as <strong className="text-[#D4B66A]">{user?.email || 'admin@titanshilajit.com'}</strong> • Live catalog, launch banners, and copy control.
+              Logged in as <strong className="text-[#D4B66A]">{user?.email || 'admin@titanshilajit.com'}</strong> • Live catalog, brand logo, launch banners, and copy control.
             </p>
           </div>
 

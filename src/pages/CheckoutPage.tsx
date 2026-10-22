@@ -28,6 +28,7 @@ import { useCart } from '../context/CartContext';
 import { useStoreContent } from '../context/StoreContentContext';
 import { BRAND_CONTACT } from '../data/content';
 import { OrderRecord, ShippingAddressData, BillingAddressData } from '../types';
+import { trackInitiateCheckout, trackPurchase } from '../utils/metaPixel';
 
 interface OrderConfirmationData {
   orderNumber: string;
@@ -79,7 +80,7 @@ interface OrderConfirmationData {
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { items, totalPrice, clearCart, addToCart } = useCart();
+  const { items, totalPrice, clearCart, addToCart, totalItems } = useCart();
   const { checkCustomerFirstOrder, recordOrder, products } = useStoreContent();
 
   // Address and Contact Information State
@@ -99,13 +100,22 @@ export const CheckoutPage: React.FC = () => {
     try { return localStorage.getItem('titan_checkout_landmark') || ''; } catch { return ''; }
   });
   const [city, setCity] = useState(() => {
-    try { return localStorage.getItem('titan_checkout_city') || 'New Delhi'; } catch { return 'New Delhi'; }
+    try {
+      const saved = localStorage.getItem('titan_checkout_city');
+      return saved && saved !== 'New Delhi' ? saved : '';
+    } catch { return ''; }
   });
   const [state, setState] = useState(() => {
-    try { return localStorage.getItem('titan_checkout_state') || 'Delhi'; } catch { return 'Delhi'; }
+    try {
+      const saved = localStorage.getItem('titan_checkout_state');
+      return saved && saved !== 'Delhi' ? saved : '';
+    } catch { return ''; }
   });
   const [pincode, setPincode] = useState(() => {
-    try { return localStorage.getItem('titan_checkout_pincode') || '110001'; } catch { return '110001'; }
+    try {
+      const saved = localStorage.getItem('titan_checkout_pincode');
+      return saved && saved !== '110001' ? saved : '';
+    } catch { return ''; }
   });
 
   // Billing Address State (defaults to same as shipping address)
@@ -204,6 +214,13 @@ export const CheckoutPage: React.FC = () => {
       .catch(() => {});
   }, []);
 
+  // Track Meta Pixel InitiateCheckout
+  useEffect(() => {
+    if (items.length > 0 && !confirmedOrder) {
+      trackInitiateCheckout(finalTotal, totalItems);
+    }
+  }, []);
+
   // CRITICAL FIX: If user has items in cart, they are placing a new order.
   // Never trap them on a past billed/invoice screen!
   useEffect(() => {
@@ -280,12 +297,12 @@ export const CheckoutPage: React.FC = () => {
               provider: data.provider || 'Delhivery B2C Express',
               hubName: data.hubName,
             });
-            // Auto-populate city & state if empty or matching default
-            if (data.city && (!city || city === 'New Delhi' || city === 'Delhi')) {
-              setCity(data.city);
+            // Fill city & state ONLY if user hasn't already typed them (never overwrite client's exact typed city)
+            if (data.city) {
+              setCity((prev) => (prev && prev.trim().length > 0 ? prev : data.city));
             }
-            if (data.state && (!state || state === 'Delhi')) {
-              setState(data.state);
+            if (data.state) {
+              setState((prev) => (prev && prev.trim().length > 0 ? prev : data.state));
             }
           } else {
             setPincodeServiceability({
@@ -306,6 +323,25 @@ export const CheckoutPage: React.FC = () => {
       setPincodeServiceability(null);
     }
   }, [pincode]);
+
+  // Real-Time Auto-Population for Billing Address when separate billing PIN is entered
+  useEffect(() => {
+    if (billingSameAsShipping) return;
+    const cleanBillPin = billingPincode.replace(/\D/g, '').trim();
+    if (cleanBillPin.length === 6) {
+      const controller = new AbortController();
+      fetch(`/api/delhivery/serviceability?pincode=${cleanBillPin}`, { signal: controller.signal })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.success) {
+            if (data.city) setBillingCity((prev) => (prev && prev.trim().length > 0 ? prev : data.city));
+            if (data.state) setBillingState((prev) => (prev && prev.trim().length > 0 ? prev : data.state));
+          }
+        })
+        .catch(() => {});
+      return () => controller.abort();
+    }
+  }, [billingPincode, billingSameAsShipping]);
 
   const finalTotal = Math.max(0, totalPrice - discountAmount);
 
@@ -417,8 +453,20 @@ export const CheckoutPage: React.FC = () => {
       setErrorMessage('Please enter a valid 6-digit postal PIN code.');
       return false;
     }
+    if (!city.trim()) {
+      setErrorMessage('Please enter your City.');
+      return false;
+    }
+    if (!state.trim()) {
+      setErrorMessage('Please enter your State.');
+      return false;
+    }
 
     if (!billingSameAsShipping) {
+      if (!billingName.trim()) {
+        setErrorMessage('Please enter the Billing Name.');
+        return false;
+      }
       if (!billingStreetAddress.trim() || billingStreetAddress.trim().length < 5) {
         setErrorMessage('Please enter the complete Street Address for your Billing Address.');
         return false;
@@ -426,6 +474,14 @@ export const CheckoutPage: React.FC = () => {
       const cleanBillPin = billingPincode.replace(/\D/g, '');
       if (cleanBillPin.length !== 6) {
         setErrorMessage('Please enter a valid 6-digit PIN code for your Billing Address.');
+        return false;
+      }
+      if (!billingCity.trim()) {
+        setErrorMessage('Please enter the Billing City.');
+        return false;
+      }
+      if (!billingState.trim()) {
+        setErrorMessage('Please enter the Billing State.');
         return false;
       }
     }
@@ -580,6 +636,22 @@ export const CheckoutPage: React.FC = () => {
     try {
       sessionStorage.setItem('titan_last_confirmed_order', JSON.stringify(confirmationData));
     } catch {}
+
+    // Track Meta Pixel Purchase event with order value & products
+    try {
+      trackPurchase({
+        orderNumber: confirmationData.orderNumber,
+        total: finalTotal,
+        items: items.map((it) => ({
+          id: it.id || it.product.id,
+          name: it.product.name,
+          quantity: it.quantity,
+          price: it.selectedPack ? it.selectedPack.price : it.product.price,
+        })),
+      });
+    } catch (pixelErr) {
+      console.warn('Meta Pixel tracking notice:', pixelErr);
+    }
 
     // Clear cart now that order is securely placed
     clearCart();
@@ -764,7 +836,7 @@ export const CheckoutPage: React.FC = () => {
               orderNumber,
               invoiceNum,
               invoiceDateStr,
-              'Razorpay Online (UPI/Cards)',
+              '(upi/card/netbankin)',
               'PAID',
               verifyData?.shipment || {
                 courier: 'Delhivery One Express',
@@ -817,8 +889,8 @@ export const CheckoutPage: React.FC = () => {
 
       rzpInstance.open();
     } catch (err: any) {
-      console.error('Razorpay initialization error:', err);
-      setErrorMessage(err?.message || 'Unable to open Razorpay payment gateway. Please try again or choose Cash on Delivery.');
+      console.error('Online payment initialization error:', err);
+      setErrorMessage(err?.message || 'Unable to open online payment gateway (UPI/Card/Netbanking). Please try again or choose Cash on Delivery.');
       setIsProcessing(false);
     }
   };
@@ -1185,7 +1257,7 @@ export const CheckoutPage: React.FC = () => {
                 <span className={`inline-block font-bold px-1.5 py-0.5 rounded-xs text-[9.5px] ${
                   isCod ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-emerald-900 border border-emerald-300'
                 }`}>
-                  {isCod ? 'COD (PAY UPON DELIVERY)' : 'PAID IN FULL (RAZORPAY)'}
+                  {isCod ? 'COD (PAY UPON DELIVERY)' : 'PAID IN FULL (upi/card/netbankin)'}
                 </span>
                 {confirmedOrder.razorpayPaymentId && (
                   <div className="text-[10px] text-[#66704B] pt-1">
@@ -1394,7 +1466,7 @@ export const CheckoutPage: React.FC = () => {
             Complete Your Vitality Order
           </h1>
           <p className="text-xs sm:text-sm text-[#66704B] mt-1">
-            Choose your preferred payment method (Credit/Debit Cards, UPI, Net Banking via Razorpay, or Cash on Delivery) with complimentary Delhivery Express dispatch.
+            Choose your preferred payment method (UPI, Credit/Debit Cards, Net Banking, or Cash on Delivery) with complimentary Delhivery Express dispatch.
           </p>
         </div>
 
@@ -1434,9 +1506,14 @@ export const CheckoutPage: React.FC = () => {
                   <span className="w-6 h-6 rounded-full bg-[#183D27] text-[#D4B66A] font-bold text-xs flex items-center justify-center">
                     1
                   </span>
-                  <h2 className="font-serif font-bold text-lg text-[#10110F]">
-                    Shipping & Delivery Details
-                  </h2>
+                  <div>
+                    <h2 className="font-serif font-bold text-lg text-[#10110F]">
+                      Billing & Delivery Information
+                    </h2>
+                    <p className="text-[11px] text-[#66704B]">
+                      Enter your exact details. What you fill is sent directly to Delhivery Express as-is for dispatch and continuous GST Tax Invoice.
+                    </p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-1 text-[11px] text-[#183D27] font-semibold">
                   <Truck className="w-3.5 h-3.5" />
@@ -1540,7 +1617,7 @@ export const CheckoutPage: React.FC = () => {
                     type="text"
                     required
                     maxLength={6}
-                    placeholder="110001"
+                    placeholder="6-digit PIN code (e.g. 400001, 560001, 110001)"
                     value={pincode}
                     onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
                     className="w-full px-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm focus:border-[#183D27] focus:ring-1 focus:ring-[#183D27] outline-none font-bold"
@@ -1584,7 +1661,7 @@ export const CheckoutPage: React.FC = () => {
                   <input
                     type="text"
                     required
-                    placeholder="New Delhi"
+                    placeholder="e.g. Mumbai, Bengaluru, Jaipur, Lucknow"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm focus:border-[#183D27] focus:ring-1 focus:ring-[#183D27] outline-none"
@@ -1598,7 +1675,7 @@ export const CheckoutPage: React.FC = () => {
                   <input
                     type="text"
                     required
-                    placeholder="Delhi"
+                    placeholder="e.g. Maharashtra, Karnataka, Rajasthan, Uttar Pradesh"
                     value={state}
                     onChange={(e) => setState(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm focus:border-[#183D27] focus:ring-1 focus:ring-[#183D27] outline-none"
@@ -1820,12 +1897,12 @@ export const CheckoutPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-1 text-[11px] text-[#B88A32] font-semibold">
                   <ShieldCheck className="w-3.5 h-3.5 text-[#B88A32]" />
-                  <span>Razorpay Verified Gateway</span>
+                  <span>(upi/card/netbankin) Secured Gateway</span>
                 </div>
               </div>
 
               <div className="space-y-3">
-                {/* Option 1: Razorpay Online Payment */}
+                {/* Option 1: (upi/card/netbankin) Online Payment */}
                 <label
                   className={`block p-4 sm:p-5 rounded-xs border-2 transition-all cursor-pointer ${
                     paymentMethod === 'online'
@@ -1844,7 +1921,7 @@ export const CheckoutPage: React.FC = () => {
                     <div className="flex-1">
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <span className="font-serif font-bold text-base text-[#10110F]">
-                          Razorpay Standard Checkout (Instant Dispatch)
+                          (upi/card/netbankin) — Instant Online Payment
                         </span>
                         <span className="px-2 py-0.5 rounded-full bg-[#183D27] text-[#D4B66A] text-[9.5px] font-black uppercase tracking-wider">
                           MOST POPULAR • SECURE
@@ -1936,7 +2013,7 @@ export const CheckoutPage: React.FC = () => {
                 ) : paymentMethod === 'online' ? (
                   <>
                     <Lock className="w-4 h-4 text-[#D4B66A]" />
-                    <span>PAY ₹{finalTotal} VIA RAZORPAY</span>
+                    <span>PAY ₹{finalTotal} VIA (UPI/CARD/NETBANKIN)</span>
                     <ArrowRight className="w-4 h-4 text-[#D4B66A]" />
                   </>
                 ) : (

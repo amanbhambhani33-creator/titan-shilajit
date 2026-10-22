@@ -9,6 +9,7 @@ import { CartDrawer } from './components/CartDrawer';
 import { FloatingWhatsApp } from './components/FloatingWhatsApp';
 import { SearchModal } from './components/SearchModal';
 import { SplashIntro } from './components/SplashIntro';
+import { trackPageView } from './utils/metaPixel';
 
 // Pages
 import { HomePage } from './pages/HomePage';
@@ -27,9 +28,10 @@ export const App: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const location = useLocation();
 
-  // Scroll to top on route change
+  // Scroll to top and track Meta Pixel PageView on route change
   React.useEffect(() => {
     window.scrollTo(0, 0);
+    trackPageView();
   }, [location.pathname]);
 
   const isAdmin = location.pathname.startsWith('/supreme-titanadmin');
