@@ -38,6 +38,7 @@ import {
   Upload,
   X,
   Check,
+  Server,
 } from 'lucide-react';
 import { useStoreContent, HeroBannerConfig, LaunchBannerConfig, BrandStoryConfig } from '../context/StoreContentContext';
 import { useAuth } from '../context/AuthContext';
@@ -51,6 +52,7 @@ import { AdminReviewsSection } from '../components/AdminReviewsSection';
 import { AdminProductImageUploader } from '../components/AdminProductImageUploader';
 import { AdminOrdersSection } from '../components/AdminOrdersSection';
 import { AdminBrandLogoSection } from '../components/AdminBrandLogoSection';
+import { AdminHostingerSection } from '../components/AdminHostingerSection';
 
 export const AdminDeskPage: React.FC = () => {
   const {
@@ -103,7 +105,7 @@ export const AdminDeskPage: React.FC = () => {
     refreshStoreData,
   } = useStoreContent();
 
-  const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'quality' | 'developer' | 'rbac' | 'settings' | 'orders' | 'reviews'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'quality' | 'developer' | 'rbac' | 'settings' | 'orders' | 'reviews' | 'hostinger'>('products');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
   const navigate = useNavigate();
@@ -797,6 +799,7 @@ export const AdminDeskPage: React.FC = () => {
               icon: Crown,
             },
             { id: 'settings', label: 'Store Defaults & Backup', icon: Sliders },
+            { id: 'hostinger', label: 'Hostinger Storage & DB', icon: Server },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1745,6 +1748,13 @@ export const AdminDeskPage: React.FC = () => {
         {/* ========================================================================= */}
         {activeTab === 'rbac' && (
           <AdminRBACSection onToast={showToast} />
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 6: HOSTINGER STORAGE & DATABASE ENGINE */}
+        {/* ========================================================================= */}
+        {activeTab === 'hostinger' && (
+          <AdminHostingerSection onToast={showToast} />
         )}
       </div>
 

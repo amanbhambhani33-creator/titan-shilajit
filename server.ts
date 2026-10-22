@@ -33,6 +33,20 @@ import {
   saveReturnRequestToFirestore,
   getReturnRequestsFromFirestore,
 } from './server/firestore';
+import {
+  getHostingerDbStatus,
+  getHostingerOrders,
+  saveHostingerOrder,
+  getHostingerProducts,
+  saveHostingerProducts,
+  getHostingerReviews,
+  saveHostingerReviews,
+  getHostingerPageContent,
+  saveHostingerPageContent,
+  syncAllFromClient,
+  exportFullHostingerBackup,
+  testHostingerMysqlConnection,
+} from './server/hostingerDb';
 
 dotenv.config();
 
@@ -539,58 +553,66 @@ apiRouter.post('/verify-payment', async (req, res) => {
         courier: shipmentResult.courier,
       };
 
-      // Directly push verified online order with gateway details and billing + shipping details to Firestore
+      // Directly push verified online order with gateway details and billing + shipping details to Firestore & Hostinger
+      const onlineOrderPayload = {
+        orderNumber: order_data.orderNumber || `TITAN-${Date.now().toString().slice(-6)}`,
+        customerName,
+        customerPhone,
+        customerEmail,
+        shippingAddress: fullShippingAddressStr,
+        shippingAddressDetails: shippingAddress,
+        billingAddress: fullBillingAddressStr,
+        billingAddressDetails: billingAddress,
+        billingSameAsShipping,
+        billingName: billingAddress.name || customerName,
+        billingPhone: billingAddress.phone || customerPhone,
+        billingEmail: billingAddress.email || customerEmail,
+        billingGstin: billingAddress.gstin || '',
+        deliveryDetails: {
+          courier: shipmentResult.courier,
+          trackingNumber: shipmentResult.waybill,
+          trackingUrl: shipmentResult.trackingUrl,
+          status: shipmentResult.status,
+          pickupLocation: shipmentResult.pickupLocation,
+          expectedDelivery: shipmentResult.expectedDelivery,
+          delhiverySynced: shipmentResult.delhiverySynced,
+          delhiveryError: shipmentResult.error,
+          manifestId: shipmentResult.manifestId,
+          rawResponse: shipmentResult.rawResponse,
+        },
+        invoiceNumber: invoiceData.invoiceNumber,
+        invoiceDate: invoiceData.invoiceDate,
+        paymentStatus: 'PAID',
+        paymentMethod: 'online',
+        razorpayDetails: {
+          orderId: razorpay_order_id,
+          paymentId: razorpay_payment_id,
+          signature: razorpay_signature,
+        },
+        items: (order_data.items || []).map((it: any) => ({
+          productId: it.productId || 'shilajit-resin',
+          productName: it.productName,
+          packName: it.packName,
+          quantity: it.quantity,
+          price: it.price,
+        })),
+        subtotal: order_data.total || 0,
+        discount: order_data.discount || 0,
+        couponCode: order_data.couponCode,
+        total: order_data.total || 0,
+        status: 'confirmed',
+      };
+
       try {
-        await pushOrderToFirestore({
-          orderNumber: order_data.orderNumber || `TITAN-${Date.now().toString().slice(-6)}`,
-          customerName,
-          customerPhone,
-          customerEmail,
-          shippingAddress: fullShippingAddressStr,
-          shippingAddressDetails: shippingAddress,
-          billingAddress: fullBillingAddressStr,
-          billingAddressDetails: billingAddress,
-          billingSameAsShipping,
-          billingName: billingAddress.name || customerName,
-          billingPhone: billingAddress.phone || customerPhone,
-          billingEmail: billingAddress.email || customerEmail,
-          billingGstin: billingAddress.gstin || '',
-          deliveryDetails: {
-            courier: shipmentResult.courier,
-            trackingNumber: shipmentResult.waybill,
-            trackingUrl: shipmentResult.trackingUrl,
-            status: shipmentResult.status,
-            pickupLocation: shipmentResult.pickupLocation,
-            expectedDelivery: shipmentResult.expectedDelivery,
-            delhiverySynced: shipmentResult.delhiverySynced,
-            delhiveryError: shipmentResult.error,
-            manifestId: shipmentResult.manifestId,
-            rawResponse: shipmentResult.rawResponse,
-          },
-          invoiceNumber: invoiceData.invoiceNumber,
-          invoiceDate: invoiceData.invoiceDate,
-          paymentStatus: 'PAID',
-          paymentMethod: 'online',
-          razorpayDetails: {
-            orderId: razorpay_order_id,
-            paymentId: razorpay_payment_id,
-            signature: razorpay_signature,
-          },
-          items: (order_data.items || []).map((it: any) => ({
-            productId: it.productId || 'shilajit-resin',
-            productName: it.productName,
-            packName: it.packName,
-            quantity: it.quantity,
-            price: it.price,
-          })),
-          subtotal: order_data.total || 0,
-          discount: order_data.discount || 0,
-          couponCode: order_data.couponCode,
-          total: order_data.total || 0,
-          status: 'confirmed',
-        });
+        await pushOrderToFirestore(onlineOrderPayload);
       } catch (fsErr) {
         console.warn('Background Firestore online order persist notice:', fsErr);
+      }
+
+      try {
+        saveHostingerOrder(onlineOrderPayload);
+      } catch (hErr) {
+        console.warn('Hostinger local online order save notice:', hErr);
       }
     }
 
@@ -767,11 +789,17 @@ apiRouter.post('/orders/confirm', async (req, res) => {
       status: 'confirmed',
     };
 
-    // Push COD/Order directly to Firestore from the backend
+    // Push COD/Order directly to Firestore and Hostinger DB from the backend
     try {
       await pushOrderToFirestore(fullOrderPayload);
     } catch (fsErr) {
       console.warn('Background Firestore COD order persist notice:', fsErr);
+    }
+
+    try {
+      saveHostingerOrder(fullOrderPayload);
+    } catch (hErr) {
+      console.warn('Hostinger local COD order save notice:', hErr);
     }
 
     const responsePayload = {
@@ -841,10 +869,23 @@ apiRouter.post('/orders/push-firestore', async (req, res) => {
 // Endpoint: Fetch All Orders from Firestore
 apiRouter.get('/orders', async (req, res) => {
   try {
-    const orders = await fetchOrdersFromFirestore();
+    let orders = await fetchOrdersFromFirestore().catch(() => []);
+    const hostingerOrders = getHostingerOrders();
+    if (!orders || orders.length === 0) {
+      orders = hostingerOrders;
+    } else if (hostingerOrders.length > 0) {
+      const seen = new Set(orders.map((o: any) => o.orderNumber || o.id));
+      for (const ho of hostingerOrders) {
+        if (!seen.has(ho.orderNumber || ho.id)) {
+          orders.push(ho);
+          seen.add(ho.orderNumber || ho.id);
+        }
+      }
+    }
     return res.json({ success: true, orders });
   } catch (err: any) {
-    return res.status(500).json({ success: false, orders: [], error: err?.message });
+    const fallbackOrders = getHostingerOrders();
+    return res.json({ success: true, orders: fallbackOrders });
   }
 });
 
@@ -856,6 +897,120 @@ apiRouter.get('/orders/check-customer', async (req, res) => {
     return res.json({ success: true, ...result });
   } catch (err: any) {
     return res.json({ success: true, isFirstOrder: true, count: 0 });
+  }
+});
+
+// =========================================================================
+// HOSTINGER SELF-CONTAINED DATABASE & STORAGE API
+// =========================================================================
+
+apiRouter.get('/hostinger/status', (req, res) => {
+  try {
+    const status = getHostingerDbStatus();
+    return res.json({ success: true, ...status });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+apiRouter.get('/hostinger/orders', (req, res) => {
+  try {
+    const orders = getHostingerOrders();
+    return res.json({ success: true, orders, count: orders.length });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, orders: [], error: err?.message });
+  }
+});
+
+apiRouter.post('/hostinger/orders', (req, res) => {
+  try {
+    const saved = saveHostingerOrder(req.body);
+    return res.json({ success: true, order: saved });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+apiRouter.get('/hostinger/products', (req, res) => {
+  try {
+    const products = getHostingerProducts();
+    return res.json({ success: true, products, count: products.length });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, products: [], error: err?.message });
+  }
+});
+
+apiRouter.post('/hostinger/products', (req, res) => {
+  try {
+    saveHostingerProducts(req.body.products || []);
+    return res.json({ success: true, message: 'Products saved to Hostinger database.' });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+apiRouter.get('/hostinger/reviews', (req, res) => {
+  try {
+    const reviews = getHostingerReviews();
+    return res.json({ success: true, reviews, count: reviews.length });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, reviews: [], error: err?.message });
+  }
+});
+
+apiRouter.post('/hostinger/reviews', (req, res) => {
+  try {
+    saveHostingerReviews(req.body.reviews || []);
+    return res.json({ success: true, message: 'Reviews saved to Hostinger database.' });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+apiRouter.get('/hostinger/content', (req, res) => {
+  try {
+    const content = getHostingerPageContent();
+    return res.json({ success: true, content });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+apiRouter.post('/hostinger/content', (req, res) => {
+  try {
+    saveHostingerPageContent(req.body.content);
+    return res.json({ success: true, message: 'Content saved to Hostinger database.' });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+apiRouter.post('/hostinger/sync-all', (req, res) => {
+  try {
+    const result = syncAllFromClient(req.body || {});
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+apiRouter.get('/hostinger/backup-download', (req, res) => {
+  try {
+    const backup = exportFullHostingerBackup();
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename=hostinger_titan_backup_${Date.now()}.json`);
+    return res.send(JSON.stringify(backup, null, 2));
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+apiRouter.post('/hostinger/test-mysql', async (req, res) => {
+  try {
+    const result = await testHostingerMysqlConnection(req.body);
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
   }
 });
 

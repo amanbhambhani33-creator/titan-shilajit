@@ -1279,13 +1279,21 @@ function addDeletedProductId(id: string) {
 
     setOrders((prev) => [fullOrder, ...prev]);
 
-    // 1. Send to server backend to push directly to Firestore REST API (guaranteed persistence)
+    // 1. Send to server backend to push directly to Firestore REST API & Hostinger DB (Dual Persistence)
     try {
       fetch('/api/orders/push-firestore', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fullOrder),
       }).catch((e) => console.warn('Background server firestore push notice:', e));
+    } catch {}
+
+    try {
+      fetch('/api/hostinger/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fullOrder),
+      }).catch(() => {});
     } catch {}
 
     // 2. Write via Firebase Web SDK (quota-safe)

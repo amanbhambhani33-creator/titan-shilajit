@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "updatedAt": "2026-10-22T11:21:26.787Z",
+  "orders": [],
+  "products": [
+    {
+      "id": "test-1",
+      "name": "Titan Shilajit Resin 20g",
+      "price": 1499
+    }
+  ],
+  "reviews": [],
+  "pageContent": {
+    "brandName": "Titan Shilajit"
+  },
+  "invoiceCounter": 1000,
+  "settings": {}
+}
