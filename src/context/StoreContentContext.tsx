@@ -4,6 +4,7 @@ import { PRODUCTS as DEFAULT_PRODUCTS } from '../data/products';
 import { REVIEWS as DEFAULT_REVIEWS } from '../data/reviews';
 import { TRUST_STRIP_ITEMS, BRAND_CONTACT } from '../data/content';
 import { db, doc, getDoc, setDoc, safeSetDoc, isFirestoreQuotaExhausted, onSnapshot, collection, getDocs, query, where } from '../lib/firebase';
+import { normalizeImageUrl } from '../utils/imageUrl';
 
 export type { BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage, BrandLogoConfig };
 
@@ -373,44 +374,44 @@ try {
   legacyKeys.forEach((key) => localStorage.removeItem(key));
 } catch {}
 
-// Utility to sanitize, normalize and preserve all direct image URLs
+// Utility to sanitize, normalize and preserve all direct image URLs without clobbering user choices
 function sanitizeProductsImages(items: Product[]): Product[] {
   if (!Array.isArray(items)) return [];
   return items.map((p) => {
     let cleanImgs = (p.images || []).map((img) => {
-      if (typeof img === 'string' && img.includes('/uploads/')) {
-        return img.substring(img.indexOf('/uploads/'));
+      if (typeof img === 'string') {
+        return normalizeImageUrl(img);
       }
       return img;
     }).filter(Boolean);
 
-    // If product has a cover image specified, ensure it is the first image in images
-    if (p.image && !cleanImgs.includes(p.image)) {
-      cleanImgs.unshift(p.image);
+    // If cleanImgs is empty but p.image is provided, use it
+    if (cleanImgs.length === 0 && p.image) {
+      cleanImgs = [normalizeImageUrl(p.image)];
     }
 
     // If empty, fallback to authentic product defaults
     if (cleanImgs.length === 0) {
-      if (p.image) {
-        cleanImgs = [p.image];
-      } else {
-        const def = DEFAULT_PRODUCTS.find((d) => d.id === p.id);
-        if (def && Array.isArray(def.images) && def.images.length > 0) {
-          cleanImgs = [...def.images];
-        }
+      const def = DEFAULT_PRODUCTS.find((d) => d.id === p.id);
+      if (def && Array.isArray(def.images) && def.images.length > 0) {
+        cleanImgs = [...def.images];
       }
     }
-    const primaryImg = p.image || cleanImgs[0] || '';
+
+    // The primary cover image is strictly cleanImgs[0] or p.image normalized
+    const primaryImg = cleanImgs[0] || (p.image ? normalizeImageUrl(p.image) : '');
+
     const cleanPacks = (p.packs || []).map((pk) => {
       let pkImg = pk.image || '';
-      if (typeof pkImg === 'string' && pkImg.includes('/uploads/')) {
-        pkImg = pkImg.substring(pkImg.indexOf('/uploads/'));
+      if (typeof pkImg === 'string') {
+        pkImg = normalizeImageUrl(pkImg);
       }
       return {
         ...pk,
         image: pkImg || primaryImg,
       };
     });
+
     return {
       ...p,
       image: primaryImg,

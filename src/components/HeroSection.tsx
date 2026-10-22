@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useStoreContent, DEFAULT_HERO_PICTURES } from '../context/StoreContentContext';
 import { HeroSlideImage } from '../types';
+import { handleImageError } from '../utils/imageUrl';
 
 export const HeroSection: React.FC = () => {
   const { content } = useStoreContent();
@@ -118,8 +119,10 @@ export const HeroSection: React.FC = () => {
             <img
               src={slide.imageUrl}
               alt={slide.altText || slide.title || `Himalayan Pure Shilajit Transition Slide ${index + 1}`}
+              referrerPolicy="no-referrer"
               className="w-full h-full object-cover object-center transform transition-transform duration-7000 ease-out scale-100 group-hover:scale-105"
               loading={index === 0 ? 'eager' : 'lazy'}
+              onError={(e) => handleImageError(e, 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1920&q=85')}
             />
           );
 

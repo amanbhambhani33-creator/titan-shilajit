@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ShieldCheck, Zap, Award } from 'lucide-react';
 import { useStoreContent } from '../context/StoreContentContext';
+import { handleImageError } from '../utils/imageUrl';
 
 export const LaunchProductBanner: React.FC = () => {
   const { content } = useStoreContent();
@@ -102,7 +103,9 @@ export const LaunchProductBanner: React.FC = () => {
                 <img
                   src={banner.imageUrl}
                   alt={banner.title}
+                  referrerPolicy="no-referrer"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  onError={(e) => handleImageError(e, 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85')}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#10110F] via-transparent to-transparent opacity-60" />
 

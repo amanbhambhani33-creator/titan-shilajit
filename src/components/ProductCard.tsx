@@ -4,6 +4,7 @@ import { Eye, Star, ShoppingBag, Check, Plus, Minus, Ban, Zap } from 'lucide-rea
 import { Product, ProductPack } from '../types';
 import { useCart } from '../context/CartContext';
 import { getProductPacks, getPackShortBadge, getPackShortName, getPackShortQuantity } from '../utils/productPacks';
+import { normalizeImageUrl, handleImageError, DEFAULT_PRODUCT_FALLBACK } from '../utils/imageUrl';
 
 interface ProductCardProps {
   product: Product;
@@ -42,18 +43,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   }, [product.id, currentPack.id, getItemQuantity]);
 
   // Dynamic image, price, mrp, and quantity based on active pack
-  const cleanProductImages = (product.images || []).map((img) => {
-    if (typeof img === 'string' && img.includes('/uploads/')) {
-      return img.substring(img.indexOf('/uploads/'));
-    }
-    return img;
-  }).filter(Boolean);
-
-  let packImg = currentPack.image || '';
-  if (typeof packImg === 'string' && packImg.includes('/uploads/')) {
-    packImg = packImg.substring(packImg.indexOf('/uploads/'));
-  }
-  const displayImage = packImg || product.image || cleanProductImages[0] || '';
+  const cleanProductImages = (product.images || []).map((img) => normalizeImageUrl(img)).filter(Boolean);
+  const packImg = currentPack.image ? normalizeImageUrl(currentPack.image) : '';
+  const displayImage = packImg || cleanProductImages[0] || normalizeImageUrl(product.image) || '';
   const displayPrice = currentPack?.price ?? product.price;
   const displayMrp = currentPack?.mrp ?? product.mrp;
   const displayQuantityText = currentPack.quantityText;
@@ -92,17 +84,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   key={displayImage}
                   src={displayImage}
                   alt={`${product.name} - ${currentPack.name}`}
+                  referrerPolicy="no-referrer"
                   className={`w-full h-full object-contain object-center group-hover:scale-105 transition-all duration-500 ${
                     isOutOfStock ? 'opacity-50 grayscale' : 'opacity-100'
                   }`}
                   loading="lazy"
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    target.onerror = null;
-                    if (cleanProductImages[0] && target.src !== cleanProductImages[0]) {
-                      target.src = cleanProductImages[0];
-                    }
-                  }}
+                  onError={(e) => handleImageError(e, DEFAULT_PRODUCT_FALLBACK)}
                 />
               </div>
             ) : (
@@ -111,17 +98,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   key={displayImage}
                   src={displayImage}
                   alt={`${product.name} - ${currentPack.name}`}
+                  referrerPolicy="no-referrer"
                   className={`w-full h-full object-contain object-center group-hover:scale-105 transition-all duration-500 ${
                     isOutOfStock ? 'opacity-50 grayscale' : 'opacity-100'
                   }`}
                   loading="lazy"
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    target.onerror = null;
-                    if (cleanProductImages[0] && target.src !== cleanProductImages[0]) {
-                      target.src = cleanProductImages[0];
-                    }
-                  }}
+                  onError={(e) => handleImageError(e, DEFAULT_PRODUCT_FALLBACK)}
                 />
               </Link>
             )

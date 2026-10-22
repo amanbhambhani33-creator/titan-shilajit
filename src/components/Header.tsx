@@ -6,6 +6,7 @@ import { useStoreContent } from '../context/StoreContentContext';
 import { BRAND_CONTACT } from '../data/content';
 import { AnnouncementBar } from './AnnouncementBar';
 import { AmazonFlipkartBadge } from './AmazonFlipkartBadge';
+import { handleImageError } from '../utils/imageUrl';
 
 interface HeaderProps {
   onOpenSearch: () => void;
@@ -88,8 +89,10 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch }) => {
               <img
                 src={logoConfig.imageUrl}
                 alt={logoConfig.titlePrefix ? `${logoConfig.titlePrefix}${logoConfig.titleSuffix || ''}` : 'Titan Shilajit'}
+                referrerPolicy="no-referrer"
                 style={{ height: `${logoConfig.heightPx || 44}px` }}
                 className="w-auto max-w-[240px] sm:max-w-[290px] object-contain transition-transform group-hover:scale-105"
+                onError={(e) => handleImageError(e, '/assets/aistudio/image_29351190.png')}
               />
             ) : (
               <>

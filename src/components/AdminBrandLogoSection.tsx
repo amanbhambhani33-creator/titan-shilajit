@@ -10,9 +10,11 @@ import {
   Sliders,
   Type,
   ShieldCheck,
+  Zap,
 } from 'lucide-react';
 import { useStoreContent, DEFAULT_BRAND_LOGO } from '../context/StoreContentContext';
 import { BrandLogoConfig } from '../types';
+import { normalizeImageUrl, handleImageError, downloadAndCacheImageUrl } from '../utils/imageUrl';
 
 interface AdminBrandLogoSectionProps {
   onToast: (msg: string) => void;
@@ -126,10 +128,33 @@ export const AdminBrandLogoSection: React.FC<AdminBrandLogoSectionProps> = ({ on
     }
   };
 
+  // Download and cache external logo URL to server storage
+  const handleCacheLogoUrl = async () => {
+    if (!imageUrl || (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://'))) {
+      return;
+    }
+    setIsUploading(true);
+    try {
+      const res = await downloadAndCacheImageUrl(imageUrl, 'brand-logo');
+      if (res.success && res.url) {
+        setImageUrl(res.url);
+        updateBrandLogo({ imageUrl: res.url, useCustomImage: true });
+        onToast('Logo image downloaded and saved to server storage permanently!');
+      } else {
+        onToast('Using direct logo URL with automatic proxy fallback.');
+      }
+    } catch {
+      onToast('Using direct logo URL with automatic proxy fallback.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   // Save changes
   const handleSaveLogo = () => {
+    const cleanLogo = normalizeImageUrl(imageUrl);
     const updates: Partial<BrandLogoConfig> = {
-      imageUrl: imageUrl.trim(),
+      imageUrl: cleanLogo,
       useCustomImage,
       heightPx: Number(heightPx) || 44,
       symbolText: symbolText.trim() || 'T',
@@ -229,12 +254,10 @@ export const AdminBrandLogoSection: React.FC<AdminBrandLogoSectionProps> = ({ on
                 <img
                   src={imageUrl}
                   alt="Logo Preview"
+                  referrerPolicy="no-referrer"
                   style={{ height: `${heightPx}px` }}
                   className="w-auto max-w-[280px] object-contain"
-                  onError={(e) => {
-                    // Fallback to placeholder if broken link
-                    (e.target as HTMLImageElement).src = ATTACHMENT_LOGO_PATH;
-                  }}
+                  onError={(e) => handleImageError(e, ATTACHMENT_LOGO_PATH)}
                 />
               ) : (
                 <div className="flex items-center gap-2.5">
@@ -265,8 +288,10 @@ export const AdminBrandLogoSection: React.FC<AdminBrandLogoSectionProps> = ({ on
                 <img
                   src={imageUrl}
                   alt="Logo Preview"
+                  referrerPolicy="no-referrer"
                   style={{ height: `${heightPx}px` }}
                   className="w-auto max-w-[280px] object-contain brightness-110"
+                  onError={(e) => handleImageError(e, ATTACHMENT_LOGO_PATH)}
                 />
               ) : (
                 <div className="flex items-center gap-2.5">
@@ -382,6 +407,18 @@ export const AdminBrandLogoSection: React.FC<AdminBrandLogoSectionProps> = ({ on
               >
                 Paste
               </button>
+              {imageUrl && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) && (
+                <button
+                  type="button"
+                  disabled={isUploading}
+                  onClick={handleCacheLogoUrl}
+                  title="Download and permanently store image on server storage (/uploads/...)"
+                  className="px-3 py-2 bg-[#183D27] hover:bg-black text-[#D4B66A] rounded-xs text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>Save to Server</span>
+                </button>
+              )}
             </div>
             <p className="text-[11px] text-[#66704B] mt-1">
               Supports local attachment paths (e.g. <code className="bg-gray-100 px-1 py-0.5 rounded">{ATTACHMENT_LOGO_PATH}</code>) or external image URLs (Cloudinary, Imgur, S3).

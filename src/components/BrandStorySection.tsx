@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ShieldCheck, Droplet, Award } from 'lucide-react';
 import { useStoreContent } from '../context/StoreContentContext';
+import { handleImageError } from '../utils/imageUrl';
 
 export const BrandStorySection: React.FC = () => {
   const { content } = useStoreContent();
@@ -17,7 +18,9 @@ export const BrandStorySection: React.FC = () => {
               <img
                 src={story.imageUrl || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=85'}
                 alt="Pristine Himalayan Altitude & Shilajit Cliffs"
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
+                onError={(e) => handleImageError(e, 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=85')}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#10110F]/80 via-transparent to-transparent" />
 

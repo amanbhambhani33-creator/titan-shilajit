@@ -1291,34 +1291,163 @@ apiRouter.post('/upload-image', async (req, res) => {
   }
 });
 
-// Resilient save for products catalog to Firestore with automatic base64 image conversion
+// Helper to normalize external image URLs (e.g. Google Drive, Dropbox) on the server
+function normalizeServerImageUrl(rawUrl: string): string {
+  if (!rawUrl || typeof rawUrl !== 'string') return '';
+  let url = rawUrl.trim().replace(/^["']|["']$/g, '');
+
+  // Google Drive
+  const driveFileMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (driveFileMatch && driveFileMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${driveFileMatch[1]}`;
+  }
+  const driveIdMatch = url.match(/drive\.google\.com\/(?:open|uc)\?.*id=([a-zA-Z0-9_-]+)/);
+  if (driveIdMatch && driveIdMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${driveIdMatch[1]}`;
+  }
+  // Dropbox
+  if (url.includes('dropbox.com')) {
+    if (url.includes('dl=0')) return url.replace('dl=0', 'raw=1');
+    if (!url.includes('raw=1')) return url + (url.includes('?') ? '&' : '?') + 'raw=1';
+  }
+  return url;
+}
+
+// 1. Resilient Image Proxy: Fetches external images server-side without CORS or Referer blocking
+apiRouter.get('/proxy-image', async (req, res) => {
+  try {
+    const rawUrl = (req.query.url as string) || '';
+    if (!rawUrl) {
+      return res.status(400).send('Image URL is required');
+    }
+    const targetUrl = normalizeServerImageUrl(rawUrl);
+
+    // If local path, redirect or let express static serve
+    if (targetUrl.startsWith('/') && !targetUrl.startsWith('//')) {
+      return res.redirect(targetUrl);
+    }
+
+    const response = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+      },
+    });
+
+    if (!response.ok) {
+      return res.status(response.status).send(`Failed to fetch image: ${response.statusText}`);
+    }
+
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    return res.send(buffer);
+  } catch (err: any) {
+    console.warn('[Server] Image proxy error:', err?.message);
+    return res.status(500).send('Proxy error');
+  }
+});
+
+// 2. Cache Image URL: Downloads an external image and permanently stores it in /uploads/
+apiRouter.post('/cache-image-url', async (req, res) => {
+  try {
+    const { url: rawUrl, prefix = 'product' } = req.body;
+    if (!rawUrl) {
+      return res.status(400).json({ success: false, error: 'url is required' });
+    }
+    const targetUrl = normalizeServerImageUrl(rawUrl);
+
+    // If already local
+    if (targetUrl.startsWith('/') && !targetUrl.startsWith('//')) {
+      return res.json({ success: true, url: targetUrl });
+    }
+
+    // If base64
+    if (targetUrl.startsWith('data:image')) {
+      const saved = saveBase64ToUploadFile(targetUrl, prefix);
+      return res.json({ success: true, url: saved });
+    }
+
+    // Download external image
+    const response = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'image/*,*/*',
+      },
+    });
+
+    if (!response.ok) {
+      return res.status(400).json({ success: false, error: `Failed to download: HTTP ${response.status}` });
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    let ext = 'jpg';
+    if (contentType.includes('png')) ext = 'png';
+    else if (contentType.includes('webp')) ext = 'webp';
+    else if (contentType.includes('gif')) ext = 'gif';
+    else if (contentType.includes('svg')) ext = 'svg';
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const safePrefix = prefix.replace(/[^a-zA-Z0-9_-]/g, '-').toLowerCase();
+    const filename = `${safePrefix}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}.${ext}`;
+    const filePath = path.join(UPLOADS_DIR, filename);
+    fs.writeFileSync(filePath, buffer);
+
+    // Also copy to dist/uploads if dist exists
+    const distUploads = path.join(process.cwd(), 'dist', 'uploads');
+    try {
+      if (fs.existsSync(distUploads)) {
+        fs.writeFileSync(path.join(distUploads, filename), buffer);
+      }
+    } catch {}
+
+    const localUrl = `/uploads/${filename}`;
+    return res.json({ success: true, url: localUrl });
+  } catch (err: any) {
+    console.warn('[Server] Cache image url error:', err);
+    return res.status(500).json({ success: false, error: err?.message || 'Cache failed' });
+  }
+});
+
+// Resilient save for products catalog to Firestore with automatic base64 image conversion & URL normalization
 apiRouter.post('/store-content/products', async (req, res) => {
   try {
     const { products } = req.body;
     if (!Array.isArray(products)) return res.status(400).json({ success: false, error: 'Products array is required.' });
 
-    // Clean all products: extract any base64 data URLs to permanent disk files
+    // Clean all products: extract any base64 data URLs to permanent disk files and normalize URLs
     const sanitizedProducts = products.map((prod: any) => {
       const cleanImages = (prod.images || []).map((img: string, idx: number) => {
         if (typeof img === 'string' && img.startsWith('data:image')) {
           return saveBase64ToUploadFile(img, `${prod.id || 'prod'}-${idx}`);
         }
-        return img;
-      });
+        return normalizeServerImageUrl(img);
+      }).filter(Boolean);
+
+      const primaryCover = cleanImages[0] || (typeof prod.image === 'string' && prod.image.startsWith('data:image') ? saveBase64ToUploadFile(prod.image, `${prod.id || 'prod'}-cover`) : normalizeServerImageUrl(prod.image)) || '';
 
       const cleanPacks = (prod.packs || []).map((pk: any, pIdx: number) => {
         let pkImg = pk.image;
         if (typeof pkImg === 'string' && pkImg.startsWith('data:image')) {
           pkImg = saveBase64ToUploadFile(pkImg, `${prod.id || 'prod'}-pack-${pk.id || pIdx}`);
+        } else if (typeof pkImg === 'string') {
+          pkImg = normalizeServerImageUrl(pkImg);
         }
         return {
           ...pk,
-          image: pkImg,
+          image: pkImg || primaryCover,
         };
       });
 
       return {
         ...prod,
+        image: primaryCover,
         images: cleanImages,
         packs: cleanPacks,
       };

@@ -28,6 +28,7 @@ import { Product, ProductPack } from '../types';
 import { getProductPacks, getPackShortBadge, getPackShortName, getPackShortQuantity } from '../utils/productPacks';
 import { AmazonFlipkartBadge } from '../components/AmazonFlipkartBadge';
 import { trackViewContent } from '../utils/metaPixel';
+import { normalizeImageUrl, handleImageError, DEFAULT_PRODUCT_FALLBACK } from '../utils/imageUrl';
 
 export const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -99,24 +100,14 @@ export const ProductDetailPage: React.FC = () => {
   const [isUserSelectedThumbnail, setIsUserSelectedThumbnail] = useState(false);
 
   // Display image: prioritize pack photo, user selected thumbnail, cover image, or first gallery image
-  const cleanProductImages = (product.images || []).map((img) => {
-    if (typeof img === 'string' && img.includes('/uploads/')) {
-      return img.substring(img.indexOf('/uploads/'));
-    }
-    return img;
-  }).filter(Boolean);
-
-  let packImg = currentPack?.image || '';
-  if (typeof packImg === 'string' && packImg.includes('/uploads/')) {
-    packImg = packImg.substring(packImg.indexOf('/uploads/'));
-  }
-  const currentPackImg = packImg || null;
+  const cleanProductImages = (product.images || []).map((img) => normalizeImageUrl(img)).filter(Boolean);
+  const currentPackImg = currentPack?.image ? normalizeImageUrl(currentPack.image) : null;
 
   // If user explicitly clicked a thumbnail, strictly show that thumbnail.
   // Otherwise show current pack photo if assigned, else cleanProductImages[0] or cover image.
   const displayImage = isUserSelectedThumbnail && cleanProductImages[selectedImageIndex]
     ? cleanProductImages[selectedImageIndex]
-    : (currentPackImg || cleanProductImages[selectedImageIndex] || product.image || cleanProductImages[0] || '');
+    : (currentPackImg || cleanProductImages[selectedImageIndex] || normalizeImageUrl(product.image) || cleanProductImages[0] || '');
 
   const displayPrice = currentPack ? currentPack.price : product.price;
   const displayMrp = currentPack ? currentPack.mrp : product.mrp;
@@ -185,17 +176,12 @@ export const ProductDetailPage: React.FC = () => {
                     key={displayImage}
                     src={displayImage}
                     alt={`${product.name} - ${currentPack?.name}`}
+                    referrerPolicy="no-referrer"
                     className={`w-full h-full object-contain transition-transform duration-150 ${
                       isZooming ? 'scale-[2.3]' : 'scale-100'
                     }`}
                     style={isZooming ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : undefined}
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      target.onerror = null;
-                      if (cleanProductImages[0] && target.src !== cleanProductImages[0]) {
-                        target.src = cleanProductImages[0];
-                      }
-                    }}
+                    onError={(e) => handleImageError(e, DEFAULT_PRODUCT_FALLBACK)}
                   />
 
                   {/* Amazon Zoom Hint Badge */}
@@ -258,7 +244,7 @@ export const ProductDetailPage: React.FC = () => {
                           : 'border-black/15 opacity-75 hover:opacity-100 hover:border-black/40'
                       }`}
                     >
-                      <img src={img} alt={`${product.name} thumbnail ${idx + 1}`} className="w-full h-full object-contain" />
+                      <img src={img} alt={`${product.name} thumbnail ${idx + 1}`} referrerPolicy="no-referrer" className="w-full h-full object-contain" onError={(e) => handleImageError(e, DEFAULT_PRODUCT_FALLBACK)} />
                     </button>
                   );
                 })}

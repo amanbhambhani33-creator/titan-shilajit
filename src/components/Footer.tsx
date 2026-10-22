@@ -5,6 +5,7 @@ import { BRAND_CONTACT } from '../data/content';
 import { useStoreContent } from '../context/StoreContentContext';
 import { ReturnProductModal } from './ReturnProductModal';
 import { AmazonFlipkartBadge } from './AmazonFlipkartBadge';
+import { handleImageError } from '../utils/imageUrl';
 
 export const Footer: React.FC = () => {
   const { content } = useStoreContent();
@@ -44,8 +45,10 @@ export const Footer: React.FC = () => {
                 <img
                   src={content.logo.imageUrl}
                   alt={content.logo.titlePrefix ? `${content.logo.titlePrefix}${content.logo.titleSuffix || ''}` : 'Titan Shilajit'}
+                  referrerPolicy="no-referrer"
                   style={{ height: `${Math.min(content.logo.heightPx || 44, 40)}px` }}
                   className="w-auto object-contain brightness-110"
+                  onError={(e) => handleImageError(e, '/assets/aistudio/image_29351190.png')}
                 />
               ) : (
                 <>

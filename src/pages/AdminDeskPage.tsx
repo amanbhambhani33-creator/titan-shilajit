@@ -53,6 +53,7 @@ import { AdminProductImageUploader } from '../components/AdminProductImageUpload
 import { AdminOrdersSection } from '../components/AdminOrdersSection';
 import { AdminBrandLogoSection } from '../components/AdminBrandLogoSection';
 import { AdminHostingerSection } from '../components/AdminHostingerSection';
+import { normalizeImageUrl } from '../utils/imageUrl';
 
 export const AdminDeskPage: React.FC = () => {
   const {
@@ -208,18 +209,10 @@ export const AdminDeskPage: React.FC = () => {
     e.preventDefault();
     if (!editingProduct) return;
 
-    const cleanImgs = (editingProduct.images || []).map((img) => {
-      if (typeof img === 'string' && img.includes('/uploads/')) {
-        return img.substring(img.indexOf('/uploads/'));
-      }
-      return img;
-    }).filter(Boolean);
+    const cleanImgs = (editingProduct.images || []).map((img) => normalizeImageUrl(img)).filter(Boolean);
 
     // If explicit cover image is given, make sure it is at position 0
-    const primaryImg = editingProduct.image || cleanImgs[0] || '';
-    if (primaryImg && !cleanImgs.includes(primaryImg)) {
-      cleanImgs.unshift(primaryImg);
-    }
+    const primaryImg = cleanImgs[0] || normalizeImageUrl(editingProduct.image || '');
 
     // Clean up packs so pricing packs always have the right images and synchronized pricing
     const currentPacks = (editingProduct.packs && editingProduct.packs.length > 0)
@@ -227,10 +220,7 @@ export const AdminDeskPage: React.FC = () => {
       : getProductPacks(editingProduct);
 
     const cleanPacks = currentPacks.map((pack) => {
-      let pImg = pack.image || '';
-      if (typeof pImg === 'string' && pImg.includes('/uploads/')) {
-        pImg = pImg.substring(pImg.indexOf('/uploads/'));
-      }
+      let pImg = pack.image ? normalizeImageUrl(pack.image) : '';
       return {
         ...pack,
         price: Number(pack.price) || Number(editingProduct.price),
@@ -266,11 +256,8 @@ export const AdminDeskPage: React.FC = () => {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
 
-    const cleanImages = (newProductForm.images || []).filter(Boolean);
-    const primaryImg = newProductForm.image || cleanImages[0] || '';
-    if (primaryImg && !cleanImages.includes(primaryImg)) {
-      cleanImages.unshift(primaryImg);
-    }
+    const cleanImages = (newProductForm.images || []).map((img) => normalizeImageUrl(img)).filter(Boolean);
+    const primaryImg = cleanImages[0] || normalizeImageUrl(newProductForm.image || '');
 
     const basePrice = Number(newProductForm.price) || 1499;
     const baseMrp = Number(newProductForm.mrp) || Math.round(basePrice * 1.35);
