@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, Star, ShoppingBag, Check, Plus, Minus, Ban, Zap } from 'lucide-react';
+import { Eye, Star, ShoppingBag, Check, Plus, Minus, Ban, Zap, RotateCcw } from 'lucide-react';
+
 import { Product, ProductPack } from '../types';
 import { useCart } from '../context/CartContext';
 import { getProductPacks, getPackShortBadge, getPackShortName, getPackShortQuantity } from '../utils/productPacks';
@@ -207,6 +208,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <p className="text-xs text-[#66704B] font-sans line-clamp-2 leading-relaxed font-light">
             {product.shortDescription}
           </p>
+
+          {/* Return & Cancellation Policy Badge */}
+          <div className="flex items-center gap-1.5 text-[9.5px] font-semibold text-[#183D27] bg-[#183D27]/5 border border-[#183D27]/15 px-2 py-1 rounded-xs mt-1">
+            <RotateCcw className="w-3 h-3 text-[#183D27] shrink-0" />
+            <span className="truncate">6h Cancellation • 24h Return upon Delivery</span>
+          </div>
         </div>
       </div>
 

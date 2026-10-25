@@ -13,7 +13,9 @@ import {
   Droplet,
   Ban,
   Lock,
+  RotateCcw,
 } from 'lucide-react';
+
 import { Product, ProductPack } from '../types';
 import { useCart } from '../context/CartContext';
 import { getProductPacks, getPackShortBadge, getPackShortName, getPackShortQuantity } from '../utils/productPacks';
@@ -373,7 +375,22 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, 
                   </Link>
                 </div>
 
-                <div className="pt-1">
+                {/* Return & Cancellation Policy Micro-Badge */}
+                <div className="flex items-center justify-between p-2 rounded-xs bg-[#183D27]/5 border border-[#183D27]/15 text-[10.5px] text-[#183D27] font-semibold">
+                  <div className="flex items-center gap-1.5">
+                    <RotateCcw className="w-3.5 h-3.5 text-[#183D27] shrink-0" />
+                    <span>6h Cancellation • 24h Return upon Delivery</span>
+                  </div>
+                  <Link
+                    to={`/product/${product.slug}`}
+                    onClick={onClose}
+                    className="font-bold underline text-[10px]"
+                  >
+                    Details
+                  </Link>
+                </div>
+
+                <div className="pt-0.5">
                   <AmazonFlipkartBadge variant="compact" className="w-full justify-center bg-white/80" />
                 </div>
               </>

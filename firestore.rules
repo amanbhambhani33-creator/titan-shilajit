@@ -21,9 +21,14 @@ service cloud.firestore {
       allow read, write, list: if true;
     }
 
+    match /returns/{document=**} {
+      allow read, write, list: if true;
+    }
+
     match /settings/{document=**} {
       allow read, write, list: if true;
     }
+
 
     match /{document=**} {
       allow read, write, list: if true;

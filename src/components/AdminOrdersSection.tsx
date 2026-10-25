@@ -29,8 +29,10 @@ import {
   Info,
   Save,
   Globe,
+  RotateCcw,
 } from 'lucide-react';
 import { OrderRecord } from '../types';
+import { formatDateTime, getOrderTimeInfo } from '../utils/orderPolicy';
 
 interface AdminOrdersSectionProps {
   orders: OrderRecord[];
@@ -39,11 +41,30 @@ interface AdminOrdersSectionProps {
 
 export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, onToast }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterMode, setFilterMode] = useState<'all' | 'online' | 'cod'>('all');
+  const [filterMode, setFilterMode] = useState<'all' | 'online' | 'cod' | 'returns'>('all');
+  const [returnRequests, setReturnRequests] = useState<any[]>([]);
+  const [isLoadingReturns, setIsLoadingReturns] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [isMcpOpen, setIsMcpOpen] = useState(false);
   const [copiedMcp, setCopiedMcp] = useState(false);
   const [quickAwb, setQuickAwb] = useState('');
+
+  const fetchReturns = async () => {
+    setIsLoadingReturns(true);
+    try {
+      const res = await fetch('/api/returns');
+      const data = await res.json();
+      if (data && Array.isArray(data.returns)) {
+        setReturnRequests(data.returns);
+      }
+    } catch {}
+    setIsLoadingReturns(false);
+  };
+
+  useEffect(() => {
+    fetchReturns();
+  }, []);
+
 
   // Delhivery B2C Gateway Console State
   const [isDelhiveryConsoleOpen, setIsDelhiveryConsoleOpen] = useState(true);
@@ -1621,9 +1642,10 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
 
           <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
             {[
-              { id: 'all', label: `All (${orders.length})` },
-              { id: 'online', label: `UPI / Card / NetBanking (${onlineOrders.length})` },
-              { id: 'cod', label: `Cash on Delivery (${codOrders.length})` },
+              { id: 'all', label: `All Orders (${orders.length})` },
+              { id: 'online', label: `UPI / Card (${onlineOrders.length})` },
+              { id: 'cod', label: `COD (${codOrders.length})` },
+              { id: 'returns', label: `Returns & Cancellations (${returnRequests.length})` },
             ].map((btn) => (
               <button
                 key={btn.id}
@@ -1641,85 +1663,223 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
           </div>
         </div>
 
-        {/* Orders Table / Cards */}
-        {filteredOrders.length === 0 ? (
-          <div className="py-16 text-center text-[#66704B] space-y-2">
-            <Package className="w-10 h-10 mx-auto text-[#B88A32] opacity-60" />
-            <h4 className="font-serif text-lg font-bold text-[#10110F]">No orders found</h4>
-            <p className="text-xs">
-              {searchTerm ? 'No orders match your search query.' : 'New orders placed through the website will appear here in real time.'}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredOrders.map((order) => {
-              const isExpanded = expandedOrderId === order.id;
-              const isPaid = order.paymentMethod === 'online' || order.paymentStatus === 'PAID';
-              const trackingNumber = order.deliveryDetails?.trackingNumber;
-              const trackingUrl = order.deliveryDetails?.trackingUrl || (trackingNumber ? `https://www.delhivery.com/track/package/${trackingNumber}` : undefined);
-
-              return (
-                <div
-                  key={order.id}
-                  className="rounded-xs border border-[#10110F]/15 bg-white overflow-hidden shadow-xs hover:border-[#183D27]/40 transition-all"
+        {/* Returns & Cancellations Dedicated View */}
+        {filterMode === 'returns' ? (
+          returnRequests.length === 0 ? (
+            <div className="py-16 text-center text-[#66704B] space-y-2">
+              <RotateCcw className="w-10 h-10 mx-auto text-[#B88A32] opacity-60" />
+              <h4 className="font-serif text-lg font-bold text-[#10110F]">No return or cancellation requests yet</h4>
+              <p className="text-xs">
+                When customers submit 6-hour cancellations or 24-hour return requests, they will be listed here.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between pb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#10110F]">
+                  Customer Return & Cancellation Requests ({returnRequests.length})
+                </span>
+                <button
+                  type="button"
+                  onClick={fetchReturns}
+                  className="px-2.5 py-1 rounded-xs bg-[#F7F3E8] border border-[#10110F]/15 hover:bg-[#EEE8D7] text-xs font-semibold flex items-center gap-1 cursor-pointer"
                 >
-                  {/* Order Card Header */}
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoadingReturns ? 'animate-spin' : ''}`} />
+                  <span>Refresh</span>
+                </button>
+              </div>
+
+              {returnRequests.map((ret: any) => {
+                const isCancellation = ret.requestType === 'cancellation_6h';
+                const cleanPhone = (ret.customerPhone || '').replace(/\D/g, '').slice(-10);
+                const waUrl = cleanPhone
+                  ? `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(
+                      `Hello ${ret.customerName}, regarding your ${isCancellation ? 'order cancellation' : 'product return'} request for Order ${ret.orderNumber || ret.invoiceNumber}:`
+                    )}`
+                  : undefined;
+
+                return (
                   <div
-                    onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
-                    className="p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 cursor-pointer hover:bg-[#F7F3E8]/40 transition-colors"
+                    key={ret.id}
+                    className="p-4 sm:p-5 rounded-xs border border-[#10110F]/15 bg-white shadow-xs space-y-3"
                   >
-                    <div className="flex items-start sm:items-center gap-3.5">
-                      <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                          isPaid
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-amber-100 text-amber-900'
-                        }`}
-                      >
-                        {isPaid ? <CreditCard className="w-5 h-5" /> : <Banknote className="w-5 h-5" />}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-[#10110F]/10 pb-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`px-2 py-0.5 rounded-xs text-[10px] font-black uppercase tracking-wider ${
+                          isCancellation ? 'bg-red-100 text-red-900 border border-red-300' : 'bg-amber-100 text-amber-900 border border-amber-300'
+                        }`}>
+                          {isCancellation ? '⚡ 6-HOUR ORDER CANCELLATION' : '📦 24-HOUR POST-DELIVERY RETURN'}
+                        </span>
+                        <span className="font-mono font-bold text-sm text-[#10110F]">
+                          Order #{ret.orderNumber || ret.invoiceNumber}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 text-[9.5px] font-bold uppercase">
+                          {ret.status || 'RECORDED'}
+                        </span>
                       </div>
 
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-mono font-bold text-sm text-[#10110F]">
-                            #{order.orderNumber}
-                          </span>
-                          <span
-                            className={`px-2 py-0.5 rounded-xs text-[10px] font-black tracking-wider uppercase ${
-                              isPaid
-                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                : 'bg-amber-100 text-amber-900 border border-amber-300'
-                            }`}
-                          >
-                            {isPaid ? 'PAID (UPI / CARD / NETBANKING)' : 'CASH ON DELIVERY'}
-                          </span>
-                          {order.invoiceNumber && (
-                            <span className="text-[10px] font-mono text-[#66704B] bg-[#F7F3E8] px-1.5 py-0.5 rounded-xs">
-                              {order.invoiceNumber}
-                            </span>
-                          )}
-                          {order.deliveryDetails?.delhiverySynced ? (
-                            <span className="px-2 py-0.5 rounded-xs text-[9.5px] font-black tracking-wider uppercase bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center gap-1">
-                              <Check className="w-3 h-3 text-emerald-600" />
-                              <span>ON DELHIVERY DASHBOARD (AWB: {order.deliveryDetails.trackingNumber})</span>
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded-xs text-[9.5px] font-black tracking-wider uppercase bg-amber-50 text-amber-900 border border-amber-300 flex items-center gap-1">
-                              <AlertCircle className="w-3 h-3 text-amber-600" />
-                              <span>DELHIVERY DISPATCH PENDING</span>
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="text-xs text-[#66704B] mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
-                          <span className="font-bold text-[#10110F]">{order.customerName}</span>
-                          <span>•</span>
-                          <span>{order.customerPhone}</span>
-                          <span>•</span>
-                          <span>{new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                        </div>
+                      <div className="text-[11px] text-[#66704B]">
+                        Submitted: <strong>{formatDateTime(ret.createdAt)}</strong>
                       </div>
                     </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                      <div className="p-2.5 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10">
+                        <span className="text-[10px] uppercase font-bold text-[#66704B] block">Customer</span>
+                        <strong className="text-[#10110F] text-xs">{ret.customerName}</strong>
+                        <div className="text-[11px] text-[#66704B] mt-0.5">{ret.customerPhone}</div>
+                      </div>
+
+                      <div className="p-2.5 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10">
+                        <span className="text-[10px] uppercase font-bold text-[#66704B] block">Product</span>
+                        <strong className="text-[#10110F] text-xs truncate block">{ret.productName || 'Titan Shilajit'}</strong>
+                        {ret.orderPlacedAt && (
+                          <div className="text-[10.5px] text-[#183D27] mt-0.5">
+                            Placed: {formatDateTime(ret.orderPlacedAt)}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="p-2.5 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10 sm:col-span-2">
+                        <span className="text-[10px] uppercase font-bold text-[#66704B] block">Reason & Notes</span>
+                        <strong className="text-[#183D27] text-xs block">{ret.reason}</strong>
+                        {ret.details && <p className="text-[11px] text-[#66704B] mt-0.5 italic">"{ret.details}"</p>}
+                        {ret.refundUpiOrAccount && (
+                          <div className="text-[10.5px] text-[#10110F] font-mono mt-1 pt-1 border-t border-[#10110F]/10">
+                            UPI Refund ID: <strong>{ret.refundUpiOrAccount}</strong>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {waUrl && (
+                      <div className="flex items-center justify-end gap-2 pt-1 border-t border-[#10110F]/10">
+                        <a
+                          href={waUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3.5 py-1.5 rounded-xs bg-[#25D366] hover:bg-[#20bd5a] text-[#10110F] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+                        >
+                          <Phone className="w-3.5 h-3.5" />
+                          <span>Chat with Customer on WhatsApp</span>
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )
+        ) : (
+          /* Orders Table / Cards */
+          filteredOrders.length === 0 ? (
+            <div className="py-16 text-center text-[#66704B] space-y-2">
+              <Package className="w-10 h-10 mx-auto text-[#B88A32] opacity-60" />
+              <h4 className="font-serif text-lg font-bold text-[#10110F]">No orders found</h4>
+              <p className="text-xs">
+                {searchTerm ? 'No orders match your search query.' : 'New orders placed through the website will appear here in real time.'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredOrders.map((order) => {
+                const isExpanded = expandedOrderId === order.id;
+                const isPaid = order.paymentMethod === 'online' || order.paymentStatus === 'PAID';
+                const trackingNumber = order.deliveryDetails?.trackingNumber;
+                const trackingUrl = order.deliveryDetails?.trackingUrl || (trackingNumber ? `https://www.delhivery.com/track/package/${trackingNumber}` : undefined);
+                const orderTimeInfo = getOrderTimeInfo(order.createdAt, undefined, order.status);
+
+                return (
+                  <div
+                    key={order.id}
+                    className="rounded-xs border border-[#10110F]/15 bg-white overflow-hidden shadow-xs hover:border-[#183D27]/40 transition-all"
+                  >
+                    {/* Order Card Header */}
+                    <div
+                      onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
+                      className="p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 cursor-pointer hover:bg-[#F7F3E8]/40 transition-colors"
+                    >
+                      <div className="flex items-start sm:items-center gap-3.5">
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                            order.status === 'cancelled'
+                              ? 'bg-red-100 text-red-800'
+                              : isPaid
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-amber-100 text-amber-900'
+                          }`}
+                        >
+                          {order.status === 'cancelled' ? (
+                            <AlertCircle className="w-5 h-5" />
+                          ) : isPaid ? (
+                            <CreditCard className="w-5 h-5" />
+                          ) : (
+                            <Banknote className="w-5 h-5" />
+                          )}
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-mono font-bold text-sm text-[#10110F]">
+                              #{order.orderNumber}
+                            </span>
+                            {order.status === 'cancelled' ? (
+                              <span className="px-2 py-0.5 rounded-xs text-[10px] font-black tracking-wider uppercase bg-red-100 text-red-900 border border-red-300">
+                                CANCELLED (REFUNDED)
+                              </span>
+                            ) : (
+                              <span
+                                className={`px-2 py-0.5 rounded-xs text-[10px] font-black tracking-wider uppercase ${
+                                  isPaid
+                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                    : 'bg-amber-100 text-amber-900 border border-amber-300'
+                                }`}
+                              >
+                                {isPaid ? 'PAID (UPI / CARD / NETBANKING)' : 'CASH ON DELIVERY'}
+                              </span>
+                            )}
+                            {order.invoiceNumber && (
+                              <span className="text-[10px] font-mono text-[#66704B] bg-[#F7F3E8] px-1.5 py-0.5 rounded-xs">
+                                {order.invoiceNumber}
+                              </span>
+                            )}
+                            {order.deliveryDetails?.delhiverySynced ? (
+                              <span className="px-2 py-0.5 rounded-xs text-[9.5px] font-black tracking-wider uppercase bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+                                <Check className="w-3 h-3 text-emerald-600" />
+                                <span>ON DELHIVERY (AWB: {order.deliveryDetails.trackingNumber})</span>
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-xs text-[9.5px] font-black tracking-wider uppercase bg-amber-50 text-amber-900 border border-amber-300 flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3 text-amber-600" />
+                                <span>DELHIVERY DISPATCH PENDING</span>
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="text-xs text-[#66704B] mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                            <span className="font-bold text-[#10110F]">{order.customerName}</span>
+                            <span>•</span>
+                            <span>{order.customerPhone}</span>
+                            <span>•</span>
+                            <span>Placed: <strong>{orderTimeInfo.orderPlacedFormatted}</strong></span>
+                            <span>•</span>
+                            {order.status === 'cancelled' ? (
+                              <span className="font-bold text-red-700 bg-red-50 px-1.5 py-0.5 rounded-xs">
+                                Cancelled
+                              </span>
+                            ) : orderTimeInfo.isWithin6HourCancellation ? (
+                              <span className="font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded-xs border border-emerald-200">
+                                6h Cancel Window Active ({orderTimeInfo.formattedTimeRemaining} left)
+                              </span>
+                            ) : (
+                              <span className="text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded-xs">
+                                6h Cutoff Elapsed • 24h on Delivery
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
 
                     <div className="flex items-center justify-between w-full md:w-auto gap-4 self-end md:self-center">
                       <div className="text-right">
@@ -1912,8 +2072,9 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
               );
             })}
           </div>
-        )}
+        ))}
       </div>
+
     </div>
   );
 };

@@ -569,6 +569,49 @@ export async function getReviewsFromFirestore(): Promise<any[] | null> {
   return diskReviews;
 }
 
+export async function updateOrderStatusInFirestore(
+  orderKey: string,
+  newStatus: string,
+  extraFields: Record<string, any> = {}
+): Promise<boolean> {
+  try {
+    const cachedOrders = readDiskCache<any[]>('orders.json') || [];
+    let matchedId = '';
+    const updatedOrders = cachedOrders.map((o) => {
+      if (o.id === orderKey || o.orderNumber === orderKey || o.invoiceNumber === orderKey) {
+        matchedId = o.id;
+        return {
+          ...o,
+          status: newStatus,
+          ...extraFields,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return o;
+    });
+
+    writeDiskCache('orders.json', updatedOrders);
+
+    if (matchedId) {
+      const patchUrl = `${FIRESTORE_BASE_URL}/orders/${encodeURIComponent(matchedId)}?key=${API_KEY}`;
+      await fetch(patchUrl, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fields: toFirestoreFields({
+            status: newStatus,
+            updatedAt: new Date().toISOString(),
+            ...extraFields,
+          }),
+        }),
+      }).catch(() => {});
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function saveReturnRequestToFirestore(returnReq: any): Promise<{ success: boolean; id: string }> {
   try {
     const id = returnReq.id || `ret_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
@@ -576,8 +619,23 @@ export async function saveReturnRequestToFirestore(returnReq: any): Promise<{ su
       ...returnReq,
       id,
       createdAt: returnReq.createdAt || new Date().toISOString(),
-      status: 'PENDING_WHATSAPP_REVIEW',
+      status: returnReq.status || 'PENDING_REVIEW',
     };
+
+    // Save to disk cache
+    const cachedReturns = readDiskCache<any[]>('returns.json') || [];
+    writeDiskCache('returns.json', [full, ...cachedReturns.filter((r) => r.id !== id)]);
+
+    // If cancellation requested, update matching order in orders collection
+    if (returnReq.requestType === 'cancellation_6h' && (returnReq.orderNumber || returnReq.invoiceNumber)) {
+      const matchKey = returnReq.orderNumber || returnReq.invoiceNumber;
+      await updateOrderStatusInFirestore(matchKey, 'cancelled', {
+        cancelledAt: full.createdAt,
+        cancellationReason: returnReq.reason,
+        returnStatus: 'cancelled',
+      });
+    }
+
     const url = `${FIRESTORE_BASE_URL}/returns?documentId=${encodeURIComponent(id)}&key=${API_KEY}`;
     const res = await fetch(url, {
       method: 'POST',
@@ -591,6 +649,7 @@ export async function saveReturnRequestToFirestore(returnReq: any): Promise<{ su
 }
 
 export async function getReturnRequestsFromFirestore(): Promise<any[]> {
+  const diskReturns = readDiskCache<any[]>('returns.json') || [];
   try {
     const url = `${FIRESTORE_BASE_URL}:runQuery?key=${API_KEY}`;
     const res = await fetch(url, {
@@ -602,9 +661,9 @@ export async function getReturnRequestsFromFirestore(): Promise<any[]> {
         },
       }),
     });
-    if (!res.ok) return [];
+    if (!res.ok) return diskReturns;
     const data = await res.json();
-    if (!Array.isArray(data)) return [];
+    if (!Array.isArray(data)) return diskReturns;
     const returns: any[] = [];
     for (const item of data) {
       if (item.document) {
@@ -612,8 +671,13 @@ export async function getReturnRequestsFromFirestore(): Promise<any[]> {
         if (parsed) returns.push(parsed);
       }
     }
-    return returns.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    if (returns.length > 0) {
+      writeDiskCache('returns.json', returns);
+      return returns.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    }
+    return diskReturns;
   } catch {
-    return [];
+    return diskReturns;
   }
 }
+

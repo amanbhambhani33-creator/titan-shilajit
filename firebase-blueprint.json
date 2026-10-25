@@ -90,8 +90,32 @@
         "total": { "type": "number" },
         "status": { "type": "string" },
         "paymentMethod": { "type": "string" },
-        "createdAt": { "type": "string" }
+        "createdAt": { "type": "string" },
+        "cancelledAt": { "type": "string" },
+        "deliveredAt": { "type": "string" },
+        "returnStatus": { "type": "string" }
+      }
+    },
+    "Return": {
+      "collection": "returns",
+      "fields": {
+        "id": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "invoiceNumber": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "customerEmail": { "type": "string" },
+        "productName": { "type": "string" },
+        "requestType": { "type": "string" },
+        "reason": { "type": "string" },
+        "details": { "type": "string" },
+        "orderPlacedAt": { "type": "string" },
+        "deliveredAt": { "type": "string" },
+        "refundUpiOrAccount": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "status": { "type": "string" }
       }
     }
   }
 }
+

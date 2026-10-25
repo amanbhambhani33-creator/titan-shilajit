@@ -43,21 +43,42 @@ export const PolicyPage: React.FC = () => {
 
       case '/refund-policy':
         return {
-          title: 'Returns & Refund Policy',
+          title: 'Cancellation & Returns Policy',
           icon: <RotateCcw className="w-8 h-8 text-[#183D27]" />,
           content: (
-            <div className="space-y-4 text-sm text-[#66704B] leading-relaxed">
-              <h3 className="font-serif font-bold text-lg text-[#10110F]">1. Purity Guarantee & Damage Replacement</h3>
+            <div className="space-y-5 text-sm text-[#66704B] leading-relaxed">
+              <div className="p-4 bg-[#183D27]/10 rounded-xs border border-[#183D27]/20 text-[#183D27] font-semibold text-xs leading-relaxed">
+                Titan Shilajit Customer Protection: Enjoy a <strong>6-Hour Instant Cancellation Window</strong> from order placement and a strict <strong>24-Hour Return Window</strong> upon package delivery.
+              </div>
+
+              <h3 className="font-serif font-bold text-lg text-[#10110F]">1. 6-Hour Instant Order Cancellation</h3>
               <p>
-                Because Shilajit is an ingested botanical wellness product, we do not accept returns on opened jars or unsealed honey sticks due to strict health and safety hygiene regulations.
+                Customers can cancel any placed order within <strong>6 hours of order placement</strong>. The exact time of placement is permanently recorded and printed on your official Tax Invoice and Order Slip.
               </p>
-              <h3 className="font-serif font-bold text-lg text-[#10110F]">2. Transit Damage or Defects</h3>
+              <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#10110F]">
+                <li><strong>How to Cancel:</strong> Click the "Cancel Order / Fill Return Form" button directly on your digital Order Slip or submit your Order ID through our online Return Form.</li>
+                <li><strong>Refund Timeline:</strong> For prepaid orders (UPI / Card / Netbanking), 100% of the transaction amount is immediately reversed or sent to your provided UPI ID. For Cash on Delivery (COD) orders, cancellation prevents Delhivery dispatch.</li>
+                <li><strong>Cutoff Expiry:</strong> After 6 hours, orders are automatically manifested and locked into our Delhi fulfillment conveyor with Delhivery Express.</li>
+              </ul>
+
+              <h3 className="font-serif font-bold text-lg text-[#10110F]">2. 24-Hour Post-Delivery Return Policy</h3>
               <p>
-                If your package arrives damaged, broken, or unsealed, please photograph the package and message our WhatsApp concierge at {BRAND_CONTACT.phoneDisplay} within 48 hours of delivery. We will immediately dispatch a replacement batch at zero cost.
+                From the exact minute your package is marked <strong>Delivered</strong> by Delhivery Express tracking, a strict <strong>24-hour inspection & return window</strong> is active.
               </p>
-              <h3 className="font-serif font-bold text-lg text-[#10110F]">3. Cancellations</h3>
+              <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#10110F]">
+                <li><strong>Eligible Conditions:</strong> Transit container breakage, broken pharmaceutical jar seal, resin leakage, or incorrect variant delivered.</li>
+                <li><strong>Reporting Window:</strong> You must submit the Return Form or notify our WhatsApp Concierge at {BRAND_CONTACT.phoneDisplay} within <strong>24 hours of delivery</strong> along with photo evidence of the packaging.</li>
+                <li><strong>Doorstep Reverse-Pickup:</strong> Upon review, our Delhi dispatch team will arrange a complimentary Delhivery doorstep reverse-pickup within 24 to 48 hours.</li>
+              </ul>
+
+              <h3 className="font-serif font-bold text-lg text-[#10110F]">3. Botanical Hygiene & Bio-Safety Policy</h3>
               <p>
-                Orders can be cancelled prior to dispatch by messaging our WhatsApp concierge. Once handed over to the courier, cancellation is not possible.
+                Because authentic Himalayan Shilajit is an ingested dietary botanical supplement, opened or partially consumed jars after 24 hours of delivery cannot be accepted for return due to national AYUSH and FSSAI health and safety hygiene regulations.
+              </p>
+
+              <h3 className="font-serif font-bold text-lg text-[#10110F]">4. Concierge Assistance</h3>
+              <p>
+                For immediate assistance regarding order cancellations or returns, contact our Delhi dispatch desk directly on WhatsApp at <strong>{BRAND_CONTACT.phoneDisplay}</strong> (available 7 days a week).
               </p>
             </div>
           ),

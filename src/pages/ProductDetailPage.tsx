@@ -19,10 +19,12 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  RotateCcw,
 } from 'lucide-react';
 import { useStoreContent } from '../context/StoreContentContext';
 import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
+import { ReturnProductModal } from '../components/ReturnProductModal';
 import { useCart } from '../context/CartContext';
 import { Product, ProductPack } from '../types';
 import { getProductPacks, getPackShortBadge, getPackShortName, getPackShortQuantity } from '../utils/productPacks';
@@ -41,9 +43,11 @@ export const ProductDetailPage: React.FC = () => {
 
   const [selectedPackIndex, setSelectedPackIndex] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState<'overview' | 'how-to-use' | 'lab-testing' | 'reviews'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'how-to-use' | 'lab-testing' | 'return-policy' | 'reviews'>('overview');
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [isAddedToast, setIsAddedToast] = useState(false);
+
 
   // Amazon-style Zoom & Fullscreen state
   const [isZooming, setIsZooming] = useState(false);
@@ -501,20 +505,84 @@ export const ProductDetailPage: React.FC = () => {
 
               {/* Authorized Pan-India Platforms (Amazon & Flipkart) */}
               <AmazonFlipkartBadge variant="full" className="mt-2" />
+
+              {/* Return & Cancellation Policy Guarantee Box */}
+              <div className="mt-3 p-3.5 sm:p-4 rounded-xs bg-white border border-[#183D27]/25 shadow-xs space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-[#183D27] text-[#D4B66A] flex items-center justify-center shrink-0">
+                      <RotateCcw className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="font-serif font-bold text-xs uppercase tracking-wider text-[#10110F]">
+                      Return & Cancellation Policy
+                    </span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-[#183D27]/10 text-[#183D27] text-[9.5px] font-bold uppercase tracking-wider">
+                    Buyer Protection
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-[#10110F]">
+                  <div className="p-2 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10 space-y-0.5">
+                    <div className="flex items-center gap-1.5 font-bold text-[#183D27]">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>6-Hour Cancellation</span>
+                    </div>
+                    <p className="text-[10.5px] text-[#66704B]">
+                      Cancel anytime within 6 hours of placement directly on your order slip or online form.
+                    </p>
+                  </div>
+
+                  <div className="p-2 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10 space-y-0.5">
+                    <div className="flex items-center gap-1.5 font-bold text-[#183D27]">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>24-Hour Return Window</span>
+                    </div>
+                    <p className="text-[10.5px] text-[#66704B]">
+                      Once delivered by Delhivery, 24 hours to report transit damage or unsealed jars.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-0.5 flex items-center justify-between text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('return-policy');
+                      const tabElement = document.getElementById('product-in-depth-tabs');
+                      if (tabElement) tabElement.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="text-[#183D27] font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Read Policy Terms</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsReturnModalOpen(true)}
+                    className="px-2.5 py-1 rounded-xs bg-[#183D27]/10 hover:bg-[#183D27]/20 text-[#183D27] font-bold text-[10px] uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    Open Return Form
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Tabbed In-Depth Information */}
-        <div className="bg-white rounded-sm border border-[#10110F]/10 p-5 sm:p-8 lg:p-10 mb-16 shadow-xs">
+        <div id="product-in-depth-tabs" className="bg-white rounded-sm border border-[#10110F]/10 p-5 sm:p-8 lg:p-10 mb-16 shadow-xs">
           {/* Tabs */}
           <div className="flex overflow-x-auto no-scrollbar border-b border-[#10110F]/10 gap-4 sm:gap-8 mb-6 sm:mb-8 whitespace-nowrap">
             {[
               { id: 'overview', label: 'Overview & Profile' },
               { id: 'how-to-use', label: 'How to Consume' },
               { id: 'lab-testing', label: 'Lab Verification' },
+              { id: 'return-policy', label: 'Return & Cancellation (6h / 24h)' },
               { id: 'reviews', label: `Reviews (${product.reviewCount})` },
             ].map((tab) => (
+
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
@@ -632,6 +700,118 @@ export const ProductDetailPage: React.FC = () => {
               <p className="text-xs text-[#66704B]">
                 Batch test certificates (COA) are verified through independent NABL-accredited testing laboratories in India. Digital test certificates for your batch can also be viewed on our Help & FAQ desk.
               </p>
+            </div>
+          )}
+
+          {/* Tab Content: Return & Cancellation Policy */}
+          {activeTab === 'return-policy' && (
+
+            <div className="space-y-6 text-sm text-[#10110F]/85 font-sans leading-relaxed">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* 6-Hour Cancellation */}
+                <div className="p-5 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10 space-y-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-[#183D27] text-[#D4B66A] flex items-center justify-center text-xs font-bold shrink-0">
+                      <Clock className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#D4B66A] bg-[#183D27] px-2 py-0.5 rounded-xs font-bold uppercase tracking-wider">
+                        PRE-DISPATCH WINDOW
+                      </span>
+                      <h4 className="font-serif text-lg font-bold text-[#10110F] leading-tight mt-0.5">
+                        6-Hour Instant Order Cancellation
+                      </h4>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-[#66704B] leading-relaxed">
+                    We understand that you may change your mind or need to adjust your order. You can cancel your order within <strong>6 hours of placing the order</strong>.
+                  </p>
+
+                  <ul className="text-xs space-y-2 text-[#10110F]/90">
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-[#183D27] shrink-0 mt-0.5" />
+                      <span><strong>Order Slip Timestamp:</strong> The exact order placement time is clearly printed on your official order slip and tax invoice.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-[#183D27] shrink-0 mt-0.5" />
+                      <span><strong>1-Click Online Form:</strong> Use the Return & Cancellation form directly with your Order ID.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-[#183D27] shrink-0 mt-0.5" />
+                      <span><strong>100% Refund:</strong> Full refund is immediately initiated to your original payment mode or UPI.</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* 24-Hour Return */}
+                <div className="p-5 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10 space-y-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-[#183D27] text-[#D4B66A] flex items-center justify-center text-xs font-bold shrink-0">
+                      <ShieldCheck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-emerald-900 bg-emerald-100 px-2 py-0.5 rounded-xs font-bold uppercase tracking-wider">
+                        POST-DELIVERY WINDOW
+                      </span>
+                      <h4 className="font-serif text-lg font-bold text-[#10110F] leading-tight mt-0.5">
+                        24-Hour Post-Delivery Return Policy
+                      </h4>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-[#66704B] leading-relaxed">
+                    Once your order is delivered by Delhivery Express, a strict <strong>24-hour return window</strong> is provided to inspect your sealed package.
+                  </p>
+
+                  <ul className="text-xs space-y-2 text-[#10110F]/90">
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-[#183D27] shrink-0 mt-0.5" />
+                      <span><strong>Transit Damage & Leaks:</strong> Broken jars, unsealed packaging, or damaged boxes are covered for free replacement.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-[#183D27] shrink-0 mt-0.5" />
+                      <span><strong>Doorstep Pickup:</strong> Delhivery reverse-pickup is dispatched to your doorstep within 24 to 48 hours.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-[#183D27] shrink-0 mt-0.5" />
+                      <span><strong>Hygiene Standard:</strong> Due to ingestible Ayurvedic safety regulations, opened or consumed jars past 24 hours cannot be returned.</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Action Banner */}
+              <div className="p-4 rounded-xs bg-[#183D27]/10 border border-[#183D27]/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <span className="font-serif font-bold text-sm text-[#183D27]">
+                    Need to cancel an order or report an issue?
+                  </span>
+                  <p className="text-xs text-[#66704B]">
+                    Submit our instant online form or chat directly with our Delhi dispatch desk on WhatsApp.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsReturnModalOpen(true)}
+                    className="px-4 py-2 rounded-xs bg-[#183D27] text-[#D4B66A] text-xs font-bold uppercase tracking-wider hover:bg-[#10110F] transition-colors cursor-pointer"
+                  >
+                    Open Return Form
+                  </button>
+
+                  <a
+                    href="https://wa.me/919958474229"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 rounded-xs bg-[#25D366] hover:bg-[#20bd5a] text-[#10110F] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    <span>WhatsApp Concierge</span>
+                  </a>
+                </div>
+              </div>
             </div>
           )}
 
@@ -777,6 +957,15 @@ export const ProductDetailPage: React.FC = () => {
           onClose={() => setQuickViewProduct(null)}
         />
       )}
+
+      {/* Return & Cancellation Policy Modal */}
+      <ReturnProductModal
+        isOpen={isReturnModalOpen}
+        onClose={() => setIsReturnModalOpen(false)}
+        initialProductName={product ? product.name : undefined}
+        initialRequestType="cancellation_6h"
+      />
     </div>
   );
 };
+

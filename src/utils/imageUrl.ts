@@ -3,6 +3,8 @@
  * Resolves external URLs, Google Drive viewer links, Dropbox links, hotlinking blocks,
  * and provides resilient proxy fallback and server caching.
  */
+import type React from 'react';
+
 
 export const DEFAULT_PRODUCT_FALLBACK =
   'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=600&q=80';

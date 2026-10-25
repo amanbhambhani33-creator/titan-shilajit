@@ -28,16 +28,22 @@ export interface ProductSizeVariant {
 
 export interface ReturnRequest {
   id: string;
+  orderNumber?: string;
   invoiceNumber: string;
   customerName: string;
   customerPhone: string;
   customerEmail?: string;
   productName: string;
+  requestType: 'cancellation_6h' | 'return_24h_delivery';
   reason: string;
   details?: string;
+  orderPlacedAt?: string;
+  deliveredAt?: string;
+  refundUpiOrAccount?: string;
   createdAt: string;
-  status: string;
+  status: 'PENDING_REVIEW' | 'CANCELLED_APPROVED' | 'RETURN_PICKUP_SCHEDULED' | 'REFUND_COMPLETED' | 'REJECTED';
 }
+
 
 export interface Product {
   id: string;
@@ -305,6 +311,12 @@ export interface OrderRecord {
   paymentMethod: 'whatsapp_prepaid' | 'cash_on_delivery' | 'online';
   createdAt: string;
   updatedAt?: string;
+  cancelledAt?: string;
+  cancellationReason?: string;
+  deliveredAt?: string;
+  returnRequestedAt?: string;
+  returnReason?: string;
+  returnStatus?: 'none' | 'cancellation_pending' | 'cancelled' | 'return_pending' | 'return_approved' | 'return_rejected' | 'refunded';
 }
 
 declare global {

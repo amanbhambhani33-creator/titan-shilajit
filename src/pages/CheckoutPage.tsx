@@ -23,19 +23,29 @@ import {
   MapPin,
   RefreshCw,
   Tag,
+  RotateCcw,
+  AlertTriangle,
+  HelpCircle,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useStoreContent } from '../context/StoreContentContext';
 import { BRAND_CONTACT } from '../data/content';
 import { OrderRecord, ShippingAddressData, BillingAddressData } from '../types';
 import { trackInitiateCheckout, trackPurchase } from '../utils/metaPixel';
+import { ReturnProductModal } from '../components/ReturnProductModal';
+import { getOrderTimeInfo, formatDateTime, ORDER_POLICY_CONFIG } from '../utils/orderPolicy';
 
 interface OrderConfirmationData {
   orderNumber: string;
   invoiceNumber: string;
   invoiceDate: string;
+  createdAt?: string;
+  orderPlacedTime?: string;
+  cancellationDeadline?: string;
+  isCancelled?: boolean;
   paymentMethod: string;
   paymentStatus: string;
+
   razorpayPaymentId?: string;
   razorpayOrderId?: string;
   delivery: {
@@ -197,6 +207,11 @@ export const CheckoutPage: React.FC = () => {
       return null;
     }
   });
+
+  // Return & Cancellation Modal State
+  const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
+  const [returnModalRequestType, setReturnModalRequestType] = useState<'cancellation_6h' | 'return_24h_delivery'>('cancellation_6h');
+
 
   const [activeRazorpayKeyId, setActiveRazorpayKeyId] = useState<string>(
     (import.meta as any).env?.VITE_RAZORPAY_KEY_ID || ''
@@ -523,13 +538,23 @@ export const CheckoutPage: React.FC = () => {
           gstin: billingGstin,
         };
 
+    const now = new Date();
+    const orderCreatedAt = now.toISOString();
+    const placedTimeStr = formatDateTime(now);
+    const cancellationCutoffStr = formatDateTime(new Date(now.getTime() + ORDER_POLICY_CONFIG.cancellationHours * 60 * 60 * 1000));
+
     const confirmationData: OrderConfirmationData = {
       orderNumber: orderNum,
       invoiceNumber: invoiceNum,
       invoiceDate: invoiceDateStr,
+      createdAt: orderCreatedAt,
+      orderPlacedTime: placedTimeStr,
+      cancellationDeadline: cancellationCutoffStr,
+      isCancelled: false,
       paymentMethod: methodName,
       paymentStatus: statusText,
       razorpayPaymentId: razorpayInfo?.paymentId,
+
       razorpayOrderId: razorpayInfo?.orderId,
       delivery: {
         courier: shipmentDetails.courier || 'Delhivery One Express',
@@ -1123,6 +1148,102 @@ export const CheckoutPage: React.FC = () => {
                 </a>
               </div>
             </div>
+
+            {/* 6-Hour Cancellation & 24-Hour Return Policy Action Slip Card */}
+            {(() => {
+              const orderTimeInfo = getOrderTimeInfo(
+                confirmedOrder.createdAt,
+                undefined,
+                confirmedOrder.isCancelled ? 'cancelled' : undefined
+              );
+
+              return (
+                <div className="mt-4 p-4 sm:p-5 rounded-xs bg-white border-2 border-[#183D27]/30 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div className="space-y-1.5 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-[#183D27] text-[#D4B66A] flex items-center justify-center shrink-0">
+                        <Clock className="w-4 h-4" />
+                      </div>
+                      <span className="font-serif font-bold text-base text-[#10110F]">
+                        Order Slip Timestamps & Return Protection
+                      </span>
+                      {confirmedOrder.isCancelled ? (
+                        <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-900 border border-red-300 text-[9.5px] font-bold uppercase tracking-wider flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3 text-red-700" />
+                          Order Cancelled
+                        </span>
+                      ) : orderTimeInfo.isWithin6HourCancellation ? (
+                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-700" />
+                          6-Hour Instant Cancellation Window Active
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[9.5px] font-bold uppercase tracking-wider">
+                          6h Window Closed • 24h Return on Delivery
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pt-1 text-xs text-[#10110F]">
+                      <div className="p-2 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10">
+                        <span className="text-[10px] uppercase font-bold text-[#66704B] block">Order Placed Time</span>
+                        <strong className="text-[#10110F] text-xs">
+                          {confirmedOrder.orderPlacedTime || orderTimeInfo.orderPlacedFormatted}
+                        </strong>
+                      </div>
+
+                      <div className="p-2 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10">
+                        <span className="text-[10px] uppercase font-bold text-[#66704B] block">6-Hour Cancellation Cutoff</span>
+                        <strong className="text-[#183D27] text-xs">
+                          {confirmedOrder.cancellationDeadline || orderTimeInfo.cancellationDeadlineFormatted}
+                        </strong>
+                      </div>
+
+                      <div className="p-2 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10">
+                        <span className="text-[10px] uppercase font-bold text-[#66704B] block">Cancellation Status</span>
+                        {confirmedOrder.isCancelled ? (
+                          <strong className="text-red-700 text-xs">Cancelled (Refund Processed)</strong>
+                        ) : orderTimeInfo.isWithin6HourCancellation ? (
+                          <strong className="text-emerald-800 text-xs">
+                            {orderTimeInfo.formattedTimeRemaining} remaining to cancel
+                          </strong>
+                        ) : (
+                          <strong className="text-[#66704B] text-xs">In Dispatch / Transit (Delhivery)</strong>
+                        )}
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-[#66704B] leading-relaxed pt-1">
+                      <strong>Policy:</strong> Orders can be cancelled within <strong>6 hours of placement</strong>. After delivery, a <strong>24-hour return policy</strong> applies for any transit damage or seal issues.
+                    </p>
+                  </div>
+
+                  <div className="w-full md:w-auto shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 print:hidden">
+                    {!confirmedOrder.isCancelled && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReturnModalRequestType(orderTimeInfo.isWithin6HourCancellation ? 'cancellation_6h' : 'return_24h_delivery');
+                          setIsReturnModalOpen(true);
+                        }}
+                        className={`px-4 py-2.5 rounded-xs text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer ${
+                          orderTimeInfo.isWithin6HourCancellation
+                            ? 'bg-red-700 hover:bg-red-800 text-white'
+                            : 'bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8]'
+                        }`}
+                      >
+                        <RotateCcw className="w-3.5 h-3.5 text-[#D4B66A]" />
+                        <span>
+                          {orderTimeInfo.isWithin6HourCancellation
+                            ? 'Cancel Order (Within 6h)'
+                            : 'Fill Return / Cancellation Form'}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* ========================================================================= */}
@@ -1176,14 +1297,21 @@ export const CheckoutPage: React.FC = () => {
                     Invoice No: <strong className="font-mono text-sm text-[#183D27]">{confirmedOrder.invoiceNumber}</strong>
                   </div>
                   <div>
-                    Date: <strong className="text-[#10110F]">{confirmedOrder.invoiceDate}</strong>
+                    Invoice Date: <strong className="text-[#10110F]">{confirmedOrder.invoiceDate}</strong>
                   </div>
                   <div>
                     Order ID: <strong className="text-[#10110F]">#{confirmedOrder.orderNumber}</strong>
                   </div>
+                  <div>
+                    Placed Time: <strong className="text-[#183D27]">{confirmedOrder.orderPlacedTime || formatDateTime(confirmedOrder.createdAt)}</strong>
+                  </div>
+                  <div>
+                    6h Cancellation Cutoff: <strong className="text-[#B88A32]">{confirmedOrder.cancellationDeadline || 'Within 6 Hours of Placement'}</strong>
+                  </div>
                 </div>
               </div>
             </div>
+
 
             {/* Billed To & Shipping Details Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-[#10110F]/10 text-xs">
@@ -1312,9 +1440,12 @@ export const CheckoutPage: React.FC = () => {
 
             {/* Invoice Totals & GST Calculations */}
             <div className="border-t-2 border-[#10110F] pt-4 flex flex-col sm:flex-row justify-between gap-6">
-              <div className="text-[11px] text-[#66704B] space-y-1 max-w-sm">
+              <div className="text-[11px] text-[#66704B] space-y-1.5 max-w-sm">
                 <p>
                   <strong>Tax Note:</strong> Prices are inclusive of Goods and Services Tax (GST 12% on Ayurvedic Health Supplements, HSN 21069099).
+                </p>
+                <p>
+                  <strong>Cancellation & Return Policy:</strong> Orders can be cancelled within <strong>6 hours of placement</strong> directly from this order slip or through our Return Form. If product is delivered, a strict <strong>24-hour return policy</strong> applies for any transit damage, broken seals, or discrepancy.
                 </p>
                 <p>
                   <strong>Authenticity Guarantee:</strong> Packed in tamper-proof pharmaceutical glass jars with sealed high-altitude Himalayan origin certificate.
@@ -2222,6 +2353,32 @@ export const CheckoutPage: React.FC = () => {
           </div>
         </form>
       </div>
+
+      {/* Return & Cancellation Modal */}
+      {confirmedOrder && (
+        <ReturnProductModal
+          isOpen={isReturnModalOpen}
+          onClose={() => setIsReturnModalOpen(false)}
+          initialOrderNumber={confirmedOrder.orderNumber}
+          initialInvoiceNumber={confirmedOrder.invoiceNumber}
+          initialCustomerName={confirmedOrder.customer.name}
+          initialCustomerPhone={confirmedOrder.customer.phone}
+          initialCustomerEmail={confirmedOrder.customer.email}
+          initialProductName={confirmedOrder.items[0]?.productName || 'Titan Pure Himalayan Shilajit Resin'}
+          initialRequestType={returnModalRequestType}
+          orderCreatedAt={confirmedOrder.createdAt}
+          onSuccess={() => {
+            if (returnModalRequestType === 'cancellation_6h') {
+              const updated = { ...confirmedOrder, isCancelled: true };
+              setConfirmedOrder(updated);
+              try {
+                sessionStorage.setItem('titan_last_confirmed_order', JSON.stringify(updated));
+              } catch {}
+            }
+          }}
+        />
+      )}
     </div>
   );
 };
+

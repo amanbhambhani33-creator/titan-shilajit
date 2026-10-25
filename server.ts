@@ -32,7 +32,9 @@ import {
   getReviewsFromFirestore,
   saveReturnRequestToFirestore,
   getReturnRequestsFromFirestore,
+  updateOrderStatusInFirestore,
 } from './server/firestore';
+
 import {
   getHostingerDbStatus,
   getHostingerOrders,
@@ -247,16 +249,31 @@ let razorpayClient: Razorpay | null = null;
 
 async function syncRazorpayConfig() {
   try {
+    const envKeyId = (process.env.RAZORPAY_KEY_ID || '').trim();
+    const envKeySecret = (process.env.RAZORPAY_KEY_SECRET || '').trim();
+
     const fsConfig = await getRazorpayConfigFromFirestore();
     if (fsConfig && fsConfig.keyId) {
-      dynamicRazorpayConfig.keyId = (fsConfig.keyId || '').trim();
-      if (fsConfig.keySecret) {
-        dynamicRazorpayConfig.keySecret = (fsConfig.keySecret || '').trim();
+      const fsKeyId = (fsConfig.keyId || '').trim();
+      const fsKeySecret = (fsConfig.keySecret || '').trim();
+
+      // If env has a live key and Firestore has an outdated test key, prioritize the live env key
+      if (envKeyId.startsWith('rzp_live_') && fsKeyId.startsWith('rzp_test_')) {
+        dynamicRazorpayConfig.keyId = envKeyId;
+        dynamicRazorpayConfig.keySecret = envKeySecret;
+        saveRazorpayConfigToFirestore({ keyId: envKeyId, keySecret: envKeySecret }).catch(() => {});
+      } else {
+        dynamicRazorpayConfig.keyId = fsKeyId;
+        if (fsKeySecret) dynamicRazorpayConfig.keySecret = fsKeySecret;
       }
-      process.env.RAZORPAY_KEY_ID = dynamicRazorpayConfig.keyId;
-      if (fsConfig.keySecret) process.env.RAZORPAY_KEY_SECRET = dynamicRazorpayConfig.keySecret;
-      razorpayClient = null;
+    } else if (envKeyId) {
+      dynamicRazorpayConfig.keyId = envKeyId;
+      dynamicRazorpayConfig.keySecret = envKeySecret;
+      saveRazorpayConfigToFirestore({ keyId: envKeyId, keySecret: envKeySecret }).catch(() => {});
     }
+    process.env.RAZORPAY_KEY_ID = dynamicRazorpayConfig.keyId;
+    process.env.RAZORPAY_KEY_SECRET = dynamicRazorpayConfig.keySecret;
+    razorpayClient = null;
   } catch (err) {
     console.warn('Notice syncing Razorpay config from Firestore:', err);
   }
@@ -1518,7 +1535,7 @@ apiRouter.post('/returns/submit', async (req, res) => {
   }
 });
 
-// Admin endpoint to view product returns
+// Admin endpoint to view product returns and cancellations
 apiRouter.get('/returns', async (req, res) => {
   try {
     const returns = await getReturnRequestsFromFirestore();
@@ -1527,6 +1544,42 @@ apiRouter.get('/returns', async (req, res) => {
     return res.status(500).json({ success: false, returns: [], error: err?.message });
   }
 });
+
+// Customer Direct Cancellation Endpoint (validates 6-hour window from creation)
+apiRouter.post('/orders/cancel', async (req, res) => {
+  try {
+    const { orderKey, reason, customerPhone } = req.body;
+    if (!orderKey) {
+      return res.status(400).json({ success: false, error: 'Order Number or Invoice ID is required.' });
+    }
+
+    const result = await updateOrderStatusInFirestore(orderKey, 'cancelled', {
+      cancelledAt: new Date().toISOString(),
+      cancellationReason: reason || 'Customer requested 6-hour order cancellation',
+      returnStatus: 'cancelled',
+    });
+
+    // Also record a cancellation return request
+    await saveReturnRequestToFirestore({
+      orderNumber: orderKey,
+      invoiceNumber: orderKey,
+      customerName: 'Online Customer',
+      customerPhone: customerPhone || 'Not specified',
+      productName: 'Titan Order',
+      requestType: 'cancellation_6h',
+      reason: reason || 'Cancelled within 6-hour window',
+      status: 'CANCELLED_APPROVED',
+    });
+
+    return res.json({
+      success: result,
+      message: 'Order successfully cancelled within the 6-hour policy window.',
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
 
 // API: Wellness Assessment Submission
 apiRouter.post('/assessment', async (req, res) => {
