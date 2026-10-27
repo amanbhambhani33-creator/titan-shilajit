@@ -108,7 +108,7 @@ export const QualityTrustSection: React.FC = () => {
               </div>
               <div>
                 <h4 className="font-serif font-bold text-sm sm:text-base text-[#F7F3E8]">
-                  100% Surya Tapi Glacial Sun-Purified Shilajit
+                  100% Authentic Triphala Purification Shilajit
                 </h4>
                 <p className="text-xs text-[#EEE8D7]/75">
                   Zero chemical boiling • Free from maltodextrin & fillers • Full batch traceability

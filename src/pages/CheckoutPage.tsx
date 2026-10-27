@@ -11,6 +11,7 @@ import {
   AlertCircle,
   ArrowRight,
   Printer,
+  Download,
   ExternalLink,
   ChevronLeft,
   Package,
@@ -61,6 +62,7 @@ interface OrderConfirmationData {
   summary: {
     subtotal: number;
     discount: number;
+    prepaidDiscount?: number;
     couponCode?: string;
     shipping: number;
     total: number;
@@ -358,9 +360,11 @@ export const CheckoutPage: React.FC = () => {
     }
   }, [billingPincode, billingSameAsShipping]);
 
-  const finalTotal = Math.max(0, totalPrice - discountAmount);
+  // Requirement 4: Extra ₹50 OFF automatically applied on Prepaid orders (UPI / Card / Netbanking)
+  const prepaidDiscount = paymentMethod === 'online' ? 50 : 0;
+  const finalTotal = Math.max(0, totalPrice - discountAmount - prepaidDiscount);
 
-  // Apply Coupon Handler
+  // Apply Coupon Handler with Dynamic Admin Coupons & First-Order verification
   const handleApplyCoupon = async (codeToApply?: string) => {
     const rawCode = (codeToApply || couponCode).trim().toUpperCase();
     if (!rawCode) return;
@@ -368,7 +372,39 @@ export const CheckoutPage: React.FC = () => {
     setCouponMessage(null);
     setIsVerifyingCoupon(true);
 
-    const isFirstOrderCoupon = ['FIRST50', 'FIRSTORDER', 'WELCOME50', 'NEW50'].includes(rawCode);
+    // First try the dynamic coupons API created by Admin
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: rawCode,
+          cartTotal: totalPrice,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data && data.valid) {
+        setAppliedCoupon(data.code);
+        setDiscountAmount(data.discountAmount);
+        setCouponMessage({
+          type: 'success',
+          text: `Coupon "${data.code}" applied! Extra ₹${data.discountAmount} discount deducted.`,
+        });
+        setIsVerifyingCoupon(false);
+        return;
+      } else if (data && data.error && !['FIRST50', 'FIRSTORDER', 'WELCOME50', 'NEW50'].includes(rawCode)) {
+        setAppliedCoupon(null);
+        setDiscountAmount(0);
+        setCouponMessage({
+          type: 'error',
+          text: data.error,
+        });
+        setIsVerifyingCoupon(false);
+        return;
+      }
+    } catch {}
+
+    const isFirstOrderCoupon = ['FIRST50', 'FIRSTORDER', 'WELCOME50', 'NEW50', 'TITANFIRST'].includes(rawCode);
 
     if (isFirstOrderCoupon) {
       const cleanPhone = customerPhone.trim();
@@ -411,13 +447,14 @@ export const CheckoutPage: React.FC = () => {
         }
       }
 
+      const discVal = rawCode === 'TITANFIRST' ? 150 : 50;
       setAppliedCoupon(rawCode);
-      setDiscountAmount(50);
+      setDiscountAmount(discVal);
       setCouponMessage({
         type: 'success',
-        text: `First order coupon ${rawCode} applied! Extra ₹50 discount deducted.`,
+        text: `First order privilege ${rawCode} applied! Extra ₹${discVal} discount deducted.`,
       });
-    } else if (rawCode === 'TITAN100' && totalPrice >= 2000) {
+    } else if (rawCode === 'TITAN100' && totalPrice >= 1499) {
       setAppliedCoupon(rawCode);
       setDiscountAmount(100);
       setCouponMessage({
@@ -429,7 +466,7 @@ export const CheckoutPage: React.FC = () => {
       setDiscountAmount(0);
       setCouponMessage({
         type: 'error',
-        text: `Coupon "${rawCode}" is invalid or does not meet minimum order requirements. Try "FIRST50".`,
+        text: `Coupon "${rawCode}" is invalid or does not meet minimum order requirements.`,
       });
     }
 
@@ -569,6 +606,7 @@ export const CheckoutPage: React.FC = () => {
       summary: {
         subtotal: totalPrice,
         discount: discountAmount,
+        prepaidDiscount,
         couponCode: appliedCoupon || undefined,
         shipping: 0,
         total: finalTotal,
@@ -648,11 +686,21 @@ export const CheckoutPage: React.FC = () => {
         })),
         subtotal: totalPrice,
         discount: discountAmount,
+        prepaidDiscount,
         couponCode: appliedCoupon || undefined,
         total: finalTotal,
         status: 'confirmed',
         paymentMethod: paymentMethod === 'online' ? 'online' : 'cash_on_delivery',
       });
+
+      // Track coupon code usage count in backend/Firestore
+      if (appliedCoupon) {
+        fetch('/api/coupons/use', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: appliedCoupon }),
+        }).catch(() => {});
+      }
     } catch (saveErr) {
       console.warn('Notice saving order to Firestore:', saveErr);
     }
@@ -1219,6 +1267,15 @@ export const CheckoutPage: React.FC = () => {
                   </div>
 
                   <div className="w-full md:w-auto shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 print:hidden">
+                    <button
+                      type="button"
+                      onClick={() => window.print()}
+                      className="px-4 py-2.5 rounded-xs bg-[#10110F] hover:bg-[#183D27] text-[#D4B66A] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer border border-[#D4B66A]/30"
+                      title="Download or Print Official GST Tax Invoice Bill"
+                    >
+                      <Download className="w-3.5 h-3.5 text-[#D4B66A]" />
+                      <span>Download Bill (PDF)</span>
+                    </button>
                     {!confirmedOrder.isCancelled && (
                       <button
                         type="button"
@@ -1463,6 +1520,12 @@ export const CheckoutPage: React.FC = () => {
                     <span>-₹{confirmedOrder.summary.discount}</span>
                   </div>
                 )}
+                {confirmedOrder.summary.prepaidDiscount && confirmedOrder.summary.prepaidDiscount > 0 ? (
+                  <div className="flex justify-between text-emerald-800 font-semibold">
+                    <span>Prepaid Instant Discount (UPI/Card):</span>
+                    <span>-₹{confirmedOrder.summary.prepaidDiscount}</span>
+                  </div>
+                ) : null}
                 <div className="flex justify-between text-[#66704B]">
                   <span>Pan-India Delivery (Delhivery One):</span>
                   <span className="text-emerald-700 font-bold uppercase">COMPLIMENTARY</span>
@@ -2062,6 +2125,11 @@ export const CheckoutPage: React.FC = () => {
                         Pay securely with UPI (Google Pay, PhonePe, Paytm, CRED), Credit/Debit Cards (Visa, Mastercard, RuPay, Amex), or Net Banking across 50+ banks.
                       </p>
 
+                      <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xs bg-emerald-100 text-emerald-900 border border-emerald-300 text-[10.5px] font-black uppercase tracking-wide">
+                        <span>⚡</span>
+                        <span>Extra ₹50 OFF Automatically Deducted on Prepaid!</span>
+                      </div>
+
                       {/* Payment Badges Strip */}
                       <div className="flex flex-wrap items-center gap-2 mt-3 pt-2.5 border-t border-[#10110F]/10 text-[10px] font-bold text-[#10110F]">
                         <span className="px-2 py-1 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10 flex items-center gap-1">
@@ -2297,6 +2365,15 @@ export const CheckoutPage: React.FC = () => {
                   <div className="flex items-center justify-between text-emerald-800 font-semibold">
                     <span>Coupon Savings ({appliedCoupon})</span>
                     <span>-₹{discountAmount}</span>
+                  </div>
+                )}
+                {prepaidDiscount > 0 && (
+                  <div className="flex items-center justify-between text-emerald-800 font-bold bg-emerald-50 px-2 py-1.5 rounded-xs border border-emerald-300">
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-sm">⚡</span>
+                      <span>Extra ₹50 OFF (Prepaid Discount)</span>
+                    </span>
+                    <span>-₹{prepaidDiscount}</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between text-[#66704B]">

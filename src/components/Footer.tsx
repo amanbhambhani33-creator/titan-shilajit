@@ -240,11 +240,20 @@ export const Footer: React.FC = () => {
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-[#EEE8D7]/60 gap-4 font-light">
           <p>© {new Date().getFullYear()} Titan Shilajit. All rights reserved. Crafted in Delhi, India.</p>
           
-          {/* Designed by Supreme Ads attribution */}
+          {/* Designed by Supreme Ads attribution (redirects strictly to 9667173693 for digital marketing service enquiry) */}
           <div className="flex items-center gap-2">
-            <span className="text-[#D4B66A] font-medium tracking-wide">
-              {footerConfig.designedBy || 'Designed by Supreme Ads'}
-            </span>
+            <a
+              href="https://wa.me/919667173693?text=Hello%20Supreme%20Ads,%20I%20am%20interested%20in%20Digital%20Marketing%20Services."
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Digital Marketing Service Enquiry on WhatsApp by Supreme Ads"
+              className="text-[#D4B66A] hover:text-[#fff] transition-colors font-medium tracking-wide flex items-center gap-1.5 underline decoration-[#D4B66A]/40 hover:decoration-[#D4B66A]"
+            >
+              <span>Designed by Supreme Ads</span>
+              <span className="text-[10px] uppercase font-sans tracking-wider bg-[#B88A32]/25 px-1.5 py-0.5 rounded text-[#D4B66A] border border-[#B88A32]/40">
+                Marketing Enquiry
+              </span>
+            </a>
           </div>
 
           <p className="flex items-center gap-2 text-[#EEE8D7]/50">

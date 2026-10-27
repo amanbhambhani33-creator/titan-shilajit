@@ -6,6 +6,8 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
+  GoogleAuthProvider,
+  signInWithPopup,
   User,
 } from 'firebase/auth';
 import {
@@ -38,6 +40,8 @@ export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 // Initialize Auth
 export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
+export { GoogleAuthProvider, signInWithPopup };
 
 // Initialize Firestore with custom databaseId and forced long polling to prevent iframe connection drops
 const databaseId = firebaseConfigJson.firestoreDatabaseId || '(default)';

@@ -62,6 +62,7 @@ export interface Product {
   stockQty?: number;
   images: string[];
   image?: string; // Cover image (first image/storefront primary image)
+  badgeTag?: 'new_arrival' | 'hot_sell' | 'bestseller' | 'trending' | 'none' | string;
   packs?: ProductPack[];
   sizeVariants?: ProductSizeVariant[];
   shortDescription: string;
@@ -101,6 +102,10 @@ export interface Review {
   productName: string;
   verifiedPurchase: boolean;
   date: string;
+  userEmail?: string;
+  userId?: string;
+  userPhotoUrl?: string;
+  verifiedGoogle?: boolean;
 }
 
 export interface BenefitCard {
@@ -305,6 +310,7 @@ export interface OrderRecord {
   }[];
   subtotal: number;
   discount: number;
+  prepaidDiscount?: number;
   couponCode?: string;
   total: number;
   status: 'pending' | 'confirmed' | 'dispatched' | 'delivered' | 'cancelled';
@@ -317,6 +323,21 @@ export interface OrderRecord {
   returnRequestedAt?: string;
   returnReason?: string;
   returnStatus?: 'none' | 'cancellation_pending' | 'cancelled' | 'return_pending' | 'return_approved' | 'return_rejected' | 'refunded';
+}
+
+export interface CouponRecord {
+  id: string;
+  code: string;
+  discountType: 'flat' | 'percentage';
+  discountValue: number;
+  minOrderAmount?: number;
+  maxDiscountAmount?: number;
+  usageLimit?: number;
+  usedCount: number;
+  isActive: boolean;
+  createdAt: string;
+  description?: string;
+  expiresAt?: string;
 }
 
 declare global {

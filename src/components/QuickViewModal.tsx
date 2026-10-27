@@ -18,8 +18,10 @@ import {
 
 import { Product, ProductPack } from '../types';
 import { useCart } from '../context/CartContext';
+import { useStoreContent } from '../context/StoreContentContext';
 import { getProductPacks, getPackShortBadge, getPackShortName, getPackShortQuantity } from '../utils/productPacks';
 import { AmazonFlipkartBadge } from './AmazonFlipkartBadge';
+import { normalizeImageUrl, handleImageError, DEFAULT_PRODUCT_FALLBACK } from '../utils/imageUrl';
 
 interface QuickViewModalProps {
   product: Product | null;
@@ -31,8 +33,11 @@ interface QuickViewModalContentProps {
   onClose: () => void;
 }
 
-const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, onClose }) => {
+const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product: initialProduct, onClose }) => {
   const navigate = useNavigate();
+  const { products } = useStoreContent();
+  // Find fresh live product from context so newly updated admin images immediately reflect
+  const product = products.find((p) => p.id === initialProduct.id) || initialProduct;
   const { addToCart, getItemQuantity } = useCart();
   const packs = getProductPacks(product);
   const [selectedPackIndex, setSelectedPackIndex] = useState(1);
@@ -55,19 +60,16 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, 
     }
   }, [product.id, currentPack.id, getItemQuantity]);
 
-  const cleanProductImages = (product.images || []).map((img) => {
-    if (typeof img === 'string' && img.includes('/uploads/')) {
-      return img.substring(img.indexOf('/uploads/'));
-    }
-    return img;
-  }).filter(Boolean);
+  const cleanProductImages = (product.images || []).map((img) => normalizeImageUrl(img)).filter(Boolean);
+  const packImg = currentPack.image ? normalizeImageUrl(currentPack.image) : '';
 
-  let packImg = currentPack.image || '';
-  if (typeof packImg === 'string' && packImg.includes('/uploads/')) {
-    packImg = packImg.substring(packImg.indexOf('/uploads/'));
-  }
-
-  const displayImage = cleanProductImages[selectedImageIndex] || packImg || product.image || cleanProductImages[0] || '';
+  // Fix image sync: If user picked thumbnail show it, otherwise prioritize product's clean images
+  const displayImage =
+    cleanProductImages[selectedImageIndex] ||
+    normalizeImageUrl(product.image) ||
+    cleanProductImages[0] ||
+    packImg ||
+    DEFAULT_PRODUCT_FALLBACK;
   const displayPrice = currentPack ? currentPack.price : product.price;
   const displayMrp = currentPack ? currentPack.mrp : product.mrp;
 
@@ -125,16 +127,11 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, 
                   key={displayImage}
                   src={displayImage}
                   alt={`${product.name} - ${currentPack.name}`}
+                  referrerPolicy="no-referrer"
                   className={`w-full h-full object-contain animate-in fade-in duration-300 ${
                     isOutOfStock ? 'opacity-55 grayscale' : ''
                   }`}
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    target.onerror = null;
-                    if (cleanProductImages[0] && target.src !== cleanProductImages[0]) {
-                      target.src = cleanProductImages[0];
-                    }
-                  }}
+                  onError={(e) => handleImageError(e, DEFAULT_PRODUCT_FALLBACK)}
                 />
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#183D27] via-[#10110F] to-[#183D27]/80 text-[#D4B66A]">
@@ -152,6 +149,27 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, 
                   {currentPack.savings}
                 </div>
               ) : null}
+
+              {/* Tag / Star Badge */}
+              {product.badgeTag && product.badgeTag !== 'none' && (
+                <div
+                  className={`absolute top-3 right-3 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-xs shadow-md border flex items-center gap-1 ${
+                    product.badgeTag === 'hot_sell'
+                      ? 'bg-gradient-to-r from-red-600 to-amber-600 text-white border-amber-300'
+                      : product.badgeTag === 'new_arrival'
+                      ? 'bg-gradient-to-r from-emerald-800 to-emerald-600 text-[#F7F3E8] border-emerald-400'
+                      : product.badgeTag === 'bestseller'
+                      ? 'bg-gradient-to-r from-[#D4B66A] to-[#B88A32] text-[#10110F] border-yellow-200'
+                      : 'bg-[#183D27] text-[#D4B66A] border-[#D4B66A]/40'
+                  }`}
+                >
+                  {product.badgeTag === 'hot_sell' && <span>🔥</span>}
+                  {product.badgeTag === 'new_arrival' && <span>✨</span>}
+                  {product.badgeTag === 'bestseller' && <span>⭐</span>}
+                  {product.badgeTag === 'trending' && <span>⚡</span>}
+                  <span>{product.badgeTag.replace(/_/g, ' ')}</span>
+                </div>
+              )}
             </div>
 
             {/* Thumbnail selector */}
@@ -167,7 +185,13 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, 
                         : 'border-white/20 opacity-60 hover:opacity-100'
                     }`}
                   >
-                    <img src={img} alt="Thumbnail" className="w-full h-full object-cover" />
+                    <img
+                      src={img}
+                      alt="Thumbnail"
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover"
+                      onError={(e) => handleImageError(e, DEFAULT_PRODUCT_FALLBACK)}
+                    />
                   </button>
                 ))}
               </div>
@@ -186,7 +210,7 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product, 
             </div>
             <div className="flex items-center gap-2">
               <Droplet className="w-3.5 h-3.5 text-[#D4B66A]" />
-              <span>Surya Tapi Sun-Purified</span>
+              <span>Triphala Purification</span>
             </div>
           </div>
         </div>

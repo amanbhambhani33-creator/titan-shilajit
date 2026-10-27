@@ -108,10 +108,11 @@ export const ProductDetailPage: React.FC = () => {
   const currentPackImg = currentPack?.image ? normalizeImageUrl(currentPack.image) : null;
 
   // If user explicitly clicked a thumbnail, strictly show that thumbnail.
-  // Otherwise show current pack photo if assigned, else cleanProductImages[0] or cover image.
+  // Otherwise show custom pack photo if assigned, else cleanProductImages[0] or cover image.
+  const hasDistinctPackImg = selectedPackIndex > 0 && currentPackImg && currentPackImg !== cleanProductImages[0];
   const displayImage = isUserSelectedThumbnail && cleanProductImages[selectedImageIndex]
     ? cleanProductImages[selectedImageIndex]
-    : (currentPackImg || cleanProductImages[selectedImageIndex] || normalizeImageUrl(product.image) || cleanProductImages[0] || '');
+    : ((hasDistinctPackImg ? currentPackImg : '') || cleanProductImages[selectedImageIndex] || cleanProductImages[0] || normalizeImageUrl(product.image) || currentPackImg || DEFAULT_PRODUCT_FALLBACK);
 
   const displayPrice = currentPack ? currentPack.price : product.price;
   const displayMrp = currentPack ? currentPack.mrp : product.mrp;
@@ -217,16 +218,37 @@ export const ProductDetailPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Savings / Discount Badge */}
-              {currentPack?.savings ? (
-                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-[#183D27] text-[#D4B66A] text-[10px] sm:text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-xs border border-[#B88A32]/40 shadow-sm pointer-events-none">
-                  {currentPack.savings}
-                </div>
-              ) : product.discount ? (
-                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-[#183D27] text-[#D4B66A] text-[10px] sm:text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-xs border border-[#B88A32]/40 shadow-sm pointer-events-none">
-                  {product.discount}
-                </div>
-              ) : null}
+              {/* Badges / Tags */}
+              <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex flex-col gap-2 z-10 pointer-events-none">
+                {product.badgeTag && product.badgeTag !== 'none' && (
+                  <span
+                    className={`px-3 py-1 rounded-xs text-[10px] sm:text-xs font-sans font-black tracking-widest uppercase shadow-md flex items-center gap-1 border ${
+                      product.badgeTag === 'hot_sell'
+                        ? 'bg-gradient-to-r from-red-600 to-amber-600 text-white border-amber-300'
+                        : product.badgeTag === 'new_arrival'
+                        ? 'bg-gradient-to-r from-emerald-800 to-emerald-600 text-[#F7F3E8] border-emerald-400'
+                        : product.badgeTag === 'bestseller'
+                        ? 'bg-gradient-to-r from-[#D4B66A] to-[#B88A32] text-[#10110F] border-yellow-200'
+                        : 'bg-[#183D27] text-[#D4B66A] border-[#D4B66A]/40'
+                    }`}
+                  >
+                    {product.badgeTag === 'hot_sell' && <span>🔥</span>}
+                    {product.badgeTag === 'new_arrival' && <span>✨</span>}
+                    {product.badgeTag === 'bestseller' && <span>⭐</span>}
+                    {product.badgeTag === 'trending' && <span>⚡</span>}
+                    <span>{product.badgeTag.replace(/_/g, ' ')}</span>
+                  </span>
+                )}
+                {currentPack?.savings ? (
+                  <div className="bg-[#183D27] text-[#D4B66A] text-[10px] sm:text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-xs border border-[#B88A32]/40 shadow-sm w-fit">
+                    {currentPack.savings}
+                  </div>
+                ) : product.discount ? (
+                  <div className="bg-[#183D27] text-[#D4B66A] text-[10px] sm:text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-xs border border-[#B88A32]/40 shadow-sm w-fit">
+                    {product.discount}
+                  </div>
+                ) : null}
+              </div>
             </div>
 
             {/* Amazon-style High Resolution Thumbnail Carousel */}
@@ -674,7 +696,7 @@ export const ProductDetailPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="p-4 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10">
                   <span className="text-[10px] text-[#66704B] uppercase font-bold tracking-wider">Fulvic Acid</span>
-                  <div className="font-serif text-2xl font-bold text-[#183D27] mt-1">&gt; 75% Purity</div>
+                  <div className="font-serif text-2xl font-bold text-[#183D27] mt-1">70%+ Purity</div>
                   <p className="text-[11px] text-[#66704B] mt-1">High bioactive transport capacity</p>
                 </div>
 
@@ -687,7 +709,7 @@ export const ProductDetailPage: React.FC = () => {
                 <div className="p-4 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10">
                   <span className="text-[10px] text-[#66704B] uppercase font-bold tracking-wider">Microbial Purity</span>
                   <div className="font-serif text-2xl font-bold text-[#183D27] mt-1">Zero Pathogens</div>
-                  <p className="text-[11px] text-[#66704B] mt-1">Sterilized through traditional sunlight</p>
+                  <p className="text-[11px] text-[#66704B] mt-1">Purified with traditional Triphala & mountain sunlight</p>
                 </div>
 
                 <div className="p-4 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10">

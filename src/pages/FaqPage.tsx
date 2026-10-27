@@ -28,15 +28,15 @@ const EXTENDED_FAQS: ExtendedFaq[] = [
     category: 'purity',
   },
   {
-    question: 'How is Titan Shilajit purified (Surya Tapi method)?',
+    question: 'How is Titan Shilajit purified (Triphala Purification method)?',
     answer:
-      'Unlike mass-market commercial extracts boiled down with high artificial heat (which destroys delicate bioactive enzymes), Titan Shilajit is purified through the classical Ayurvedic Surya Tapi method: rinsed and filtered repeatedly in pure glacial spring water, then sun-cured under mountain sunlight for 40+ days until it condenses into a thick, glass-like resin.',
+      'Unlike mass-market commercial extracts boiled down with high artificial heat (which destroys delicate bioactive enzymes), Titan Shilajit is purified through classical Ayurvedic Triphala purification: slow-filtered with traditional Triphala decoctions, then gently sun-cured under mountain sunlight for 40+ days until it condenses into a thick, mineral-dense resin.',
     category: 'purity',
   },
   {
     question: 'What percentage of Fulvic Acid is guaranteed?',
     answer:
-      'Every batch of Titan Shilajit is NABL third-party laboratory tested and chromatography-verified to contain greater than 75% active Fulvic Acid bio-carriers. Batch certificates are accessible on our site and via our WhatsApp concierge.',
+      'Every batch of Titan Shilajit is NABL third-party laboratory tested and chromatography-verified to contain 70%+ active Fulvic Acid bio-carriers. Batch certificates are accessible on our site and via our WhatsApp concierge.',
     category: 'purity',
   },
   {
@@ -48,7 +48,7 @@ const EXTENDED_FAQS: ExtendedFaq[] = [
   {
     question: 'How do I use the Shilajit Raw Honey Sticks on the go?',
     answer:
-      'Titan Honey Sticks combine 350mg of pure Surya Tapi purified Shilajit with raw high-altitude wildflower forest honey. Simply tear the top notch and squeeze directly into your mouth, or stir into warm tea or morning oats. No measuring wand or water glass required.',
+      'Titan Honey Sticks combine 350mg of pure Triphala purified Shilajit with raw high-altitude wildflower forest honey. Simply tear the top notch and squeeze directly into your mouth, or stir into warm tea or morning oats. No measuring wand or water glass required.',
     category: 'dosage',
   },
   {
@@ -127,7 +127,7 @@ export const FaqPage: React.FC = () => {
           </h1>
 
           <p className="text-sm sm:text-base text-[#66704B] font-sans max-w-xl font-light leading-relaxed">
-            Everything you need to know about Titan pure Himalayan Shilajit, Surya Tapi solar purification, batch lab certificates, and daily ritual guidance.
+            Everything you need to know about Titan pure Himalayan Shilajit, authentic Triphala purification, batch lab certificates, and daily ritual guidance.
           </p>
         </div>
 

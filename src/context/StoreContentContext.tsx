@@ -115,7 +115,7 @@ export const DEFAULT_PRODUCT_BENEFITS: BenefitCard[] = [
 export const DEFAULT_QUALITY_TRUST: QualityTrustConfig = {
   kicker: 'QUALITY & TRUST',
   title: 'Quality You Can See. Trust You Can Feel.',
-  description: 'At Titan Shilajit, we believe that true wellness begins with purity, transparency, and responsible quality practices. Hand-gathered above 16,000 ft, Surya Tapi sun-purified, and third-party NABL lab certified.',
+  description: 'At Titan Shilajit, we believe that true wellness begins with purity, transparency, and responsible quality practices. Hand-gathered above 16,000 ft, authentic Triphala purified, and third-party NABL lab certified.',
   cards: [
     {
       id: 'qt-1',
@@ -128,11 +128,11 @@ export const DEFAULT_QUALITY_TRUST: QualityTrustConfig = {
     },
     {
       id: 'qt-2',
-      title: 'Surya Tapi Sun Purified',
-      subtitle: 'Traditional 40-Day Solar Curing',
-      description: 'Slow-cured beneath open mountain sunlight using glacial spring water, preserving delicate live enzymes and >75% fulvic acid.',
+      title: 'Triphala Purification Process',
+      subtitle: 'Traditional Ayurvedic Shodhana',
+      description: 'Purified with authentic Triphala decoctions and slow-cured beneath open mountain sunlight, preserving delicate live enzymes and 70%+ fulvic acid.',
       imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=85',
-      badge: 'SOLAR PURITY',
+      badge: 'TRIPHALA PURITY',
       tag: '02. PROCESS',
     },
     {
@@ -206,7 +206,7 @@ const DEFAULT_HERO: HeroBannerConfig = {
   headlineLine1: 'SACRED MOUNTAIN RESIN.',
   headlineLine2: 'UNTOUCHED GEOLOGICAL GOLD.',
   headlineLine3: 'UNLEASH THE TITAN.',
-  description: 'Pure high-altitude rock exudate, hand-gathered from extreme Ladakh crevices and Surya Tapi sun-purified in glacial spring water. Rich in 84+ ionic bio-minerals and >75% active Fulvic Acid.',
+  description: 'Pure high-altitude rock exudate, hand-gathered from extreme Ladakh crevices and purified with traditional Triphala in glacial spring water. Rich in 84+ ionic bio-minerals and 70%+ active Fulvic Acid.',
   shopButtonText: 'ACQUIRE TITAN RESIN',
   guideButtonText: 'THE ANCIENT HARVEST STORY',
   bgImageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80',
@@ -253,7 +253,7 @@ const DEFAULT_BRAND_STORY: BrandStoryConfig = {
   title: 'ANCIENT HIMALAYAN RESILIENCE. RECLAIMED FOR MODERN LIFE.',
   quote: '"Shilajit is neither herb nor stone; it is the compressed life-memory of ancient primeval forests, distilled through millennia under extreme Himalayan tectonic pressure."',
   paragraph1: 'Titan Shilajit was born from a singular vow: to restore the unadulterated purity of high-altitude Himalayan rock resin without industrial boiling, chemical bleaching, or artificial dilution.',
-  paragraph2: 'Our native foraging families ascend beyond 16,000 feet into the pristine granite ridges of Ladakh and Kashmir. Under the scorching high-altitude summer sun, raw crude exudate melts from rock cracks. We purify this nectar using time-honored Ayurvedic Shodhana—slowly filtering through glacial spring water and curing for over 40 days beneath open mountain sunlight (Surya Tapi) to keep vital bio-enzymes intact.',
+  paragraph2: 'Our native foraging families ascend beyond 16,000 feet into the pristine granite ridges of Ladakh and Kashmir. Under the scorching high-altitude summer sun, raw crude exudate melts from rock cracks. We purify this nectar using time-honored Ayurvedic Shodhana—slowly filtering with authentic Triphala decoctions and curing for over 40 days beneath open mountain sunlight to keep vital bio-enzymes intact.',
   paragraph3: 'Encased in heavy UV-shielding dark amber glass and single-serve forest honey sticks, Titan Shilajit delivers raw mineral vitality, razor-sharp focus, and primal physical vigor directly to your morning cup.',
   imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=85',
   badgeTitle: '16,000+ FT HIGH HARVEST',
@@ -293,7 +293,7 @@ const DEFAULT_PAGE_CONTENT: PageContentConfig = {
     whatsappBtnText: 'ORDER DIRECT ON WHATSAPP',
   },
   footer: {
-    aboutText: 'Titan Shilajit brings the primal strength of pure Himalayan rock resin into modern life. 100% natural, Surya Tapi sun-purified, and NABL lab-certified for uncompromising daily vigor.',
+    aboutText: 'Titan Shilajit brings the primal strength of pure Himalayan rock resin into modern life. 100% natural, authentic Triphala purified, and NABL lab-certified for uncompromising daily vigor.',
     creditText: 'Designed by Supreme Ads',
     designedBy: 'Designed by Supreme Ads',
     tagline: 'Titan Shilajit brings the ancient strength of pure Himalayan Shilajit into the rhythm of modern life. Naturally rich, traditionally purified, and lab-tested for uncompromising daily vitality.',

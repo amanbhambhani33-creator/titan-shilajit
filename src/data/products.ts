@@ -16,6 +16,7 @@ export const PRODUCTS: Product[] = [
     reviewCount: 342,
     inStock: true,
     stockQty: 85,
+    badgeTag: 'hot_sell',
     images: [
       '/uploads/titan-shilajit-resin-0.jpg',
       '/uploads/titan-shilajit-resin-1.jpg',
@@ -58,7 +59,7 @@ export const PRODUCTS: Product[] = [
     description: 'Titan Pure Himalayan Shilajit Resin is the pinnacle of ancient natural strength. Hand-harvested from high-altitude rock faces above 16,000 feet in the Himalayan range during peak summer months, our resin undergoes slow sun-drying and gentle traditional purification using pure spring water. It retains maximum natural bio-availability without synthetic preservatives, binders, or artificial additives.',
     origin: 'Kashmir & Ladakh High Himalayan Ranges (16,000+ ft)',
     elevation: '16,000 – 18,000 ft',
-    fulvicAcidContent: '> 75% Lab Verified Fulvic Acid',
+    fulvicAcidContent: '70%+ Lab Verified Fulvic Acid',
     ingredients: [
       '100% Pure Himalayan Shilajit (Asphaltum punjabianum) Resin',
       '84+ Naturally Occurring Ionic Trace Minerals',
@@ -308,6 +309,7 @@ export const PRODUCTS: Product[] = [
     reviewCount: 147,
     inStock: true,
     stockQty: 34,
+    badgeTag: 'new_arrival',
     images: [
       '/uploads/titan-honey-sticks-strawberry-0.jpg',
       '/uploads/titan-honey-sticks-strawberry-1.jpg',
@@ -401,6 +403,7 @@ export const PRODUCTS: Product[] = [
     reviewCount: 96,
     inStock: true,
     stockQty: 26,
+    badgeTag: 'bestseller',
     images: [
       '/uploads/product-1791727204107-juykt.jpg',
       '/uploads/product-1791632586215-73g2v.jpg',
@@ -442,7 +445,7 @@ export const PRODUCTS: Product[] = [
     description: 'The definitive Titan Shilajit experience. Designed for those committed to a high-standard morning routine at home and on the move. Includes our lab-certified Grade-A Himalayan Resin, our precision stainless steel dosing spoon, and travel-ready Classic Honey Sticks, presented in a luxury matte black and gold rigid gift box.',
     origin: 'Himalayan Ranges (16,000+ ft)',
     elevation: '16,000+ ft',
-    fulvicAcidContent: '> 75% Lab Verified Fulvic Acid',
+    fulvicAcidContent: '70%+ Lab Verified Fulvic Acid',
     ingredients: [
       'Titan Pure Himalayan Shilajit Resin (20g)',
       'Titan Shilajit Classic Honey Sticks (10 Sticks x 10g)',

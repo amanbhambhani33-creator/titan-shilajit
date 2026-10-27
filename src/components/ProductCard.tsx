@@ -46,7 +46,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   // Dynamic image, price, mrp, and quantity based on active pack
   const cleanProductImages = (product.images || []).map((img) => normalizeImageUrl(img)).filter(Boolean);
   const packImg = currentPack.image ? normalizeImageUrl(currentPack.image) : '';
-  const displayImage = packImg || cleanProductImages[0] || normalizeImageUrl(product.image) || '';
+  // Fix image sync: If product.images[0] or product.image is set, prioritize it unless a higher pack has a distinct custom image
+  const hasCustomPackImage = selectedPackIndex > 0 && packImg && packImg !== cleanProductImages[0];
+  const displayImage = (hasCustomPackImage ? packImg : '') || cleanProductImages[0] || normalizeImageUrl(product.image) || packImg || DEFAULT_PRODUCT_FALLBACK;
   const displayPrice = currentPack?.price ?? product.price;
   const displayMrp = currentPack?.mrp ?? product.mrp;
   const displayQuantityText = currentPack.quantityText;
@@ -124,6 +126,25 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               </span>
             ) : (
               <>
+                {product.badgeTag && product.badgeTag !== 'none' && (
+                  <span
+                    className={`px-2.5 py-1 rounded-xs text-[10px] font-sans font-black tracking-widest uppercase shadow-md flex items-center gap-1 border ${
+                      product.badgeTag === 'hot_sell'
+                        ? 'bg-gradient-to-r from-red-600 to-amber-600 text-white border-amber-300'
+                        : product.badgeTag === 'new_arrival'
+                        ? 'bg-gradient-to-r from-emerald-800 to-emerald-600 text-[#F7F3E8] border-emerald-400'
+                        : product.badgeTag === 'bestseller'
+                        ? 'bg-gradient-to-r from-[#D4B66A] to-[#B88A32] text-[#10110F] border-yellow-200'
+                        : 'bg-[#183D27] text-[#D4B66A] border-[#D4B66A]/40'
+                    }`}
+                  >
+                    {product.badgeTag === 'hot_sell' && <span>🔥</span>}
+                    {product.badgeTag === 'new_arrival' && <span>✨</span>}
+                    {product.badgeTag === 'bestseller' && <span>⭐</span>}
+                    {product.badgeTag === 'trending' && <span>⚡</span>}
+                    <span>{product.badgeTag.replace(/_/g, ' ')}</span>
+                  </span>
+                )}
                 {currentPack.savings && !isHomeScreen && (
                   <span className="px-2.5 py-0.5 rounded-xs bg-[#183D27] text-[#D4B66A] text-[9px] font-sans font-bold tracking-widest uppercase border border-[#B88A32]/40 shadow-xs">
                     {currentPack.savings}

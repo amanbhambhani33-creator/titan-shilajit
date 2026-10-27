@@ -84,7 +84,7 @@ export const WellnessAssessmentPage: React.FC = () => {
         lifestyleSummary: `${formData.lifestyle} profile focused on energy and consistent daily performance`,
         suggestedProduct: 'Titan Pure Himalayan Shilajit Resin (20g)',
         productSlug: 'titan-shilajit-resin',
-        whyThisFits: 'Titan Pure Himalayan Shilajit delivers fulvic acid (>75%) and 84+ ionic trace minerals to support cellular energy and routine stamina.',
+        whyThisFits: 'Titan Pure Himalayan Shilajit delivers fulvic acid (70%+) and 84+ ionic trace minerals to support cellular energy and routine stamina.',
         suggestedRoutine: [
           {
             time: 'Morning (Within 30 mins of waking)',

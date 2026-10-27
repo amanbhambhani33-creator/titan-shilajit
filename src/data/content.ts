@@ -18,11 +18,11 @@ export const TRUST_STRIP_ITEMS = [
     subtitle: 'Wild-gathered from sheer granite fissures in Kashmir & Ladakh peaks'
   },
   {
-    title: 'SURYA TAPI SUN-PURIFIED',
-    subtitle: 'Slow-filtered through glacial spring water and sun-cured over 40 days'
+    title: 'TRIPHALA PURIFICATION',
+    subtitle: 'Slow-filtered through pristine Triphala decoction and sun-cured over 40 days'
   },
   {
-    title: '> 75% NATURAL FULVIC DENSITY',
+    title: '70%+ FULVIC ACID',
     subtitle: 'Certified rich in 84+ bio-ionic trace elements and humic compounds'
   },
   {
@@ -97,15 +97,15 @@ export const SOURCING_STEPS = [
   },
   {
     step: '03',
-    title: 'Traditional Surya Tapi Curing',
-    tag: 'Sun-Infused Potency',
-    description: 'Filtered through organic cotton filters and slowly cured beneath direct Himalayan sunlight for 40+ days to preserve delicate live enzymes.'
+    title: 'Traditional Triphala Purification',
+    tag: 'Authentic Ayurvedic Shodhana',
+    description: 'Slow-purified using traditional Triphala herbal decoction and naturally sun-cured beneath pristine Himalayan sunshine to enhance bioavailability.'
   },
   {
     step: '04',
     title: 'NABL Certified Standardization',
     tag: 'Pure & Uncut',
-    description: 'Every harvest batch undergoes rigorous NABL lab assays, verifying >75% active Fulvic Acid and complete freedom from heavy metals.'
+    description: 'Every harvest batch undergoes rigorous NABL lab assays, verifying 70%+ active fulvic acid and complete freedom from heavy metals.'
   }
 ];
 
@@ -130,9 +130,9 @@ export const SOURCING_JOURNEY = [
   },
   {
     step: '04',
-    title: '40-Day Surya Tapi Sun Curing',
-    subtitle: 'Zero Heat Damage',
-    description: 'Unlike commercial Shilajit boiled in industrial vats, Titan is thickened under the open sun, keeping heat-sensitive fulvic complexes alive.'
+    title: '40-Day Triphala Purification & Curing',
+    subtitle: 'Traditional Bio-Potent Shodhana',
+    description: 'Purified with authentic Triphala decoction and slow cured under gentle mountain sun, keeping bioactive 70%+ fulvic acid complexes maximally intact.'
   },
   {
     step: '05',

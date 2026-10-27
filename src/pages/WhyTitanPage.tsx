@@ -65,9 +65,9 @@ export const WhyTitanPage: React.FC = () => {
               <div className="w-12 h-12 rounded-xs bg-[#183D27] text-[#D4B66A] flex items-center justify-center mb-4">
                 <Sun className="w-6 h-6" />
               </div>
-              <h3 className="font-serif text-xl font-bold text-[#10110F] mb-2">Ayurvedic Shodhana</h3>
+              <h3 className="font-serif text-xl font-bold text-[#10110F] mb-2">Triphala Purification</h3>
               <p className="text-xs text-[#66704B] leading-relaxed">
-                Purified exclusively with natural mountain spring water and slow sun-curing (Surya Tapi), preserving sensitive enzymatic bioactives.
+                Purified exclusively with natural Triphala decoction and gentle sun-curing, preserving sensitive enzymatic bioactives and minerals.
               </p>
             </div>
             <div className="mt-4 pt-3 border-t border-[#10110F]/10 text-[11px] font-bold text-[#183D27]">
@@ -95,7 +95,7 @@ export const WhyTitanPage: React.FC = () => {
               <div className="w-12 h-12 rounded-xs bg-[#183D27] text-[#D4B66A] flex items-center justify-center mb-4">
                 <Award className="w-6 h-6" />
               </div>
-              <h3 className="font-serif text-xl font-bold text-[#10110F] mb-2">&gt; 75% Fulvic Acid</h3>
+              <h3 className="font-serif text-xl font-bold text-[#10110F] mb-2">70%+ Fulvic Acid</h3>
               <p className="text-xs text-[#66704B] leading-relaxed">
                 Rich in microscopic carrier molecules that transport 84+ ionic trace minerals directly across cell membranes.
               </p>
@@ -180,7 +180,7 @@ export const WhyTitanPage: React.FC = () => {
                 <tr>
                   <td className="p-4 sm:p-5 font-semibold">Fulvic Acid Concentration</td>
                   <td className="p-4 sm:p-5 bg-[#183D27]/5 font-bold text-[#183D27] flex items-center gap-1.5">
-                    <Check className="w-4 h-4" /> &gt; 75% Lab Certified
+                    <Check className="w-4 h-4" /> 70%+ Lab Certified
                   </td>
                   <td className="p-4 sm:p-5 text-[#66704B]">30% – 50% Average</td>
                   <td className="p-4 sm:p-5 text-[#66704B]">10% – 20% Extract Blend</td>

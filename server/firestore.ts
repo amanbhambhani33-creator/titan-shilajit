@@ -681,3 +681,161 @@ export async function getReturnRequestsFromFirestore(): Promise<any[]> {
   }
 }
 
+// =========================================================================
+// COUPONS MANAGEMENT & USAGE TRACKING
+// =========================================================================
+
+const DEFAULT_COUPONS = [
+  {
+    id: 'coupon_titanfirst',
+    code: 'TITANFIRST',
+    discountType: 'flat',
+    discountValue: 150,
+    minOrderAmount: 999,
+    usageLimit: 1000,
+    usedCount: 0,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    description: 'Welcome privilege for first-time customers',
+  },
+  {
+    id: 'coupon_titan100',
+    code: 'TITAN100',
+    discountType: 'flat',
+    discountValue: 100,
+    minOrderAmount: 1499,
+    usageLimit: 500,
+    usedCount: 0,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    description: 'Special ₹100 discount on cart value above ₹1,499',
+  },
+  {
+    id: 'coupon_titan10',
+    code: 'TITAN10',
+    discountType: 'percentage',
+    discountValue: 10,
+    minOrderAmount: 1999,
+    maxDiscountAmount: 500,
+    usageLimit: 500,
+    usedCount: 0,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    description: '10% OFF privilege on premium ritual orders',
+  },
+];
+
+export async function saveCouponToFirestore(coupon: any): Promise<{ success: boolean; coupon: any }> {
+  try {
+    const id = coupon.id || `cpn_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const full = {
+      ...coupon,
+      id,
+      code: (coupon.code || '').trim().toUpperCase(),
+      usedCount: Number(coupon.usedCount || 0),
+      createdAt: coupon.createdAt || new Date().toISOString(),
+      isActive: coupon.isActive !== undefined ? Boolean(coupon.isActive) : true,
+    };
+
+    // Save to disk cache
+    const cached = readDiskCache<any[]>('coupons.json') || DEFAULT_COUPONS;
+    const filtered = cached.filter((c) => c.id !== id && c.code !== full.code);
+    writeDiskCache('coupons.json', [full, ...filtered]);
+
+    // Save to Firestore
+    const url = `${FIRESTORE_BASE_URL}/coupons?documentId=${encodeURIComponent(id)}&key=${API_KEY}`;
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: toFirestoreFields(full) }),
+    });
+
+    return { success: true, coupon: full };
+  } catch (err: any) {
+    return { success: false, coupon };
+  }
+}
+
+export async function getCouponsFromFirestore(): Promise<any[]> {
+  const disk = readDiskCache<any[]>('coupons.json');
+  const fallback = disk && disk.length > 0 ? disk : DEFAULT_COUPONS;
+  try {
+    const url = `${FIRESTORE_BASE_URL}:runQuery?key=${API_KEY}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: 'coupons' }],
+        },
+      }),
+    });
+    if (!res.ok) return fallback;
+    const data = await res.json();
+    if (!Array.isArray(data)) return fallback;
+    const items: any[] = [];
+    for (const item of data) {
+      if (item.document) {
+        const parsed = fromFirestoreDoc(item.document);
+        if (parsed && parsed.code) items.push(parsed);
+      }
+    }
+    if (items.length > 0) {
+      writeDiskCache('coupons.json', items);
+      return items;
+    }
+    return fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export async function deleteCouponFromFirestore(id: string): Promise<boolean> {
+  try {
+    const cached = readDiskCache<any[]>('coupons.json') || [];
+    writeDiskCache('coupons.json', cached.filter((c) => c.id !== id));
+
+    const url = `${FIRESTORE_BASE_URL}/coupons/${encodeURIComponent(id)}?key=${API_KEY}`;
+    await fetch(url, { method: 'DELETE' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function incrementCouponUsage(code: string): Promise<number> {
+  if (!code) return 0;
+  const upperCode = code.trim().toUpperCase();
+  try {
+    const coupons = await getCouponsFromFirestore();
+    const target = coupons.find((c) => (c.code || '').toUpperCase() === upperCode);
+    if (!target) return 0;
+
+    const newCount = (Number(target.usedCount) || 0) + 1;
+    target.usedCount = newCount;
+    target.updatedAt = new Date().toISOString();
+
+    const updatedList = coupons.map((c) => ((c.code || '').toUpperCase() === upperCode ? target : c));
+    writeDiskCache('coupons.json', updatedList);
+
+    // Update in Firestore
+    if (target.id) {
+      const url = `${FIRESTORE_BASE_URL}/coupons/${encodeURIComponent(target.id)}?updateMask.fieldPaths=usedCount&updateMask.fieldPaths=updatedAt&key=${API_KEY}`;
+      await fetch(url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fields: toFirestoreFields({
+            usedCount: newCount,
+            updatedAt: target.updatedAt,
+          }),
+        }),
+      }).catch(() => {});
+    }
+
+    return newCount;
+  } catch {
+    return 0;
+  }
+}
+

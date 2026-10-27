@@ -83,7 +83,7 @@ export const ShilajitGuidePage: React.FC = () => {
                 When you consume Shilajit, fulvic acid binds with essential trace minerals (magnesium, zinc, iron, selenium) and escorts them directly into your mitochondria—the cellular power plants responsible for ATP energy production.
               </p>
               <div className="p-3 rounded-xs bg-white border border-[#10110F]/10 text-[#10110F] text-xs font-semibold">
-                Titan Shilajit guarantees &gt; 75% purified Fulvic Acid density in every batch.
+                Titan Shilajit guarantees 70%+ purified Fulvic Acid density in every batch.
               </div>
             </div>
 

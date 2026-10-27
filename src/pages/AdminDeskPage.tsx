@@ -53,6 +53,7 @@ import { AdminProductImageUploader } from '../components/AdminProductImageUpload
 import { AdminOrdersSection } from '../components/AdminOrdersSection';
 import { AdminBrandLogoSection } from '../components/AdminBrandLogoSection';
 import { AdminHostingerSection } from '../components/AdminHostingerSection';
+import { AdminCouponsSection } from '../components/AdminCouponsSection';
 import { normalizeImageUrl } from '../utils/imageUrl';
 
 export const AdminDeskPage: React.FC = () => {
@@ -106,7 +107,7 @@ export const AdminDeskPage: React.FC = () => {
     refreshStoreData,
   } = useStoreContent();
 
-  const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'quality' | 'developer' | 'rbac' | 'settings' | 'orders' | 'reviews' | 'hostinger'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'quality' | 'developer' | 'rbac' | 'settings' | 'orders' | 'reviews' | 'coupons' | 'hostinger'>('products');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
   const navigate = useNavigate();
@@ -160,6 +161,7 @@ export const AdminDeskPage: React.FC = () => {
     slug: '',
     category: 'resin',
     tagline: '',
+    badgeTag: 'none',
     price: 1499,
     mrp: 1999,
     discount: '25% OFF',
@@ -175,7 +177,7 @@ export const AdminDeskPage: React.FC = () => {
     description: '',
     origin: 'Himalayan Ranges (16,000+ ft)',
     elevation: '16,000+ ft',
-    fulvicAcidContent: '> 75% Lab Verified Fulvic Acid',
+    fulvicAcidContent: '70%+ Lab Verified Fulvic Acid',
     ingredients: ['100% Pure Himalayan Shilajit Resin'],
     benefits: [
       { title: 'Cellular Energy', description: 'Supports daily ATP and metabolic vitality.' },
@@ -308,6 +310,7 @@ export const AdminDeskPage: React.FC = () => {
       slug: generatedSlug,
       category: (newProductForm.category as any) || 'resin',
       tagline: newProductForm.tagline || 'Pure Power of the Himalayas',
+      badgeTag: (newProductForm.badgeTag as any) || 'none',
       price: basePrice,
       mrp: baseMrp,
       discount: newProductForm.discount || '25% OFF',
@@ -324,7 +327,7 @@ export const AdminDeskPage: React.FC = () => {
       description: newProductForm.description || 'Harvested from extreme Himalayan altitudes and purified using traditional Ayurvedic methods.',
       origin: newProductForm.origin || 'Himalayan Range (16,000+ ft)',
       elevation: newProductForm.elevation || '16,000+ ft',
-      fulvicAcidContent: newProductForm.fulvicAcidContent || '> 75% Fulvic Acid',
+      fulvicAcidContent: newProductForm.fulvicAcidContent || '70%+ Fulvic Acid',
       ingredients: newProductForm.ingredients || ['100% Pure Shilajit Exudate'],
       benefits: newProductForm.benefits || [
         { title: 'Vitality Support', description: 'Supports daily physical stamina and focus.' }
@@ -775,6 +778,11 @@ export const AdminDeskPage: React.FC = () => {
               id: 'orders',
               label: `Orders & Repeat Check (${orders.length})`,
               icon: Package,
+            },
+            {
+              id: 'coupons',
+              label: 'Coupons & Discounts',
+              icon: Tag,
             },
             {
               id: 'rbac',
@@ -1738,6 +1746,13 @@ export const AdminDeskPage: React.FC = () => {
         )}
 
         {/* ========================================================================= */}
+        {/* TAB: COUPONS & DISCOUNT MANAGER */}
+        {/* ========================================================================= */}
+        {activeTab === 'coupons' && (
+          <AdminCouponsSection onToast={showToast} />
+        )}
+
+        {/* ========================================================================= */}
         {/* TAB 6: HOSTINGER STORAGE & DATABASE ENGINE */}
         {/* ========================================================================= */}
         {activeTab === 'hostinger' && (
@@ -1805,6 +1820,26 @@ export const AdminDeskPage: React.FC = () => {
                     <option value="resin">Pure Resin</option>
                     <option value="honey-sticks">Honey Sticks</option>
                     <option value="bundles">Bundles & Ritual Boxes</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase text-[#10110F] mb-1 flex items-center justify-between">
+                    <span>Badge Tag (Star Ribbon)</span>
+                    <span className="text-[10px] text-[#B88A32]">Front-end Tag</span>
+                  </label>
+                  <select
+                    value={editingProduct.badgeTag || 'none'}
+                    onChange={(e) =>
+                      setEditingProduct({ ...editingProduct, badgeTag: e.target.value as any })
+                    }
+                    className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs bg-white font-medium"
+                  >
+                    <option value="none">None (Standard Product)</option>
+                    <option value="hot_sell">🔥 HOT SELL (Star Tag)</option>
+                    <option value="new_arrival">✨ NEW ARRIVAL (Star Tag)</option>
+                    <option value="bestseller">⭐ BESTSELLER (Top Rated)</option>
+                    <option value="trending">⚡ TRENDING (High Demand)</option>
                   </select>
                 </div>
               </div>
@@ -2764,6 +2799,26 @@ export const AdminDeskPage: React.FC = () => {
                     <option value="resin">Pure Resin</option>
                     <option value="honey-sticks">Honey Sticks</option>
                     <option value="bundles">Bundles & Ritual Boxes</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase text-[#10110F] mb-1 flex items-center justify-between">
+                    <span>Badge Tag (Star Ribbon)</span>
+                    <span className="text-[10px] text-[#B88A32]">Front-end Tag</span>
+                  </label>
+                  <select
+                    value={newProductForm.badgeTag || 'none'}
+                    onChange={(e) =>
+                      setNewProductForm({ ...newProductForm, badgeTag: e.target.value as any })
+                    }
+                    className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs bg-white font-medium"
+                  >
+                    <option value="none">None (Standard Product)</option>
+                    <option value="hot_sell">🔥 HOT SELL (Star Tag)</option>
+                    <option value="new_arrival">✨ NEW ARRIVAL (Star Tag)</option>
+                    <option value="bestseller">⭐ BESTSELLER (Top Rated)</option>
+                    <option value="trending">⚡ TRENDING (High Demand)</option>
                   </select>
                 </div>
               </div>

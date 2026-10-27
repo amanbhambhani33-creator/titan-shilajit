@@ -54,7 +54,7 @@ export const AboutPage: React.FC = () => {
             <ShieldCheck className="w-6 h-6 text-[#183D27] mb-3" />
             <h4 className="font-serif font-bold text-lg text-[#10110F] mb-1">Scientific Verification</h4>
             <p className="text-xs text-[#66704B] leading-relaxed">
-              Every single batch is NABL certified for heavy metals, microbial safety, and &gt;75% fulvic acid.
+              Every single batch is NABL certified for heavy metals, microbial safety, and 70%+ fulvic acid.
             </p>
           </div>
 

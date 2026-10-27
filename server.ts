@@ -33,6 +33,10 @@ import {
   saveReturnRequestToFirestore,
   getReturnRequestsFromFirestore,
   updateOrderStatusInFirestore,
+  saveCouponToFirestore,
+  getCouponsFromFirestore,
+  deleteCouponFromFirestore,
+  incrementCouponUsage,
 } from './server/firestore';
 
 import {
@@ -1577,6 +1581,119 @@ apiRouter.post('/orders/cancel', async (req, res) => {
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// =========================================================================
+// COUPONS API (Admin Manager & Checkout Validation)
+// =========================================================================
+
+// GET all coupons with live usage counts
+apiRouter.get('/coupons', async (req, res) => {
+  try {
+    const coupons = await getCouponsFromFirestore();
+    return res.json({ success: true, coupons });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, coupons: [], error: err?.message });
+  }
+});
+
+// POST create or update a coupon
+apiRouter.post('/coupons', async (req, res) => {
+  try {
+    const data = req.body;
+    if (!data || !data.code) {
+      return res.status(400).json({ success: false, error: 'Coupon code is required.' });
+    }
+    const result = await saveCouponToFirestore(data);
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// DELETE a coupon
+apiRouter.delete('/coupons/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const ok = await deleteCouponFromFirestore(id);
+    return res.json({ success: ok });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// POST validate coupon code for checkout
+apiRouter.post('/coupons/validate', async (req, res) => {
+  try {
+    const { code, cartTotal = 0, isFirstOrder = false } = req.body;
+    if (!code) {
+      return res.status(400).json({ valid: false, error: 'Coupon code is required.' });
+    }
+    const upperCode = code.trim().toUpperCase();
+    const coupons = await getCouponsFromFirestore();
+    const coupon = coupons.find((c) => (c.code || '').toUpperCase() === upperCode && c.isActive);
+
+    if (!coupon) {
+      // Check legacy welcome coupon
+      if (upperCode === 'TITANFIRST' || upperCode === 'FIRST10') {
+        const discountAmount = Math.min(150, Math.round(cartTotal * 0.15));
+        return res.json({
+          valid: true,
+          code: upperCode,
+          discountAmount,
+          discountType: 'flat',
+          discountValue: 150,
+          description: 'First order privilege',
+        });
+      }
+      return res.status(404).json({ valid: false, error: 'Invalid or inactive coupon code.' });
+    }
+
+    // Check usage limit
+    if (coupon.usageLimit && (coupon.usedCount || 0) >= coupon.usageLimit) {
+      return res.status(400).json({ valid: false, error: 'This coupon has reached its maximum usage limit.' });
+    }
+
+    // Check minimum order amount
+    if (coupon.minOrderAmount && cartTotal < coupon.minOrderAmount) {
+      return res.status(400).json({
+        valid: false,
+        error: `Minimum order amount of ₹${coupon.minOrderAmount} required for this coupon.`,
+      });
+    }
+
+    let discountAmount = 0;
+    if (coupon.discountType === 'percentage') {
+      discountAmount = Math.round((cartTotal * Number(coupon.discountValue)) / 100);
+      if (coupon.maxDiscountAmount && discountAmount > coupon.maxDiscountAmount) {
+        discountAmount = coupon.maxDiscountAmount;
+      }
+    } else {
+      discountAmount = Number(coupon.discountValue) || 0;
+    }
+
+    return res.json({
+      valid: true,
+      coupon,
+      code: upperCode,
+      discountAmount,
+      description: coupon.description || `${coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`} OFF`,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ valid: false, error: err?.message });
+  }
+});
+
+// POST track coupon usage upon completed order placement
+apiRouter.post('/coupons/use', async (req, res) => {
+  try {
+    const { code } = req.body;
+    if (!code) return res.json({ success: false });
+    const count = await incrementCouponUsage(code);
+    return res.json({ success: true, usedCount: count });
+  } catch (err: any) {
+    return res.json({ success: false, error: err?.message });
   }
 });
 
