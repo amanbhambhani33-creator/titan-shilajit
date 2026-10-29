@@ -108,11 +108,10 @@ export const ProductDetailPage: React.FC = () => {
   const currentPackImg = currentPack?.image ? normalizeImageUrl(currentPack.image) : null;
 
   // If user explicitly clicked a thumbnail, strictly show that thumbnail.
-  // Otherwise show custom pack photo if assigned, else cleanProductImages[0] or cover image.
-  const hasDistinctPackImg = selectedPackIndex > 0 && currentPackImg && currentPackImg !== cleanProductImages[0];
+  // Otherwise prioritize latest updated product image/gallery, falling back to pack image.
   const displayImage = isUserSelectedThumbnail && cleanProductImages[selectedImageIndex]
     ? cleanProductImages[selectedImageIndex]
-    : ((hasDistinctPackImg ? currentPackImg : '') || cleanProductImages[selectedImageIndex] || cleanProductImages[0] || normalizeImageUrl(product.image) || currentPackImg || DEFAULT_PRODUCT_FALLBACK);
+    : (normalizeImageUrl(product.image) || cleanProductImages[selectedImageIndex] || cleanProductImages[0] || currentPackImg || DEFAULT_PRODUCT_FALLBACK);
 
   const displayPrice = currentPack ? currentPack.price : product.price;
   const displayMrp = currentPack ? currentPack.mrp : product.mrp;

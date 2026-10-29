@@ -30,9 +30,12 @@ import {
   Save,
   Globe,
   RotateCcw,
+  Delete,
+  XCircle,
 } from 'lucide-react';
 import { OrderRecord } from '../types';
 import { formatDateTime, getOrderTimeInfo } from '../utils/orderPolicy';
+import { printOrderInvoice } from '../utils/printInvoice';
 
 interface AdminOrdersSectionProps {
   orders: OrderRecord[];
@@ -1630,14 +1633,36 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
         {/* Filters and Search Bar */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-[#66704B] absolute left-3 top-3" />
+            <Search className="w-4 h-4 text-[#66704B] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search by Order #, Customer, Phone, or Delhivery AWB..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm focus:border-[#183D27] outline-none"
+              className="w-full pl-9 pr-20 py-2 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm focus:border-[#183D27] outline-none bg-white"
             />
+            {searchTerm.length > 0 && (
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm((prev) => prev.slice(0, -1))}
+                  title="Backspace"
+                  aria-label="Backspace"
+                  className="p-1 rounded-xs bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors cursor-pointer"
+                >
+                  <Delete className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  title="Clear search"
+                  aria-label="Clear search"
+                  className="p-1 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#D4B66A] transition-colors cursor-pointer"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
@@ -2064,6 +2089,25 @@ export const AdminOrdersSection: React.FC<AdminOrdersSectionProps> = ({ orders, 
                               </div>
                             </div>
                           ))}
+                        </div>
+
+                        {/* Order Slip Actions: Isolated 1-Page Tax Invoice */}
+                        <div className="pt-3 mt-3 border-t border-[#10110F]/10 flex flex-wrap items-center justify-between gap-2">
+                          <span className="text-[10px] text-[#66704B]">
+                            Official GST Tax Invoice • Delhivery Waybill: <strong className="font-mono text-[#183D27]">{trackingNumber || 'Manifested'}</strong>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              printOrderInvoice(order);
+                            }}
+                            className="px-3.5 py-1.5 rounded-xs bg-[#10110F] hover:bg-[#183D27] text-[#D4B66A] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer border border-[#D4B66A]/30"
+                            title="Print Isolated 1-Page Tax Invoice PDF"
+                          >
+                            <Printer className="w-3.5 h-3.5 text-[#D4B66A]" />
+                            <span>Print Tax Invoice (1 Page)</span>
+                          </button>
                         </div>
                       </div>
                     </div>

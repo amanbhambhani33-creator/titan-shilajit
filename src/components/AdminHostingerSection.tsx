@@ -20,14 +20,24 @@ interface AdminHostingerSectionProps {
 }
 
 export const AdminHostingerSection: React.FC<AdminHostingerSectionProps> = ({ onToast }) => {
-  const { products, reviews, orders, content } = useStoreContent();
+  const { products, reviews, orders, content, pullFromHostinger } = useStoreContent();
 
   const [status, setStatus] = useState<any>(null);
   const [loadingStatus, setLoadingStatus] = useState<boolean>(true);
 
-  // 1-Click Sync
+  // 1-Click Sync States
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [isPulling, setIsPulling] = useState<boolean>(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
+
+  // Remote Hostinger Website URL (e.g. https://yourdomain.com)
+  const [remoteHostingerUrl, setRemoteHostingerUrl] = useState<string>(() => {
+    try {
+      return localStorage.getItem('titan_remote_hostinger_url') || '';
+    } catch {
+      return '';
+    }
+  });
 
   // MySQL Test state
   const [mysqlHost, setMysqlHost] = useState<string>('');
@@ -56,6 +66,58 @@ export const AdminHostingerSection: React.FC<AdminHostingerSectionProps> = ({ on
   useEffect(() => {
     fetchStatus();
   }, []);
+
+  // 1-Click Pull all changes from Hostinger to AI Studio
+  const handlePullFromHostinger = async (useRemoteUrl: boolean = false) => {
+    setIsPulling(true);
+    setSyncResult(null);
+
+    try {
+      const urlToUse = useRemoteUrl ? remoteHostingerUrl : undefined;
+      const res = await pullFromHostinger(urlToUse);
+      if (res.success) {
+        setSyncResult(res.message);
+        onToast('Changes from Hostinger successfully imported and applied!');
+        fetchStatus();
+      } else {
+        setSyncResult(res.message || 'Notice: Could not pull changes from Hostinger.');
+      }
+    } catch (err: any) {
+      setSyncResult(err?.message || 'Pull sync failed.');
+    } finally {
+      setIsPulling(false);
+    }
+  };
+
+  // Import from uploaded Hostinger JSON file
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const text = evt.target?.result as string;
+        const parsed = JSON.parse(text);
+        const res = await fetch('/api/hostinger/import-json', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(parsed),
+        });
+        const data = await res.json();
+        if (data.success) {
+          onToast('Backup JSON imported successfully! Pulling into active store...');
+          await pullFromHostinger();
+          fetchStatus();
+        } else {
+          onToast(data.message || 'Import failed.');
+        }
+      } catch (err: any) {
+        onToast('Failed to parse JSON file.');
+      }
+    };
+    reader.readAsText(file);
+  };
 
   // 1-Click Sync all data to Hostinger
   const handleSyncToHostinger = async () => {
@@ -147,16 +209,28 @@ export const AdminHostingerSection: React.FC<AdminHostingerSectionProps> = ({ on
           <div className="flex flex-wrap items-center gap-2.5">
             <button
               type="button"
+              onClick={() => handlePullFromHostinger(false)}
+              disabled={isPulling}
+              className="px-4 py-2.5 rounded-xs bg-[#25D366] hover:bg-[#20ba5a] text-[#10110F] text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
+              title="Pull changes from Hostinger database into AI Studio"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isPulling ? 'animate-spin' : ''}`} />
+              <span>{isPulling ? 'Pulling Changes...' : 'Pull Changes from Hostinger'}</span>
+            </button>
+
+            <button
+              type="button"
               onClick={handleSyncToHostinger}
               disabled={isSyncing}
               className="px-4 py-2.5 rounded-xs bg-[#B88A32] hover:bg-[#D4B66A] text-[#10110F] text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
+              title="Push current products, reviews, and content to Hostinger database"
             >
               {isSyncing ? (
                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
               ) : (
                 <UploadCloud className="w-3.5 h-3.5" />
               )}
-              <span>{isSyncing ? 'Syncing Store...' : 'Sync All to Hostinger'}</span>
+              <span>{isSyncing ? 'Syncing...' : 'Sync All to Hostinger'}</span>
             </button>
 
             <a
@@ -165,8 +239,46 @@ export const AdminHostingerSection: React.FC<AdminHostingerSectionProps> = ({ on
               className="px-4 py-2.5 rounded-xs bg-white/10 hover:bg-white/20 text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center gap-2 border border-white/20 transition-all cursor-pointer"
             >
               <Download className="w-3.5 h-3.5 text-[#D4B66A]" />
-              <span>Download Backup (.json)</span>
+              <span>Download Backup</span>
             </a>
+          </div>
+        </div>
+
+        {/* Live Hostinger Remote Website URL Sync */}
+        <div className="mt-5 pt-4 border-t border-white/15 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          <div className="flex-1">
+            <label className="text-[10px] uppercase font-bold text-[#D4B66A] tracking-wider block mb-1">
+              Hostinger Live Website Domain / URL (For Remote Sync):
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={remoteHostingerUrl}
+                onChange={(e) => {
+                  setRemoteHostingerUrl(e.target.value);
+                  try { localStorage.setItem('titan_remote_hostinger_url', e.target.value); } catch {}
+                }}
+                placeholder="https://yourdomain.com (Your Live Hostinger Site)"
+                className="flex-1 px-3 py-2 rounded-xs bg-white/10 border border-white/20 text-[#F7F3E8] text-xs font-mono placeholder:text-stone-400 focus:outline-none focus:border-[#D4B66A]"
+              />
+              <button
+                type="button"
+                onClick={() => handlePullFromHostinger(true)}
+                disabled={isPulling || !remoteHostingerUrl.trim()}
+                className="px-3.5 py-2 rounded-xs bg-[#183D27] hover:bg-[#205234] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-[#D4B66A]/40 transition-all cursor-pointer disabled:opacity-40"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-[#D4B66A] ${isPulling ? 'animate-spin' : ''}`} />
+                <span>Pull from Domain</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="shrink-0 flex items-center gap-2">
+            <label className="px-3 py-2 rounded-xs bg-white/10 hover:bg-white/20 text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center gap-2 border border-white/20 cursor-pointer">
+              <FileJson className="w-3.5 h-3.5 text-[#D4B66A]" />
+              <span>Restore from JSON</span>
+              <input type="file" accept=".json" onChange={handleFileUpload} className="hidden" />
+            </label>
           </div>
         </div>
 

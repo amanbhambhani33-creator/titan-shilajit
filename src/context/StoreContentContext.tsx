@@ -347,6 +347,7 @@ interface StoreContentContextType {
   refreshStoreData: () => Promise<boolean>;
   saveAllToFirebase: () => Promise<boolean>;
   testFirestoreConnection: () => Promise<{ success: boolean; message: string }>;
+  pullFromHostinger: (remoteUrl?: string) => Promise<{ success: boolean; message: string; details?: any }>;
   resetAllContent: () => void;
 }
 
@@ -943,6 +944,76 @@ function addDeletedProductId(id: string) {
     }
   };
 
+  const pullFromHostinger = async (remoteUrl?: string): Promise<{ success: boolean; message: string; details?: any }> => {
+    try {
+      let endpoint = '/api/hostinger/pull-all';
+      let requestOptions: RequestInit = { method: 'GET' };
+
+      if (remoteUrl && remoteUrl.trim()) {
+        endpoint = '/api/hostinger/pull-from-remote';
+        requestOptions = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ remoteUrl: remoteUrl.trim() }),
+        };
+      }
+
+      const res = await fetch(endpoint, requestOptions);
+      const data = await res.json();
+
+      if (data && data.success) {
+        if (Array.isArray(data.products) && data.products.length > 0) {
+          const clean = sanitizeProductsImages(data.products);
+          setProducts(clean);
+          try { localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(clean)); } catch {}
+        }
+
+        if (Array.isArray(data.reviews) && data.reviews.length > 0) {
+          setReviews(data.reviews);
+          try { localStorage.setItem(REVIEWS_STORAGE_KEY, JSON.stringify(data.reviews)); } catch {}
+        }
+
+        if (data.content && typeof data.content === 'object') {
+          setContent((prev) => ({
+            ...prev,
+            ...data.content,
+            footer: {
+              ...prev.footer,
+              ...(data.content.footer || {}),
+              creditText: 'Designed by Supreme Ads',
+              designedBy: 'Designed by Supreme Ads',
+            },
+          }));
+          try { localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(data.content)); } catch {}
+        }
+
+        if (Array.isArray(data.orders) && data.orders.length > 0) {
+          setOrders(data.orders);
+          try { localStorage.setItem('titan_store_orders_v1', JSON.stringify(data.orders)); } catch {}
+        }
+
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        setLastSyncTime(timeStr);
+
+        return {
+          success: true,
+          message: data.message || `Successfully pulled & updated all records from Hostinger at ${timeStr}!`,
+          details: data.details,
+        };
+      }
+
+      return {
+        success: false,
+        message: data.error || 'Failed to pull updates from Hostinger.',
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        message: err?.message || 'Sync connection failed.',
+      };
+    }
+  };
+
   const triggerSplash = () => setShowSplash(true);
   const closeSplash = () => {
     setShowSplash(false);
@@ -1481,6 +1552,7 @@ function addDeletedProductId(id: string) {
         refreshStoreData,
         saveAllToFirebase,
         testFirestoreConnection,
+        pullFromHostinger,
         resetAllContent,
       }}
     >

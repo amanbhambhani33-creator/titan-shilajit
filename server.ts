@@ -51,6 +51,8 @@ import {
   saveHostingerPageContent,
   syncAllFromClient,
   exportFullHostingerBackup,
+  pullAllHostingerData,
+  importHostingerBackup,
   testHostingerMysqlConnection,
 } from './server/hostingerDb';
 
@@ -1026,6 +1028,109 @@ apiRouter.get('/hostinger/backup-download', (req, res) => {
   }
 });
 
+// Pull all latest changes from Hostinger storage
+apiRouter.get('/hostinger/pull-all', (req, res) => {
+  try {
+    const data = pullAllHostingerData();
+    return res.json(data);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// Import Hostinger JSON data directly
+apiRouter.post('/hostinger/import-json', async (req, res) => {
+  try {
+    const payload = req.body;
+    const result = importHostingerBackup(payload);
+
+    // Also mirror to Firestore if available so both stay in 100% sync
+    try {
+      if (Array.isArray(payload.products) && payload.products.length > 0) {
+        await saveProductsToFirestore(payload.products);
+      }
+      if (payload.pageContent || payload.content) {
+        await saveStoreContentToFirestore(payload.pageContent || payload.content);
+      }
+      if (Array.isArray(payload.reviews) && payload.reviews.length > 0) {
+        await saveReviewsToFirestore(payload.reviews);
+      }
+    } catch (fsErr) {
+      console.warn('Firestore mirror warning after Hostinger import:', fsErr);
+    }
+
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// Pull and sync from live Hostinger website URL
+apiRouter.post('/hostinger/pull-from-remote', async (req, res) => {
+  try {
+    const { remoteUrl } = req.body;
+    if (!remoteUrl || typeof remoteUrl !== 'string') {
+      return res.status(400).json({ success: false, error: 'Hostinger remote website URL is required.' });
+    }
+
+    const cleanUrl = remoteUrl.trim().replace(/\/+$/, '');
+    let fetchedData: any = null;
+
+    // Try backup-download or pull-all or store-content
+    const candidateEndpoints = [
+      `${cleanUrl}/api/hostinger/pull-all`,
+      `${cleanUrl}/api/hostinger/backup-download`,
+      `${cleanUrl}/api/store-content`,
+    ];
+
+    let lastError = '';
+    for (const ep of candidateEndpoints) {
+      try {
+        const response = await fetch(ep, { headers: { 'Accept': 'application/json' } });
+        if (response.ok) {
+          const json = await response.json();
+          if (json && (json.products || json.content || json.pageContent || json.orders)) {
+            fetchedData = json;
+            break;
+          }
+        }
+      } catch (err: any) {
+        lastError = err?.message || 'Connection failed';
+      }
+    }
+
+    if (!fetchedData) {
+      return res.status(502).json({
+        success: false,
+        error: `Could not fetch store data from Hostinger URL "${cleanUrl}". Please check if the site is reachable. (${lastError})`,
+      });
+    }
+
+    const importResult = importHostingerBackup(fetchedData);
+
+    // Also mirror to Firestore
+    try {
+      if (Array.isArray(fetchedData.products) && fetchedData.products.length > 0) {
+        await saveProductsToFirestore(fetchedData.products);
+      }
+      if (fetchedData.pageContent || fetchedData.content) {
+        await saveStoreContentToFirestore(fetchedData.pageContent || fetchedData.content);
+      }
+      if (Array.isArray(fetchedData.reviews) && fetchedData.reviews.length > 0) {
+        await saveReviewsToFirestore(fetchedData.reviews);
+      }
+    } catch {}
+
+    return res.json({
+      success: true,
+      message: `Successfully pulled and synchronized all changes from Hostinger website (${cleanUrl})!`,
+      details: importResult.counts,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
 apiRouter.post('/hostinger/test-mysql', async (req, res) => {
   try {
     const result = await testHostingerMysqlConnection(req.body);
@@ -1266,7 +1371,7 @@ apiRouter.post('/delhivery/register-warehouse', async (req, res) => {
 
 // RESILIENT MULTI-HOST STORE CONTENT & RETURNS SYNC (Never Fails on Vercel / Hostinger / Custom Domains)
 
-// Fetch all store content, products, and reviews directly from Firestore via server
+// Fetch all store content, products, and reviews directly from Firestore & Hostinger via server
 apiRouter.get('/store-content', async (req, res) => {
   try {
     const [mainContent, products, reviews] = await Promise.all([
@@ -1274,24 +1379,46 @@ apiRouter.get('/store-content', async (req, res) => {
       getProductsFromFirestore(),
       getReviewsFromFirestore(),
     ]);
+
+    const hostingerProducts = getHostingerProducts();
+    const hostingerReviews = getHostingerReviews();
+    const hostingerContent = getHostingerPageContent();
+
+    let finalProducts = (products && products.length > 0) ? products : hostingerProducts;
+    if (hostingerProducts && hostingerProducts.length > 0 && products && products.length > 0) {
+      const hostingerMap = new Map(hostingerProducts.map((p: any) => [p.id, p]));
+      finalProducts = finalProducts.map((p: any) => {
+        const hp = hostingerMap.get(p.id);
+        if (hp) {
+          return { ...p, ...hp };
+        }
+        return p;
+      });
+    }
+
+    const finalReviews = (reviews && reviews.length > 0) ? reviews : hostingerReviews;
+    const finalContent = mainContent || hostingerContent;
+
     return res.json({
       success: true,
-      content: mainContent,
-      products: products || [],
-      reviews: reviews || [],
+      content: finalContent,
+      products: finalProducts || [],
+      reviews: finalReviews || [],
+      hostingerSynced: true,
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message });
   }
 });
 
-// Resilient save for page content to Firestore
+// Resilient save for page content to Firestore and Hostinger
 apiRouter.post('/store-content/save', async (req, res) => {
   try {
     const { content } = req.body;
     if (!content) return res.status(400).json({ success: false, error: 'Content payload is required.' });
+    saveHostingerPageContent(content);
     const ok = await saveStoreContentToFirestore(content);
-    return res.json({ success: ok, message: ok ? 'Saved to Firestore.' : 'Failed to save to Firestore.' });
+    return res.json({ success: true, message: ok ? 'Saved to Firestore and Hostinger database.' : 'Saved to Hostinger database.' });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message });
   }
@@ -1476,10 +1603,11 @@ apiRouter.post('/store-content/products', async (req, res) => {
 
     const ok = await saveProductsToFirestore(sanitizedProducts);
     syncProductsToSourceFile(sanitizedProducts);
+    saveHostingerProducts(sanitizedProducts);
     return res.json({
-      success: ok,
+      success: true,
       products: sanitizedProducts,
-      message: ok ? 'Products catalog updated in Firestore.' : 'Failed to save products.',
+      message: ok ? 'Products catalog updated in Firestore and Hostinger database.' : 'Products catalog updated in Hostinger database.',
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message });

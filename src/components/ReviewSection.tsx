@@ -12,10 +12,13 @@ import {
   Download,
   Printer,
   Search,
+  Delete,
+  XCircle,
 } from 'lucide-react';
 import { useStoreContent } from '../context/StoreContentContext';
 import { auth, googleProvider, signInWithPopup } from '../lib/firebase';
 import { Review, OrderRecord } from '../types';
+import { printOrderInvoice } from '../utils/printInvoice';
 
 export const ReviewSection: React.FC = () => {
   const { reviews, setReviews, addReview, products, orders } = useStoreContent();
@@ -792,8 +795,30 @@ export const ReviewSection: React.FC = () => {
                     placeholder="Order #, Mobile, or Email"
                     value={billSearchQuery}
                     onChange={(e) => setBillSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs bg-white font-mono"
+                    className="w-full pl-9 pr-24 py-2.5 rounded-xs border border-[#10110F]/20 text-xs bg-white font-mono"
                   />
+                  {billSearchQuery.length > 0 && (
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setBillSearchQuery((prev) => prev.slice(0, -1))}
+                        title="Backspace"
+                        aria-label="Backspace"
+                        className="p-1 rounded-xs bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors cursor-pointer"
+                      >
+                        <Delete className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBillSearchQuery('')}
+                        title="Clear"
+                        aria-label="Clear search"
+                        className="p-1 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#D4B66A] transition-colors cursor-pointer"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <button
                   type="submit"
@@ -851,23 +876,25 @@ export const ReviewSection: React.FC = () => {
                     ) : null}
                   </div>
 
-                  {/* Actions: Download Bill (PDF) & Print */}
+                  {/* Actions: Download Bill (PDF) & Print (Single 1-Page PDF) */}
                   <div className="flex flex-col sm:flex-row gap-2 pt-2">
                     <button
                       type="button"
-                      onClick={() => window.print()}
-                      className="flex-1 py-2.5 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                      onClick={() => printOrderInvoice(foundOrder)}
+                      className="flex-1 py-2.5 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-colors"
+                      title="Download 1-page Official Tax Invoice Bill (PDF)"
                     >
                       <Download className="w-4 h-4 text-[#D4B66A]" />
-                      <span>Download Bill (PDF)</span>
+                      <span>Download Bill (PDF - 1 Copy)</span>
                     </button>
                     <button
                       type="button"
-                      onClick={() => window.print()}
-                      className="px-4 py-2.5 rounded-xs border border-[#10110F]/20 text-[#10110F] text-xs font-bold uppercase hover:bg-stone-100 flex items-center justify-center gap-2 cursor-pointer"
+                      onClick={() => printOrderInvoice(foundOrder)}
+                      className="px-4 py-2.5 rounded-xs border border-[#10110F]/20 text-[#10110F] text-xs font-bold uppercase hover:bg-stone-100 flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                      title="Print Official Tax Invoice"
                     >
                       <Printer className="w-4 h-4 text-[#66704B]" />
-                      <span>Print</span>
+                      <span>Print (1 Page)</span>
                     </button>
                   </div>
                 </div>

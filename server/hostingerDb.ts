@@ -247,6 +247,62 @@ export function exportFullHostingerBackup(): HostingerStoreSchema {
   return loadStore();
 }
 
+export function pullAllHostingerData() {
+  const store = loadStore();
+  return {
+    success: true,
+    orders: store.orders || [],
+    products: store.products || [],
+    reviews: store.reviews || [],
+    content: store.pageContent || null,
+    updatedAt: store.updatedAt,
+  };
+}
+
+export function importHostingerBackup(payload: any): { success: boolean; message: string; counts: any } {
+  if (!payload || typeof payload !== 'object') {
+    return { success: false, message: 'Invalid payload', counts: {} };
+  }
+
+  const store = loadStore();
+
+  if (Array.isArray(payload.products) && payload.products.length > 0) {
+    store.products = payload.products;
+  }
+
+  if (Array.isArray(payload.reviews) && payload.reviews.length > 0) {
+    store.reviews = payload.reviews;
+  }
+
+  if (payload.pageContent || payload.content) {
+    store.pageContent = payload.pageContent || payload.content;
+  }
+
+  if (Array.isArray(payload.orders) && payload.orders.length > 0) {
+    const existingIds = new Set((store.orders || []).map((o: any) => o.orderNumber || o.id));
+    for (const ord of payload.orders) {
+      const key = ord.orderNumber || ord.id;
+      if (!existingIds.has(key)) {
+        store.orders.push({ ...ord, storedAtHostinger: true });
+        existingIds.add(key);
+      }
+    }
+  }
+
+  saveStore(store);
+
+  return {
+    success: true,
+    message: 'Hostinger store data imported and saved successfully.',
+    counts: {
+      products: (store.products || []).length,
+      reviews: (store.reviews || []).length,
+      orders: (store.orders || []).length,
+      hasContent: Boolean(store.pageContent),
+    },
+  };
+}
+
 // =========================================================================
 // STATUS REPORT
 // =========================================================================

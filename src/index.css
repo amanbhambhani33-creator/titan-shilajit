@@ -109,3 +109,63 @@
   animation-play-state: paused;
 }
 
+/* =========================================================================
+   STRICT PRINT ISOLATION: GUARANTEES EXACTLY 1 COPY / 1 PAGE IN PDF
+   ========================================================================= */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+
+  /* Reset body and html for clean print */
+  html, body {
+    background: #ffffff !important;
+    color: #10110F !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Completely hide all extraneous web app chrome */
+  header,
+  nav,
+  footer,
+  aside,
+  .print\:hidden,
+  button,
+  [role="dialog"]:not(#print-bill-modal),
+  .fixed:not(#titan-print-invoice-iframe),
+  #root > div > header,
+  #root > div > footer {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* When printing checkout confirmation, isolate #titan-tax-invoice */
+  #titan-tax-invoice {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 12px !important;
+    border: 1.5px solid #10110F !important;
+    box-shadow: none !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Ensure invoice text stays crisp black/dark green */
+  #titan-tax-invoice * {
+    visibility: visible !important;
+  }
+}
+

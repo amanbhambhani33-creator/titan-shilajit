@@ -10,6 +10,8 @@ import {
   Award,
   Sparkles,
   ArrowRight,
+  Delete,
+  XCircle,
 } from 'lucide-react';
 import { FAQS } from '../data/content';
 import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
@@ -139,15 +141,29 @@ export const FaqPage: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search questions (e.g., dosage, warm milk, lab test, delivery)..."
-            className="w-full pl-12 pr-4 py-3.5 rounded-sm bg-white border border-[#10110F]/15 text-sm sm:text-base text-[#10110F] placeholder:text-[#10110F]/40 focus:outline-none focus:border-[#183D27] shadow-xs"
+            className="w-full pl-12 pr-28 py-3.5 rounded-sm bg-white border border-[#10110F]/15 text-sm sm:text-base text-[#10110F] placeholder:text-[#10110F]/40 focus:outline-none focus:border-[#183D27] shadow-xs"
           />
           {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-[#66704B] hover:text-[#10110F]"
-            >
-              Clear
-            </button>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setSearchQuery((prev) => prev.slice(0, -1))}
+                title="Backspace (delete last character)"
+                className="px-2 py-1 rounded-xs bg-[#EEE8D7] hover:bg-[#183D27] hover:text-[#F7F3E8] text-[#10110F] text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#10110F]/10"
+              >
+                <Delete className="w-3.5 h-3.5" />
+                <span className="text-[10px] uppercase font-sans hidden sm:inline">Backspace</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                title="Clear search"
+                className="px-2 py-1 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#D4B66A] text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <XCircle className="w-3.5 h-3.5" />
+                <span className="text-[10px] uppercase font-sans">Clear</span>
+              </button>
+            </div>
           )}
         </div>
 

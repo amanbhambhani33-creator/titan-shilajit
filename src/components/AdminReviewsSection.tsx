@@ -12,6 +12,8 @@ import {
   Sparkles,
   MapPin,
   Calendar,
+  Delete,
+  XCircle,
 } from 'lucide-react';
 import { Review, Product } from '../types';
 
@@ -397,8 +399,30 @@ export const AdminReviewsSection: React.FC<AdminReviewsSectionProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search reviews by name, city, product, or keyword..."
-            className="w-full pl-9 pr-3 py-1.5 rounded-xs border border-[#10110F]/15 text-xs text-[#10110F] placeholder:text-[#10110F]/40 focus:outline-none"
+            className="w-full pl-9 pr-20 py-1.5 rounded-xs border border-[#10110F]/15 text-xs text-[#10110F] placeholder:text-[#10110F]/40 focus:outline-none"
           />
+          {searchQuery.length > 0 && (
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setSearchQuery((prev) => prev.slice(0, -1))}
+                title="Backspace"
+                aria-label="Backspace"
+                className="p-1 rounded-xs bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors cursor-pointer"
+              >
+                <Delete className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                title="Clear search"
+                aria-label="Clear search"
+                className="p-1 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#D4B66A] transition-colors cursor-pointer"
+              >
+                <XCircle className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
         <span className="text-xs text-[#66704B] font-mono shrink-0">
           Showing {filteredReviews.length} of {reviews.length} reviews

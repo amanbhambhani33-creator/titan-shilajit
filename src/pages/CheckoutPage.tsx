@@ -35,6 +35,7 @@ import { OrderRecord, ShippingAddressData, BillingAddressData } from '../types';
 import { trackInitiateCheckout, trackPurchase } from '../utils/metaPixel';
 import { ReturnProductModal } from '../components/ReturnProductModal';
 import { getOrderTimeInfo, formatDateTime, ORDER_POLICY_CONFIG } from '../utils/orderPolicy';
+import { printOrderInvoice } from '../utils/printInvoice';
 
 interface OrderConfirmationData {
   orderNumber: string;
@@ -1131,11 +1132,12 @@ export const CheckoutPage: React.FC = () => {
               {/* Action Buttons: Print Invoice & Place Another Order */}
               <div className="flex items-center gap-2.5 w-full sm:w-auto print:hidden">
                 <button
-                  onClick={() => window.print()}
+                  onClick={() => printOrderInvoice(confirmedOrder)}
                   className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xs bg-[#10110F] hover:bg-[#183D27] text-[#F7F3E8] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  title="Print Single-Page Official Tax Invoice (1 Copy)"
                 >
                   <Printer className="w-4 h-4 text-[#D4B66A]" />
-                  <span>Print Tax Invoice</span>
+                  <span>Print Tax Invoice (1 Page)</span>
                 </button>
                 <button
                   onClick={() => {
@@ -1269,12 +1271,12 @@ export const CheckoutPage: React.FC = () => {
                   <div className="w-full md:w-auto shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 print:hidden">
                     <button
                       type="button"
-                      onClick={() => window.print()}
+                      onClick={() => printOrderInvoice(confirmedOrder)}
                       className="px-4 py-2.5 rounded-xs bg-[#10110F] hover:bg-[#183D27] text-[#D4B66A] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer border border-[#D4B66A]/30"
-                      title="Download or Print Official GST Tax Invoice Bill"
+                      title="Download or Print Single-Page Official GST Tax Invoice Bill (1 Copy PDF)"
                     >
                       <Download className="w-3.5 h-3.5 text-[#D4B66A]" />
-                      <span>Download Bill (PDF)</span>
+                      <span>Download Bill (PDF - 1 Copy)</span>
                     </button>
                     {!confirmedOrder.isCancelled && (
                       <button
