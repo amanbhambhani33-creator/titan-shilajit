@@ -417,7 +417,7 @@ export const AdminReviewsSection: React.FC<AdminReviewsSectionProps> = ({
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div>
                   <div className="flex text-[#B88A32] mb-1">
-                    {[...Array(rev.rating || 5)].map((_, i) => (
+                    {[...Array(Math.max(1, Math.min(5, Math.round(Number(rev.rating) || 5))))].map((_, i) => (
                       <Star key={i} className="w-3.5 h-3.5 fill-[#B88A32]" />
                     ))}
                   </div>

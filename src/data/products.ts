@@ -16,7 +16,7 @@ export const PRODUCTS: Product[] = [
     reviewCount: 342,
     inStock: true,
     stockQty: 85,
-    badgeTag: 'hot_sell',
+    badgeTag: 'hot_selling',
     images: [
       '/uploads/titan-shilajit-resin-0.jpg',
       '/uploads/titan-shilajit-resin-1.jpg',
@@ -309,7 +309,7 @@ export const PRODUCTS: Product[] = [
     reviewCount: 147,
     inStock: true,
     stockQty: 34,
-    badgeTag: 'new_arrival',
+    badgeTag: 'new_launch',
     images: [
       '/uploads/titan-honey-sticks-strawberry-0.jpg',
       '/uploads/titan-honey-sticks-strawberry-1.jpg',

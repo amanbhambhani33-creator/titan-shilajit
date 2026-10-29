@@ -62,7 +62,7 @@ export interface Product {
   stockQty?: number;
   images: string[];
   image?: string; // Cover image (first image/storefront primary image)
-  badgeTag?: 'new_arrival' | 'hot_sell' | 'bestseller' | 'trending' | 'none' | string;
+  badgeTag?: 'hot_selling' | 'new_launch' | 'new_arrival' | 'hot_sell' | 'bestseller' | 'trending' | 'none' | string;
   packs?: ProductPack[];
   sizeVariants?: ProductSizeVariant[];
   shortDescription: string;

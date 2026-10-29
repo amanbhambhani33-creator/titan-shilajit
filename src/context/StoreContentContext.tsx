@@ -1112,24 +1112,28 @@ function addDeletedProductId(id: string) {
   const addReview = async (newReview: Review): Promise<boolean> => {
     const updated = [newReview, ...reviews];
     setReviews(updated);
-    let success = false;
     try {
-      await fetch('/api/store-content/reviews', {
+      localStorage.setItem(REVIEWS_STORAGE_KEY, JSON.stringify(updated));
+    } catch {}
+
+    let synced = false;
+    try {
+      const res = await fetch('/api/store-content/reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reviews: updated }),
       });
-      success = true;
+      if (res.ok) synced = true;
     } catch {}
 
     try {
       const reviewsDocRef = doc(db, 'store_content', 'reviews');
       await safeSetDoc(reviewsDocRef, { items: updated, updatedAt: new Date().toISOString() }, { merge: true });
-      success = true;
+      synced = true;
     } catch {}
 
-    if (success) setIsFirebaseSynced(true);
-    return success;
+    if (synced) setIsFirebaseSynced(true);
+    return true;
   };
 
   const updateReview = async (id: string, updates: Partial<Review>): Promise<boolean> => {

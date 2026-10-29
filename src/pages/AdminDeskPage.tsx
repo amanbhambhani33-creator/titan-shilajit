@@ -1088,6 +1088,28 @@ export const AdminDeskPage: React.FC = () => {
                               {p.inStock ? 'Mark Out of Stock' : 'Mark In Stock'}
                             </button>
                           </div>
+
+                          <div className="flex items-center justify-between pt-1 border-t border-[#10110F]/10">
+                            <span className="text-[10px] font-bold uppercase text-[#183D27] flex items-center gap-1">
+                              <Star className="w-3 h-3 text-[#B88A32]" />
+                              <span>Storefront Tag:</span>
+                            </span>
+                            <select
+                              value={p.badgeTag || 'none'}
+                              onChange={(e) => {
+                                const nextTag = e.target.value;
+                                updateProduct(p.id, { badgeTag: nextTag as any });
+                                showToast(`Assigned "${nextTag.replace(/_/g, ' ')}" tag to "${p.name}"`);
+                              }}
+                              className="px-2 py-1 rounded-xs border border-[#10110F]/20 text-[10px] font-bold bg-white cursor-pointer"
+                            >
+                              <option value="none">None (Standard)</option>
+                              <option value="hot_selling">🔥 Hot Selling</option>
+                              <option value="new_launch">✨ New Launch</option>
+                              <option value="bestseller">⭐ Bestseller</option>
+                              <option value="trending">⚡ Trending</option>
+                            </select>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1836,8 +1858,8 @@ export const AdminDeskPage: React.FC = () => {
                     className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs bg-white font-medium"
                   >
                     <option value="none">None (Standard Product)</option>
-                    <option value="hot_sell">🔥 HOT SELL (Star Tag)</option>
-                    <option value="new_arrival">✨ NEW ARRIVAL (Star Tag)</option>
+                    <option value="hot_selling">🔥 HOT SELLING (Star Ribbon)</option>
+                    <option value="new_launch">✨ NEW LAUNCH (Star Ribbon)</option>
                     <option value="bestseller">⭐ BESTSELLER (Top Rated)</option>
                     <option value="trending">⚡ TRENDING (High Demand)</option>
                   </select>
@@ -2815,8 +2837,8 @@ export const AdminDeskPage: React.FC = () => {
                     className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs bg-white font-medium"
                   >
                     <option value="none">None (Standard Product)</option>
-                    <option value="hot_sell">🔥 HOT SELL (Star Tag)</option>
-                    <option value="new_arrival">✨ NEW ARRIVAL (Star Tag)</option>
+                    <option value="hot_selling">🔥 HOT SELLING (Star Ribbon)</option>
+                    <option value="new_launch">✨ NEW LAUNCH (Star Ribbon)</option>
                     <option value="bestseller">⭐ BESTSELLER (Top Rated)</option>
                     <option value="trending">⚡ TRENDING (High Demand)</option>
                   </select>

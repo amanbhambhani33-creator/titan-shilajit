@@ -129,20 +129,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 {product.badgeTag && product.badgeTag !== 'none' && (
                   <span
                     className={`px-2.5 py-1 rounded-xs text-[10px] font-sans font-black tracking-widest uppercase shadow-md flex items-center gap-1 border ${
-                      product.badgeTag === 'hot_sell'
+                      product.badgeTag === 'hot_sell' || product.badgeTag === 'hot_selling'
                         ? 'bg-gradient-to-r from-red-600 to-amber-600 text-white border-amber-300'
-                        : product.badgeTag === 'new_arrival'
+                        : product.badgeTag === 'new_arrival' || product.badgeTag === 'new_launch'
                         ? 'bg-gradient-to-r from-emerald-800 to-emerald-600 text-[#F7F3E8] border-emerald-400'
                         : product.badgeTag === 'bestseller'
                         ? 'bg-gradient-to-r from-[#D4B66A] to-[#B88A32] text-[#10110F] border-yellow-200'
                         : 'bg-[#183D27] text-[#D4B66A] border-[#D4B66A]/40'
                     }`}
                   >
-                    {product.badgeTag === 'hot_sell' && <span>🔥</span>}
-                    {product.badgeTag === 'new_arrival' && <span>✨</span>}
-                    {product.badgeTag === 'bestseller' && <span>⭐</span>}
-                    {product.badgeTag === 'trending' && <span>⚡</span>}
-                    <span>{product.badgeTag.replace(/_/g, ' ')}</span>
+                    {(product.badgeTag === 'hot_sell' || product.badgeTag === 'hot_selling') && <span>🔥 HOT SELLING</span>}
+                    {(product.badgeTag === 'new_arrival' || product.badgeTag === 'new_launch') && <span>✨ NEW LAUNCH</span>}
+                    {product.badgeTag === 'bestseller' && <span>⭐ BESTSELLER</span>}
+                    {product.badgeTag === 'trending' && <span>⚡ TRENDING</span>}
+                    {!['hot_sell', 'hot_selling', 'new_arrival', 'new_launch', 'bestseller', 'trending'].includes(product.badgeTag) && (
+                      <span>{product.badgeTag.replace(/_/g, ' ')}</span>
+                    )}
                   </span>
                 )}
                 {currentPack.savings && !isHomeScreen && (
