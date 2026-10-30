@@ -1,99 +1,18 @@
 import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import {
   HelpCircle,
-  Search,
   ChevronDown,
   ChevronUp,
   MessageCircle,
   ShieldCheck,
-  Award,
   Sparkles,
-  ArrowRight,
-  Delete,
-  XCircle,
 } from 'lucide-react';
-import { FAQS } from '../data/content';
+import { useStoreContent } from '../context/StoreContentContext';
 import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
 
-interface ExtendedFaq {
-  question: string;
-  answer: string;
-  category: 'all' | 'purity' | 'dosage' | 'shipping' | 'safety';
-}
-
-const EXTENDED_FAQS: ExtendedFaq[] = [
-  {
-    question: 'What is Titan Shilajit and where is it harvested?',
-    answer:
-      'Titan Shilajit is Grade-A wild Himalayan rock exudate hand-harvested from sheer granite rock formations above 16,000 feet in Ladakh and the Karakoram ranges. At these extreme altitudes, intense UV radiation and temperature fluctuations produce the highest concentrations of active fulvic acid and ionic minerals in the world.',
-    category: 'purity',
-  },
-  {
-    question: 'How is Titan Shilajit purified (Triphala Purification method)?',
-    answer:
-      'Unlike mass-market commercial extracts boiled down with high artificial heat (which destroys delicate bioactive enzymes), Titan Shilajit is purified through classical Ayurvedic Triphala purification: slow-filtered with traditional Triphala decoctions, then gently sun-cured under mountain sunlight for 40+ days until it condenses into a thick, mineral-dense resin.',
-    category: 'purity',
-  },
-  {
-    question: 'What percentage of Fulvic Acid is guaranteed?',
-    answer:
-      'Every batch of Titan Shilajit is NABL third-party laboratory tested and chromatography-verified to contain 70%+ active Fulvic Acid bio-carriers. Batch certificates are accessible on our site and via our WhatsApp concierge.',
-    category: 'purity',
-  },
-  {
-    question: 'How should I consume Titan Shilajit Pure Resin?',
-    answer:
-      'Using the stainless steel measurement wand provided in each box, scoop a pea-sized portion (approximately 300mg to 500mg). Stir it into a cup of lukewarm water, raw cow milk, almond milk, or green tea until completely dissolved. Consume once daily in the morning on an empty stomach or 30 minutes before physical training.',
-    category: 'dosage',
-  },
-  {
-    question: 'How do I use the Shilajit Raw Honey Sticks on the go?',
-    answer:
-      'Titan Honey Sticks combine 350mg of pure Triphala purified Shilajit with raw high-altitude wildflower forest honey. Simply tear the top notch and squeeze directly into your mouth, or stir into warm tea or morning oats. No measuring wand or water glass required.',
-    category: 'dosage',
-  },
-  {
-    question: 'How soon can I expect to feel the vitality benefits?',
-    answer:
-      'Most practitioners report a clear lift in mental alertness, physical stamina, and recovery within 3 to 7 days of daily use. Because Shilajit works at the mitochondrial level to restore ATP energy and mineral balance, cumulative full-body benefits compound significantly over 4 to 8 weeks.',
-    category: 'dosage',
-  },
-  {
-    question: 'Is Titan Shilajit tested for heavy metals and pesticides?',
-    answer:
-      'Yes. Safety is paramount. Every harvest batch undergoes ICP-MS heavy metal analysis (Lead, Arsenic, Cadmium, and Mercury) to ensure levels are far below strict Ayurvedic Pharmacopoeia of India (API) and international safety thresholds. Zero synthetic binders, maltodextrin, or preservatives are ever added.',
-    category: 'safety',
-  },
-  {
-    question: 'Are there any contraindications or side effects?',
-    answer:
-      'Titan Shilajit is safe for daily consumption by healthy adults. It is not recommended for children under 18, pregnant or nursing mothers, or individuals with active hyperuricemia (gout) or chronic kidney conditions without prior physician clearance. Consult your doctor if you are taking blood-thinning medications.',
-    category: 'safety',
-  },
-  {
-    question: 'What are the shipping charges and delivery timeframes across India?',
-    answer:
-      'We provide FREE Express Pan-India Delivery on all orders. Metro deliveries (Delhi NCR, Mumbai, Bengaluru, Hyderabad, Chennai, Kolkata) arrive within 24 to 48 hours. Tier-2 and Tier-3 cities typically arrive in 2 to 4 business days via Bluedart and express air couriers with live SMS tracking.',
-    category: 'shipping',
-  },
-  {
-    question: 'How are orders placed and tracked?',
-    answer:
-      'You can place your order directly through our secure online store with zero extra fees. We offer instant Cash on Delivery (COD) and encrypted (upi/card/netbankin) options. All orders are assigned an official continuous Tax Invoice and a Delhivery AWB number, allowing you to track your delivery in real time via SMS and online dashboard.',
-    category: 'shipping',
-  },
-  {
-    question: 'How should I store the Obsidian Glass Jar?',
-    answer:
-      'Keep the jar sealed tightly in a cool, dry place away from direct sunlight. High-purity Shilajit naturally softens in warm environments and hardens in cold weather. If the resin becomes too firm to scoop, place the sealed jar in a bowl of warm water for 2 minutes to restore its smooth consistency.',
-    category: 'safety',
-  },
-];
-
 export const FaqPage: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'purity' | 'dosage' | 'shipping' | 'safety'>('all');
+  const { faqs } = useStoreContent();
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [openIndexes, setOpenIndexes] = useState<number[]>([0, 1]);
 
   const toggleAccordion = (idx: number) => {
@@ -103,16 +22,13 @@ export const FaqPage: React.FC = () => {
   };
 
   const filteredFaqs = useMemo(() => {
-    return EXTENDED_FAQS.filter((faq) => {
-      const matchesCategory = selectedCategory === 'all' || faq.category === selectedCategory;
-      const q = searchQuery.toLowerCase().trim();
-      const matchesSearch =
-        !q ||
-        faq.question.toLowerCase().includes(q) ||
-        faq.answer.toLowerCase().includes(q);
-      return matchesCategory && matchesSearch;
+    if (!faqs || faqs.length === 0) return [];
+    if (selectedCategory === 'all') return faqs;
+    return faqs.filter((faq) => {
+      const cat = (faq.category || 'purity').toLowerCase();
+      return cat.includes(selectedCategory.toLowerCase());
     });
-  }, [searchQuery, selectedCategory]);
+  }, [faqs, selectedCategory]);
 
   return (
     <div id="faq-dedicated-page" className="min-h-screen pt-28 pb-20 bg-[#F7F3E8] text-[#10110F]">
@@ -133,40 +49,6 @@ export const FaqPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Live Search Bar */}
-        <div className="relative mb-8 max-w-2xl mx-auto">
-          <Search className="w-5 h-5 text-[#10110F]/40 absolute left-4 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search questions (e.g., dosage, warm milk, lab test, delivery)..."
-            className="w-full pl-12 pr-28 py-3.5 rounded-sm bg-white border border-[#10110F]/15 text-sm sm:text-base text-[#10110F] placeholder:text-[#10110F]/40 focus:outline-none focus:border-[#183D27] shadow-xs"
-          />
-          {searchQuery && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setSearchQuery((prev) => prev.slice(0, -1))}
-                title="Backspace (delete last character)"
-                className="px-2 py-1 rounded-xs bg-[#EEE8D7] hover:bg-[#183D27] hover:text-[#F7F3E8] text-[#10110F] text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#10110F]/10"
-              >
-                <Delete className="w-3.5 h-3.5" />
-                <span className="text-[10px] uppercase font-sans hidden sm:inline">Backspace</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                title="Clear search"
-                className="px-2 py-1 rounded-xs bg-[#183D27] hover:bg-[#10110F] text-[#D4B66A] text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
-              >
-                <XCircle className="w-3.5 h-3.5" />
-                <span className="text-[10px] uppercase font-sans">Clear</span>
-              </button>
-            </div>
-          )}
-        </div>
-
         {/* Category Filter Pills */}
         <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
           {[
@@ -175,10 +57,11 @@ export const FaqPage: React.FC = () => {
             { id: 'dosage', label: 'Dosage & Ritual' },
             { id: 'safety', label: 'Safety & Storage' },
             { id: 'shipping', label: 'Shipping & Orders' },
+            { id: 'aeo', label: 'AI & Direct Answers' },
           ].map((cat) => (
             <button
               key={cat.id}
-              onClick={() => setSelectedCategory(cat.id as any)}
+              onClick={() => setSelectedCategory(cat.id)}
               className={`px-4 py-2 rounded-xs text-[11px] font-bold tracking-wider uppercase transition-all cursor-pointer ${
                 selectedCategory === cat.id
                   ? 'bg-[#183D27] text-[#F7F3E8] shadow-xs'
@@ -194,15 +77,12 @@ export const FaqPage: React.FC = () => {
         <div className="bg-white rounded-sm border border-[#10110F]/10 shadow-xs divide-y divide-[#10110F]/10 overflow-hidden mb-12">
           {filteredFaqs.length === 0 ? (
             <div className="p-10 text-center text-sm text-[#66704B]">
-              <p>No questions matched "{searchQuery}".</p>
+              <p>No questions available in this category.</p>
               <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedCategory('all');
-                }}
-                className="mt-3 text-xs font-bold uppercase tracking-wider text-[#183D27] underline"
+                onClick={() => setSelectedCategory('all')}
+                className="mt-3 text-xs font-bold uppercase tracking-wider text-[#183D27] underline cursor-pointer"
               >
-                Reset filters
+                View all FAQs
               </button>
             </div>
           ) : (

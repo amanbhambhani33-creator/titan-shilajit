@@ -340,6 +340,20 @@ export interface CouponRecord {
   expiresAt?: string;
 }
 
+export interface FaqItem {
+  id: string;
+  question: string;
+  answer: string;
+  category: 'all' | 'purity' | 'dosage' | 'shipping' | 'safety' | 'general' | 'aeo';
+  isAeoPriority?: boolean;
+}
+
+export interface ThemeFontConfig {
+  serifFont: string;
+  sansFont: string;
+  displayFont: string;
+}
+
 declare global {
   interface Window {
     Razorpay?: any;

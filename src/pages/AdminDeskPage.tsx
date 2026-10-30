@@ -39,6 +39,9 @@ import {
   X,
   Check,
   Server,
+  Type,
+  Globe,
+  Bot,
 } from 'lucide-react';
 import { useStoreContent, HeroBannerConfig, LaunchBannerConfig, BrandStoryConfig } from '../context/StoreContentContext';
 import { useAuth } from '../context/AuthContext';
@@ -54,6 +57,10 @@ import { AdminOrdersSection } from '../components/AdminOrdersSection';
 import { AdminBrandLogoSection } from '../components/AdminBrandLogoSection';
 import { AdminHostingerSection } from '../components/AdminHostingerSection';
 import { AdminCouponsSection } from '../components/AdminCouponsSection';
+import { AdminBannerGuideSection } from '../components/AdminBannerGuideSection';
+import { AdminFontSection } from '../components/AdminFontSection';
+import { AdminFaqSection } from '../components/AdminFaqSection';
+import { AdminSeoMasterSection } from '../components/AdminSeoMasterSection';
 import { normalizeImageUrl } from '../utils/imageUrl';
 
 export const AdminDeskPage: React.FC = () => {
@@ -98,6 +105,7 @@ export const AdminDeskPage: React.FC = () => {
     saveAllToFirebase,
     resetAllContent,
     triggerSplash,
+    faqs,
     reviews,
     addReview,
     updateReview,
@@ -107,7 +115,7 @@ export const AdminDeskPage: React.FC = () => {
     refreshStoreData,
   } = useStoreContent();
 
-  const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'quality' | 'developer' | 'rbac' | 'settings' | 'orders' | 'reviews' | 'coupons' | 'hostinger'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'quality' | 'developer' | 'rbac' | 'settings' | 'orders' | 'reviews' | 'coupons' | 'hostinger' | 'faq' | 'seo' | 'fonts'>('products');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
   const navigate = useNavigate();
@@ -768,6 +776,21 @@ export const AdminDeskPage: React.FC = () => {
             },
             { id: 'banners', label: 'Brand Logo & Banners', icon: ImageIcon },
             {
+              id: 'faq',
+              label: `FAQs & AEO Q&A (${faqs?.length || 0})`,
+              icon: HelpCircle,
+            },
+            {
+              id: 'fonts',
+              label: 'Fonts & Typography',
+              icon: Type,
+            },
+            {
+              id: 'seo',
+              label: 'SEO & AEO Master Hub',
+              icon: Globe,
+            },
+            {
               id: 'reviews',
               label: `Customer Reviews (${reviews.length})`,
               icon: Star,
@@ -1168,6 +1191,9 @@ export const AdminDeskPage: React.FC = () => {
         {/* ========================================================================= */}
         {activeTab === 'banners' && (
           <div className="space-y-8">
+            {/* Banner & Image Size Reference Descriptions Guide */}
+            <AdminBannerGuideSection />
+
             {/* Storefront Brand Logo & Visual Identity */}
             <AdminBrandLogoSection onToast={showToast} />
 
@@ -1779,6 +1805,27 @@ export const AdminDeskPage: React.FC = () => {
         {/* ========================================================================= */}
         {activeTab === 'hostinger' && (
           <AdminHostingerSection onToast={showToast} />
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB: FAQs & AEO KNOWLEDGE BASE MANAGER */}
+        {/* ========================================================================= */}
+        {activeTab === 'faq' && (
+          <AdminFaqSection onSuccessToast={showToast} />
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB: STORE FONTS & TYPOGRAPHY CONTROLLER */}
+        {/* ========================================================================= */}
+        {activeTab === 'fonts' && (
+          <AdminFontSection onSuccessToast={showToast} />
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB: SEO & AEO MASTER KEYWORD HUB */}
+        {/* ========================================================================= */}
+        {activeTab === 'seo' && (
+          <AdminSeoMasterSection onSuccessToast={showToast} />
         )}
       </div>
 

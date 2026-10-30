@@ -12,36 +12,47 @@ export const BrandStorySection: React.FC = () => {
     <section id="brand-story-section" className="py-20 lg:py-32 bg-[#F7F3E8] text-[#10110F] relative overflow-hidden border-b border-[#10110F]/5">
       <div className="max-w-7xl mx-auto px-6 lg:px-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-          {/* Left Split: Himalayan imagery */}
-          <div className="lg:col-span-6 relative">
-            <div className="relative aspect-4/5 rounded-sm overflow-hidden bg-[#10110F] shadow-2xl border border-[#10110F]/10">
+          {/* Left Split: Himalayan imagery & Quote */}
+          <div className="lg:col-span-6 relative flex flex-col">
+            <div className="relative rounded-sm overflow-hidden bg-[#10110F] shadow-2xl border border-[#10110F]/10 aspect-[16/10] sm:aspect-4/5 w-full">
               <img
                 src={story.imageUrl || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=85'}
                 alt="Pristine Himalayan Altitude & Shilajit Cliffs"
                 referrerPolicy="no-referrer"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-center"
                 onError={(e) => handleImageError(e, 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=85')}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#10110F]/80 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#10110F]/80 via-transparent to-transparent pointer-events-none" />
 
-              <div className="absolute bottom-6 left-6 right-6 p-6 rounded-sm bg-[#10110F]/90 backdrop-blur-md border border-[#B88A32]/30 text-[#F7F3E8]">
-                <span className="text-[9px] tracking-[0.3em] text-[#D4B66A] uppercase font-bold">
-                  {story.badgeTitle || 'HIMALAYAN HERITAGE'}
+              {/* On desktop (sm+), overlay neatly inside bottom */}
+              <div className="hidden sm:block absolute bottom-6 left-6 right-6 p-5 lg:p-6 rounded-sm bg-[#10110F]/90 backdrop-blur-md border border-[#B88A32]/35 text-[#F7F3E8] shadow-lg">
+                <span className="text-[9px] tracking-[0.3em] text-[#D4B66A] uppercase font-bold block mb-1">
+                  {story.badgeTitle || '16,000+ FT HIGH HARVEST'}
                 </span>
-                <p className="font-serif text-lg italic text-[#EEE8D7] mt-1 font-light">
-                  {story.quote || '"Harvested where the earth touches the sky. Purified through sun and mountain spring water."'}
+                <p className="font-serif text-sm sm:text-base lg:text-lg italic text-[#EEE8D7] font-light leading-relaxed">
+                  {story.quote || '"Shilajit is neither herb nor stone; it is the compressed life-memory of ancient primeval forests, distilled through millennia under extreme Himalayan tectonic pressure."'}
                 </p>
               </div>
             </div>
 
-            {/* Floating badge */}
-            <div className="hidden sm:flex absolute -bottom-6 -right-6 bg-[#183D27] text-[#F7F3E8] p-5 rounded-sm border border-[#B88A32]/40 shadow-xl max-w-xs flex-col gap-1">
+            {/* On mobile (<sm), cleanly dock quote below the image so it NEVER overlaps or covers the mountain photo */}
+            <div className="block sm:hidden mt-3 p-4 rounded-sm bg-[#10110F] border border-[#B88A32]/30 text-[#F7F3E8] shadow-md">
+              <span className="text-[9px] tracking-[0.25em] text-[#D4B66A] uppercase font-bold block mb-1">
+                {story.badgeTitle || '16,000+ FT HIGH HARVEST'}
+              </span>
+              <p className="font-serif text-xs sm:text-sm italic text-[#EEE8D7] font-light leading-relaxed">
+                {story.quote || '"Shilajit is neither herb nor stone; it is the compressed life-memory of ancient primeval forests, distilled through millennia under extreme Himalayan tectonic pressure."'}
+              </p>
+            </div>
+
+            {/* Floating badge (tablet & desktop) */}
+            <div className="hidden sm:flex absolute -bottom-6 -right-6 bg-[#183D27] text-[#F7F3E8] p-4 lg:p-5 rounded-sm border border-[#B88A32]/40 shadow-xl max-w-xs flex-col gap-1 z-10">
               <div className="flex items-center gap-2 text-[#D4B66A]">
                 <Award className="w-4 h-4" />
                 <span className="text-[10px] font-bold uppercase tracking-widest">Traditional Shodhana</span>
               </div>
               <p className="text-[11px] text-[#EEE8D7]/80 font-light">
-                Slow sun-cured purification retaining all 84+ ionic trace minerals.
+                Slow sun-cured purification retaining all 84+ ionic trace minerals and 70%+ fulvic acid.
               </p>
             </div>
           </div>

@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage, OrderRecord, Review, BrandLogoConfig } from '../types';
+import { Product, BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage, OrderRecord, Review, BrandLogoConfig, FaqItem, ThemeFontConfig } from '../types';
 import { PRODUCTS as DEFAULT_PRODUCTS } from '../data/products';
 import { REVIEWS as DEFAULT_REVIEWS } from '../data/reviews';
 import { TRUST_STRIP_ITEMS, BRAND_CONTACT } from '../data/content';
 import { db, doc, getDoc, setDoc, safeSetDoc, isFirestoreQuotaExhausted, onSnapshot, collection, getDocs, query, where } from '../lib/firebase';
 import { normalizeImageUrl } from '../utils/imageUrl';
 
-export type { BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage, BrandLogoConfig };
+export type { BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage, BrandLogoConfig, FaqItem, ThemeFontConfig };
 
 export interface HeroBannerConfig {
   kicker: string;
@@ -75,6 +75,8 @@ export interface PageContentConfig {
   qualityTrust: QualityTrustConfig;
   cta: { kicker: string; titleLine1: string; titleLine2: string; description: string; shopBtnText: string; whatsappBtnText: string };
   footer: { aboutText: string; creditText: string; location: string; phoneDisplay: string; email: string; tagline?: string; designedBy?: string };
+  faqs?: FaqItem[];
+  themeFont?: ThemeFontConfig;
 }
 
 export const DEFAULT_PRODUCT_BENEFITS: BenefitCard[] = [
@@ -270,6 +272,120 @@ export const DEFAULT_BRAND_LOGO: BrandLogoConfig = {
   heightPx: 44,
 };
 
+export const DEFAULT_THEME_FONT: ThemeFontConfig = {
+  serifFont: 'Cormorant Garamond',
+  sansFont: 'Plus Jakarta Sans',
+  displayFont: 'Cinzel',
+};
+
+export const DEFAULT_FAQS: FaqItem[] = [
+  {
+    id: 'faq-1',
+    question: 'What is Himalayan Shilajit?',
+    answer: 'Himalayan Shilajit is a potent, mineral-dense botanical exudate formed over millennia by the natural compression of high-altitude alpine forests in sheer Himalayan granite rock ridges above 16,000 feet in Ladakh and Kashmir. It naturally contains 84+ ionic trace minerals and 70%+ active fulvic acid bio-carriers.',
+    category: 'purity',
+    isAeoPriority: true,
+  },
+  {
+    id: 'faq-2',
+    question: 'What is Shilajit resin?',
+    answer: 'Shilajit resin is the traditional, semi-solid pure form of Shilajit. Unlike modern tablets or powders that require high-heat drying and binders, authentic resin preserves delicate live enzymes and active fulvic compounds, providing maximum bio-availability and instant cellular absorption.',
+    category: 'purity',
+    isAeoPriority: true,
+  },
+  {
+    id: 'faq-3',
+    question: 'How is Titan Shilajit sourced?',
+    answer: 'Titan Shilajit is hand-gathered by indigenous local harvesters exclusively from virgin Himalayan granite crevices above 16,000 feet during intense mid-summer solar cycles. We harvest ethically without explosives or heavy machinery to protect the fragile Himalayan ecology.',
+    category: 'purity',
+    isAeoPriority: true,
+  },
+  {
+    id: 'faq-4',
+    question: 'Is your Shilajit lab tested?',
+    answer: 'Yes. Every batch of Titan Shilajit undergoes third-party NABL-accredited laboratory assay testing and ICP-MS chromatography analysis. We rigorously test for heavy metals (Lead, Arsenic, Cadmium, Mercury), microbial safety, and independently verify 70%+ natural Fulvic Acid density.',
+    category: 'safety',
+    isAeoPriority: true,
+  },
+  {
+    id: 'faq-5',
+    question: 'What is the fulvic acid content?',
+    answer: 'Titan Shilajit is certified to contain 70%+ natural fulvic acid bio-density. Fulvic acid is an ultra-nano biological carrier molecule that transports vital minerals, electrolytes, and antioxidants directly through human cellular walls for sustained ATP cellular energy.',
+    category: 'purity',
+    isAeoPriority: true,
+  },
+  {
+    id: 'faq-6',
+    question: 'How do you ensure product purity?',
+    answer: 'We purify our harvest through classical Ayurvedic Triphala Shodhana: slow filtration with traditional Triphala decoctions, followed by 40+ days of natural mountain solar curing. We add zero maltodextrin, sugar, synthetic binders, artificial colors, or preservatives.',
+    category: 'purity',
+    isAeoPriority: true,
+  },
+  {
+    id: 'faq-7',
+    question: 'How should Shilajit resin be stored?',
+    answer: 'Store your Obsidian Amber Glass Jar in a cool, dry place away from direct sunlight. Authentic Shilajit is naturally thermo-reactive: it softens in warm temperatures and hardens in cold weather. If too firm to scoop, place the sealed jar in lukewarm water for 2 minutes.',
+    category: 'safety',
+    isAeoPriority: true,
+  },
+  {
+    id: 'faq-8',
+    question: 'How do I use Shilajit resin?',
+    answer: 'Using the stainless steel precision measuring wand included in every box, scoop a pea-sized portion (300mg to 500mg). Stir thoroughly into a cup of lukewarm water, warm milk, almond milk, or green tea until completely dissolved. Drink in the morning.',
+    category: 'dosage',
+    isAeoPriority: true,
+  },
+  {
+    id: 'faq-9',
+    question: 'What is the recommended serving size?',
+    answer: 'The recommended daily serving is 300mg to 500mg (a pea-sized amount). For optimal wellness and physical adaptation, we recommend a consistent daily routine for 60 to 90 consecutive days.',
+    category: 'dosage',
+    isAeoPriority: true,
+  },
+  {
+    id: 'faq-10',
+    question: 'What is your Shilajit packaging and shelf life?',
+    answer: 'Titan Shilajit is packaged in heavy, UV-impervious obsidian amber pharmaceutical glass jars with an airtight vacuum seal to shield against photo-oxidation. The sealed shelf life is 36 months from the date of manufacture.',
+    category: 'safety',
+    isAeoPriority: true,
+  },
+  {
+    id: 'faq-11',
+    question: 'How can customers verify authenticity?',
+    answer: 'Authentic Titan Shilajit dissolves 100% in warm water without leaving sandy residue, produces zero smoke when subjected to heat, and has a rich, smoky-herbal aroma. Batch-specific NABL certificates are accessible on our site and via WhatsApp concierge.',
+    category: 'purity',
+    isAeoPriority: true,
+  },
+  {
+    id: 'faq-12',
+    question: 'What is your return & cancellation policy?',
+    answer: 'Customers can cancel any order within 6 hours of placement directly from their official order slip. If a delivered product arrives damaged or with a broken seal, an immediate 24-hour return and replacement window applies with complimentary reverse courier pickup.',
+    category: 'shipping',
+    isAeoPriority: true,
+  },
+  {
+    id: 'faq-13',
+    question: 'Is Shilajit resin better than capsules or tablets?',
+    answer: 'Yes. Pure resin is the gold standard of Ayurvedic Shilajit. Capsules and tablets typically require artificial fillers, anti-caking agents, and spray-drying heat that destroy delicate bioactive enzymes. Pure resin delivers pristine bioavailability and rapid cellular uptake.',
+    category: 'dosage',
+    isAeoPriority: true,
+  },
+  {
+    id: 'faq-14',
+    question: 'How does Titan Shilajit compare with other brands (Kapiva, Upakarma, Dabur, Patanjali)?',
+    answer: 'While commercial brands often use low-altitude harvests and industrial boiling vats, Titan Shilajit is strictly hand-gathered above 16,000 ft in virgin Himalayan cliffs, authenticated for 70%+ natural fulvic acid density, and sun-purified with authentic Triphala without maltodextrin or sugar.',
+    category: 'purity',
+    isAeoPriority: true,
+  },
+  {
+    id: 'faq-15',
+    question: 'What are the shipping charges and delivery timeframes across India?',
+    answer: 'We provide 100% complimentary Express Pan-India Delivery via Delhivery One. Metro cities (Delhi NCR, Mumbai, Bengaluru, Hyderabad, Chennai, Kolkata) arrive within 24 to 48 hours. Tier-2 and Tier-3 cities arrive in 2 to 4 business days with live SMS tracking.',
+    category: 'shipping',
+    isAeoPriority: true,
+  },
+];
+
 const DEFAULT_PAGE_CONTENT: PageContentConfig = {
   logo: DEFAULT_BRAND_LOGO,
   announcement: DEFAULT_ANNOUNCEMENT,
@@ -301,6 +417,8 @@ const DEFAULT_PAGE_CONTENT: PageContentConfig = {
     phoneDisplay: BRAND_CONTACT.phoneDisplay,
     email: BRAND_CONTACT.email,
   },
+  faqs: DEFAULT_FAQS,
+  themeFont: DEFAULT_THEME_FONT,
 };
 
 interface StoreContentContextType {
@@ -337,6 +455,14 @@ interface StoreContentContextType {
   updateQualityTrust: (updates: Partial<QualityTrustConfig>) => Promise<boolean>;
   updateQualityTrustCard: (cardId: string, updates: Partial<QualityTrustCard>) => Promise<boolean>;
   updatePageContent: <K extends keyof PageContentConfig>(section: K, updates: Partial<PageContentConfig[K]>) => void;
+  // FAQs Management (AEO & Search)
+  faqs: FaqItem[];
+  updateFaqItem: (id: string, updates: Partial<FaqItem>) => Promise<boolean>;
+  addFaqItem: (faq: Omit<FaqItem, 'id'>) => Promise<boolean>;
+  deleteFaqItem: (id: string) => Promise<boolean>;
+  resetFaqsToDefault: () => Promise<boolean>;
+  // Theme & Fonts
+  updateThemeFont: (updates: Partial<ThemeFontConfig>) => void;
   // Reviews management
   reviews: Review[];
   addReview: (review: Review) => Promise<boolean>;
@@ -537,6 +663,8 @@ function addDeletedProductId(id: string) {
           productBenefits: productBenefitsData,
           qualityTrust: qualityTrustData,
           footer: { ...DEFAULT_PAGE_CONTENT.footer, ...parsed.footer, creditText: 'Designed by Supreme Ads', designedBy: 'Designed by Supreme Ads' },
+          faqs: Array.isArray(parsed.faqs) && parsed.faqs.length > 0 ? parsed.faqs : DEFAULT_FAQS,
+          themeFont: parsed.themeFont ? { ...DEFAULT_THEME_FONT, ...parsed.themeFont } : DEFAULT_THEME_FONT,
         };
       }
     } catch (e) {
@@ -611,6 +739,8 @@ function addDeletedProductId(id: string) {
                   }
                 : prev.qualityTrust || DEFAULT_QUALITY_TRUST,
               footer: { ...prev.footer, ...(data.footer || {}), creditText: 'Designed by Supreme Ads', designedBy: 'Designed by Supreme Ads' },
+              faqs: Array.isArray(data.faqs) && data.faqs.length > 0 ? data.faqs : (prev.faqs || DEFAULT_FAQS),
+              themeFont: data.themeFont ? { ...DEFAULT_THEME_FONT, ...(prev.themeFont || {}), ...data.themeFont } : (prev.themeFont || DEFAULT_THEME_FONT),
             }));
             setIsFirebaseSynced(true);
             const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -1505,6 +1635,80 @@ function addDeletedProductId(id: string) {
     syncContentToFirestore(newContent);
   };
 
+  // Dynamic Font CSS Variables
+  useEffect(() => {
+    const fonts = content.themeFont || DEFAULT_THEME_FONT;
+    if (typeof document !== 'undefined') {
+      const root = document.documentElement;
+      if (fonts.serifFont) {
+        root.style.setProperty('--font-serif', `"${fonts.serifFont}", Georgia, serif`);
+      }
+      if (fonts.sansFont) {
+        root.style.setProperty('--font-sans', `"${fonts.sansFont}", ui-sans-serif, system-ui, sans-serif`);
+      }
+      if (fonts.displayFont) {
+        root.style.setProperty('--font-display', `"${fonts.displayFont}", serif`);
+      }
+    }
+  }, [content.themeFont]);
+
+  const updateFaqItem = async (id: string, updates: Partial<FaqItem>): Promise<boolean> => {
+    const currentFaqs = content.faqs || DEFAULT_FAQS;
+    const newFaqs = currentFaqs.map((f) => (f.id === id ? { ...f, ...updates } : f));
+    const newContent = { ...content, faqs: newFaqs };
+    setContent(newContent);
+    try {
+      localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(newContent));
+    } catch {}
+    return await syncContentToFirestore(newContent);
+  };
+
+  const addFaqItem = async (faq: Omit<FaqItem, 'id'>): Promise<boolean> => {
+    const currentFaqs = content.faqs || DEFAULT_FAQS;
+    const newFaq: FaqItem = {
+      ...faq,
+      id: `faq-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    };
+    const newFaqs = [newFaq, ...currentFaqs];
+    const newContent = { ...content, faqs: newFaqs };
+    setContent(newContent);
+    try {
+      localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(newContent));
+    } catch {}
+    return await syncContentToFirestore(newContent);
+  };
+
+  const deleteFaqItem = async (id: string): Promise<boolean> => {
+    const currentFaqs = content.faqs || DEFAULT_FAQS;
+    const newFaqs = currentFaqs.filter((f) => f.id !== id);
+    const newContent = { ...content, faqs: newFaqs };
+    setContent(newContent);
+    try {
+      localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(newContent));
+    } catch {}
+    return await syncContentToFirestore(newContent);
+  };
+
+  const resetFaqsToDefault = async (): Promise<boolean> => {
+    const newContent = { ...content, faqs: DEFAULT_FAQS };
+    setContent(newContent);
+    try {
+      localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(newContent));
+    } catch {}
+    return await syncContentToFirestore(newContent);
+  };
+
+  const updateThemeFont = (updates: Partial<ThemeFontConfig>) => {
+    const currentFont = content.themeFont || DEFAULT_THEME_FONT;
+    const newFont: ThemeFontConfig = { ...currentFont, ...updates };
+    const newContent = { ...content, themeFont: newFont };
+    setContent(newContent);
+    try {
+      localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(newContent));
+    } catch {}
+    syncContentToFirestore(newContent);
+  };
+
   const resetAllContent = () => {
     setContent(DEFAULT_PAGE_CONTENT);
     localStorage.removeItem(CONTENT_STORAGE_KEY);
@@ -1543,6 +1747,12 @@ function addDeletedProductId(id: string) {
         updateQualityTrust,
         updateQualityTrustCard,
         updatePageContent,
+        faqs: content.faqs || DEFAULT_FAQS,
+        updateFaqItem,
+        addFaqItem,
+        deleteFaqItem,
+        resetFaqsToDefault,
+        updateThemeFont,
         reviews,
         addReview,
         updateReview,
