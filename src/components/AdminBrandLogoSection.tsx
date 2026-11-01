@@ -20,15 +20,13 @@ interface AdminBrandLogoSectionProps {
   onToast: (msg: string) => void;
 }
 
-const ATTACHMENT_LOGO_PATH = '/assets/aistudio/image_29351190.png';
-const CLEAN_CROPPED_LOGO_PATH = '/assets/aistudio/titan_logo_clean.png';
-
 export const AdminBrandLogoSection: React.FC<AdminBrandLogoSectionProps> = ({ onToast }) => {
   const { content, updateBrandLogo } = useStoreContent();
   const currentLogo = content.logo || DEFAULT_BRAND_LOGO;
 
-  const [imageUrl, setImageUrl] = useState<string>(currentLogo.imageUrl || ATTACHMENT_LOGO_PATH);
-  const [useCustomImage, setUseCustomImage] = useState<boolean>(currentLogo.useCustomImage ?? true);
+  const [imageUrl, setImageUrl] = useState<string>(currentLogo.imageUrl || '');
+  const [useCustomImage, setUseCustomImage] = useState<boolean>(currentLogo.useCustomImage ?? false);
+  const [showSymbol, setShowSymbol] = useState<boolean>(currentLogo.showSymbol ?? false);
   const [heightPx, setHeightPx] = useState<number>(currentLogo.heightPx || 44);
   const [symbolText, setSymbolText] = useState<string>(currentLogo.symbolText || 'T');
   const [titlePrefix, setTitlePrefix] = useState<string>(currentLogo.titlePrefix || 'TITAN ');
@@ -41,8 +39,9 @@ export const AdminBrandLogoSection: React.FC<AdminBrandLogoSectionProps> = ({ on
   // Sync local form state when content changes externally
   useEffect(() => {
     if (content.logo) {
-      setImageUrl(content.logo.imageUrl || ATTACHMENT_LOGO_PATH);
-      setUseCustomImage(content.logo.useCustomImage ?? true);
+      setImageUrl(content.logo.imageUrl || '');
+      setUseCustomImage(content.logo.useCustomImage ?? false);
+      setShowSymbol(content.logo.showSymbol ?? false);
       setHeightPx(content.logo.heightPx || 44);
       setSymbolText(content.logo.symbolText || 'T');
       setTitlePrefix(content.logo.titlePrefix || 'TITAN ');
@@ -156,6 +155,7 @@ export const AdminBrandLogoSection: React.FC<AdminBrandLogoSectionProps> = ({ on
     const updates: Partial<BrandLogoConfig> = {
       imageUrl: cleanLogo,
       useCustomImage,
+      showSymbol,
       heightPx: Number(heightPx) || 44,
       symbolText: symbolText.trim() || 'T',
       titlePrefix: titlePrefix || 'TITAN ',
@@ -167,10 +167,33 @@ export const AdminBrandLogoSection: React.FC<AdminBrandLogoSectionProps> = ({ on
     onToast('Brand logo & identity updated across Header and Footer!');
   };
 
-  // Reset to default attachment
-  const handleResetToAttachment = () => {
-    setImageUrl(ATTACHMENT_LOGO_PATH);
-    setUseCustomImage(true);
+  // Switch to clean luxury typography wordmark
+  const handleSelectCleanTypography = () => {
+    setImageUrl('');
+    setUseCustomImage(false);
+    setShowSymbol(false);
+    setHeightPx(44);
+    setTitlePrefix('TITAN ');
+    setTitleSuffix('SHILAJIT');
+    setTagline('Himalayan Apothecary');
+
+    updateBrandLogo({
+      imageUrl: '',
+      useCustomImage: false,
+      showSymbol: false,
+      heightPx: 44,
+      titlePrefix: 'TITAN ',
+      titleSuffix: 'SHILAJIT',
+      tagline: 'Himalayan Apothecary',
+    });
+    onToast('Switched to clean luxury typography wordmark!');
+  };
+
+  // Switch to typography with monogram box
+  const handleSelectTypographyWithBox = () => {
+    setImageUrl('');
+    setUseCustomImage(false);
+    setShowSymbol(true);
     setHeightPx(44);
     setSymbolText('T');
     setTitlePrefix('TITAN ');
@@ -178,28 +201,16 @@ export const AdminBrandLogoSection: React.FC<AdminBrandLogoSectionProps> = ({ on
     setTagline('Himalayan Apothecary');
 
     updateBrandLogo({
-      imageUrl: ATTACHMENT_LOGO_PATH,
-      useCustomImage: true,
+      imageUrl: '',
+      useCustomImage: false,
+      showSymbol: true,
       heightPx: 44,
       symbolText: 'T',
       titlePrefix: 'TITAN ',
       titleSuffix: 'SHILAJIT',
       tagline: 'Himalayan Apothecary',
     });
-    onToast('Restored to official attachment logo!');
-  };
-
-  // Use clean cropped version
-  const handleSelectCleanCropped = () => {
-    setImageUrl(CLEAN_CROPPED_LOGO_PATH);
-    setUseCustomImage(true);
-    setHeightPx(44);
-    updateBrandLogo({
-      imageUrl: CLEAN_CROPPED_LOGO_PATH,
-      useCustomImage: true,
-      heightPx: 44,
-    });
-    onToast('Switched to clean cropped logo badge!');
+    onToast('Enabled typography with [T] monogram box!');
   };
 
   return (
@@ -257,13 +268,17 @@ export const AdminBrandLogoSection: React.FC<AdminBrandLogoSectionProps> = ({ on
                   referrerPolicy="no-referrer"
                   style={{ height: `${heightPx}px` }}
                   className="w-auto max-w-[280px] object-contain"
-                  onError={(e) => handleImageError(e, ATTACHMENT_LOGO_PATH)}
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
                 />
               ) : (
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 bg-[#183D27] border border-[#B88A32]/40 flex items-center justify-center rounded-sm">
-                    <span className="text-[#D4B66A] font-serif text-lg font-bold">{symbolText || 'T'}</span>
-                  </div>
+                  {showSymbol && (
+                    <div className="w-9 h-9 bg-[#183D27] border border-[#B88A32]/40 flex items-center justify-center rounded-sm shrink-0">
+                      <span className="text-[#D4B66A] font-serif text-lg font-bold">{symbolText || 'T'}</span>
+                    </div>
+                  )}
                   <div className="flex flex-col">
                     <span className="font-serif text-lg font-bold tracking-tight uppercase leading-none">
                       <span className="text-[#10110F]">{titlePrefix || 'TITAN '}</span>
@@ -291,13 +306,17 @@ export const AdminBrandLogoSection: React.FC<AdminBrandLogoSectionProps> = ({ on
                   referrerPolicy="no-referrer"
                   style={{ height: `${heightPx}px` }}
                   className="w-auto max-w-[280px] object-contain brightness-110"
-                  onError={(e) => handleImageError(e, ATTACHMENT_LOGO_PATH)}
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
                 />
               ) : (
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-sm bg-[#183D27] text-[#B88A32] border border-[#B88A32]/40 flex items-center justify-center font-serif font-bold text-lg">
-                    {symbolText || 'T'}
-                  </div>
+                  {showSymbol && (
+                    <div className="w-9 h-9 rounded-sm bg-[#183D27] text-[#B88A32] border border-[#B88A32]/40 flex items-center justify-center font-serif font-bold text-lg shrink-0">
+                      {symbolText || 'T'}
+                    </div>
+                  )}
                   <div className="flex flex-col">
                     <span className="font-serif tracking-tight font-bold text-lg text-[#F7F3E8] uppercase">
                       {(titlePrefix || 'Titan ') + (titleSuffix || 'Shilajit')}
@@ -316,50 +335,48 @@ export const AdminBrandLogoSection: React.FC<AdminBrandLogoSectionProps> = ({ on
       {/* Preset 1-Click Buttons */}
       <div className="bg-[#F7F3E8] p-4 rounded-xs border border-[#10110F]/10 space-y-2.5">
         <span className="text-[10px] font-bold uppercase tracking-wider text-[#10110F] block">
-          One-Click Logo Presets:
+          Logo Style Presets:
         </span>
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={handleResetToAttachment}
+            onClick={handleSelectCleanTypography}
             className={`px-3 py-1.5 rounded-xs text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-              imageUrl === ATTACHMENT_LOGO_PATH && useCustomImage
-                ? 'bg-[#183D27] text-[#D4B66A] font-bold shadow-xs'
-                : 'bg-white hover:bg-[#10110F] hover:text-[#F7F3E8] text-[#10110F] border border-[#10110F]/15'
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Attachment Logo (Official)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSelectCleanCropped}
-            className={`px-3 py-1.5 rounded-xs text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-              imageUrl === CLEAN_CROPPED_LOGO_PATH && useCustomImage
-                ? 'bg-[#183D27] text-[#D4B66A] font-bold shadow-xs'
-                : 'bg-white hover:bg-[#10110F] hover:text-[#F7F3E8] text-[#10110F] border border-[#10110F]/15'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Clean Cropped Badge</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setUseCustomImage(false);
-              updateBrandLogo({ useCustomImage: false });
-              onToast('Switched to vector typography logo!');
-            }}
-            className={`px-3 py-1.5 rounded-xs text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-              !useCustomImage
+              !useCustomImage && !showSymbol
                 ? 'bg-[#183D27] text-[#D4B66A] font-bold shadow-xs'
                 : 'bg-white hover:bg-[#10110F] hover:text-[#F7F3E8] text-[#10110F] border border-[#10110F]/15'
             }`}
           >
             <Type className="w-3.5 h-3.5" />
-            <span>Vector Typography (No Image)</span>
+            <span>Clean Typography Wordmark (Default)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSelectTypographyWithBox}
+            className={`px-3 py-1.5 rounded-xs text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+              !useCustomImage && showSymbol
+                ? 'bg-[#183D27] text-[#D4B66A] font-bold shadow-xs'
+                : 'bg-white hover:bg-[#10110F] hover:text-[#F7F3E8] text-[#10110F] border border-[#10110F]/15'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Typography with [T] Monogram Box</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setUseCustomImage(true);
+            }}
+            className={`px-3 py-1.5 rounded-xs text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+              useCustomImage
+                ? 'bg-[#183D27] text-[#D4B66A] font-bold shadow-xs'
+                : 'bg-white hover:bg-[#10110F] hover:text-[#F7F3E8] text-[#10110F] border border-[#10110F]/15'
+            }`}
+          >
+            <ImageIcon className="w-3.5 h-3.5" />
+            <span>Custom Uploaded Logo Image</span>
           </button>
         </div>
       </div>
@@ -396,7 +413,7 @@ export const AdminBrandLogoSection: React.FC<AdminBrandLogoSectionProps> = ({ on
                   setImageUrl(e.target.value);
                   setUseCustomImage(true);
                 }}
-                placeholder="e.g. /assets/aistudio/image_29351190.png"
+                placeholder="e.g. https://... or /uploads/..."
                 className="flex-1 px-3.5 py-2.5 rounded-xs border border-[#10110F]/20 text-xs sm:text-sm font-mono"
               />
               <button
@@ -407,6 +424,20 @@ export const AdminBrandLogoSection: React.FC<AdminBrandLogoSectionProps> = ({ on
               >
                 Paste
               </button>
+              {imageUrl && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImageUrl('');
+                    setUseCustomImage(false);
+                    onToast('Custom logo image cleared! Using clean typography wordmark.');
+                  }}
+                  title="Remove logo image and use typography wordmark"
+                  className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xs text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Clear
+                </button>
+              )}
               {imageUrl && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) && (
                 <button
                   type="button"
@@ -421,7 +452,7 @@ export const AdminBrandLogoSection: React.FC<AdminBrandLogoSectionProps> = ({ on
               )}
             </div>
             <p className="text-[11px] text-[#66704B] mt-1">
-              Supports local attachment paths (e.g. <code className="bg-gray-100 px-1 py-0.5 rounded">{ATTACHMENT_LOGO_PATH}</code>) or external image URLs (Cloudinary, Imgur, S3).
+              Supports any image URL (Cloudinary, Imgur, S3, CDN) or upload a file directly below.
             </p>
           </div>
 
@@ -546,14 +577,28 @@ export const AdminBrandLogoSection: React.FC<AdminBrandLogoSectionProps> = ({ on
             </div>
           </div>
 
+          <div className="pt-1">
+            <label className="flex items-center gap-2 cursor-pointer p-2 rounded-xs bg-white border border-[#10110F]/10">
+              <input
+                type="checkbox"
+                checked={showSymbol}
+                onChange={(e) => setShowSymbol(e.target.checked)}
+                className="rounded-xs text-[#183D27] focus:ring-[#183D27]"
+              />
+              <span className="text-xs font-semibold text-[#10110F]">
+                Show Monogram Symbol Box [T] in header
+              </span>
+            </label>
+          </div>
+
           <div className="pt-3 flex items-center justify-between border-t border-[#10110F]/10">
             <button
               type="button"
-              onClick={handleResetToAttachment}
+              onClick={handleSelectCleanTypography}
               className="text-xs text-[#66704B] hover:text-[#10110F] flex items-center gap-1 transition-colors cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset to Official Defaults</span>
+              <span>Reset to Clean Typography</span>
             </button>
 
             <button

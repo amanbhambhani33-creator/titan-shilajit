@@ -92,15 +92,19 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch }) => {
                 referrerPolicy="no-referrer"
                 style={{ height: `${logoConfig.heightPx || 44}px` }}
                 className="w-auto max-w-[240px] sm:max-w-[290px] object-contain transition-transform group-hover:scale-105"
-                onError={(e) => handleImageError(e, '/assets/aistudio/image_29351190.png')}
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
               />
             ) : (
               <>
-                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-[#183D27] border border-[#B88A32]/40 flex items-center justify-center rounded-sm shadow-xs transition-transform group-hover:scale-105 shrink-0">
-                  <span className="text-[#D4B66A] font-serif text-lg sm:text-xl font-bold">
-                    {logoConfig?.symbolText || 'T'}
-                  </span>
-                </div>
+                {logoConfig?.showSymbol && (
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 bg-[#183D27] border border-[#B88A32]/40 flex items-center justify-center rounded-sm shadow-xs transition-transform group-hover:scale-105 shrink-0">
+                    <span className="text-[#D4B66A] font-serif text-lg sm:text-xl font-bold">
+                      {logoConfig?.symbolText || 'T'}
+                    </span>
+                  </div>
+                )}
                 <div className="flex flex-col">
                   <span className="font-serif text-base sm:text-xl font-bold tracking-tight uppercase leading-none">
                     <span className="text-[#10110F] group-hover:text-[#183D27] transition-colors">

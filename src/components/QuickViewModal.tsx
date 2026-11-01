@@ -327,6 +327,51 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product: 
               </span>
             </div>
 
+            {/* How to Use Quick Ritual Guide */}
+            <div className="mb-4 rounded-xs bg-[#F7F3E8] border border-[#B88A32]/35 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-[#183D27] text-xs font-bold font-serif uppercase tracking-wider">
+                  <Droplet className="w-3.5 h-3.5 text-[#B88A32]" />
+                  <span>{product.category === 'resin' ? 'How to Use: Pure Resin Ritual' : 'How to Use: On-The-Go'}</span>
+                </div>
+                <span className="text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#183D27]/10 text-[#183D27]">
+                  3 Steps
+                </span>
+              </div>
+
+              {product.category === 'resin' ? (
+                <div className="space-y-1.5 text-[11px] text-[#10110F]/85 font-sans">
+                  <div className="flex items-start gap-2">
+                    <span className="w-4 h-4 rounded-full bg-[#183D27] text-[#D4B66A] flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">1</span>
+                    <p><strong className="text-[#183D27]">Measure Dosage:</strong> Pea-sized amount (200mg to 250mg) with measuring spoon.</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="w-4 h-4 rounded-full bg-[#183D27] text-[#D4B66A] flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">2</span>
+                    <p><strong className="text-[#183D27]">Mix in Warm Liquid:</strong> Stir into 200ml lukewarm water, tea, or milk for ~60s.</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="w-4 h-4 rounded-full bg-[#183D27] text-[#D4B66A] flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">3</span>
+                    <p><strong className="text-[#183D27]">Morning Timing:</strong> Consume on empty stomach 20-30 min before breakfast.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-1.5 text-[11px] text-[#10110F]/85 font-sans">
+                  <div className="flex items-start gap-2">
+                    <span className="w-4 h-4 rounded-full bg-[#183D27] text-[#D4B66A] flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">1</span>
+                    <p><strong className="text-[#183D27]">Direct Consumption:</strong> Tear open stick &amp; consume directly from pouch on-the-go.</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="w-4 h-4 rounded-full bg-[#183D27] text-[#D4B66A] flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">2</span>
+                    <p><strong className="text-[#183D27]">Pre-Workout Booster:</strong> Take 30 mins before gym sessions or endurance runs.</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="w-4 h-4 rounded-full bg-[#183D27] text-[#D4B66A] flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">3</span>
+                    <p><strong className="text-[#183D27]">Beverage Sweetener:</strong> Squeeze into herbal tea, lemon water, or morning oatmeal.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Quantity Stepper */}
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-bold uppercase tracking-wider text-[#10110F]">

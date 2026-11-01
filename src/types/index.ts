@@ -142,6 +142,7 @@ export interface BrandLogoConfig {
   titleSuffix?: string;
   tagline?: string;
   heightPx?: number;
+  showSymbol?: boolean;
 }
 
 export interface HeroSlideImage {

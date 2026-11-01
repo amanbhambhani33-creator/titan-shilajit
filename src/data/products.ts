@@ -85,16 +85,16 @@ export const PRODUCTS: Product[] = [
     ],
     usage: [
       {
-        step: 'Step 1: Measure',
-        instruction: 'Use the included stainless steel spoon to take a pea-sized portion (approx. 300mg to 500mg).'
+        step: '1. Measure Dosage',
+        instruction: 'Use the included measuring spoon to take a pea-sized amount (200mg to 250mg).'
       },
       {
-        step: 'Step 2: Dissolve',
-        instruction: 'Stir into 100ml of lukewarm water, warm milk, green tea, or herbal infusion until fully dissolved.'
+        step: '2. Mix in Warm Liquid',
+        instruction: 'Stir into 200ml of lukewarm water, green tea, or warm milk until fully dissolved (approx 60 seconds).'
       },
       {
-        step: 'Step 3: Consume',
-        instruction: 'Drink once daily, ideally in the morning on an empty stomach for optimal consistency.'
+        step: '3. Morning Timing',
+        instruction: 'Consume on an empty stomach 20-30 minutes before breakfast for highest cellular absorption.'
       }
     ],
     qualityNotes: [
@@ -183,16 +183,16 @@ export const PRODUCTS: Product[] = [
     ],
     usage: [
       {
-        step: 'Step 1: Tear',
-        instruction: 'Tear open the top notch of 1 Titan Honey Stick.'
+        step: '1. Direct Consumption (ON-THE-GO)',
+        instruction: 'Tear open one stick and consume directly from the pouch for convenient, on-the-go use.'
       },
       {
-        step: 'Step 2: Consume',
-        instruction: 'Squeeze directly into your mouth or mix into warm water, oatmeal, black coffee, or herbal tea.'
+        step: '2. Pre-Workout Booster',
+        instruction: 'Take 30 minutes before high-intensity gym sessions or outdoor endurance runs.'
       },
       {
-        step: 'Step 3: Timing',
-        instruction: 'Best taken in the morning or 30 minutes before your workout or high-focus work sessions.'
+        step: '3. Beverage Sweetener',
+        instruction: 'Squeeze into herbal tea, lemon water, or morning oatmeal for delicious earthy sweetness.'
       }
     ],
     qualityNotes: [
@@ -279,12 +279,16 @@ export const PRODUCTS: Product[] = [
     ],
     usage: [
       {
-        step: 'Step 1: Tear & Enjoy',
-        instruction: 'Tear open and consume directly as an afternoon treat or pre-workout fuel.'
+        step: '1. Direct Consumption (ON-THE-GO)',
+        instruction: 'Tear open one stick and consume directly from the pouch for convenient, on-the-go use.'
       },
       {
-        step: 'Step 2: Beverage Pairing',
-        instruction: 'Drizzle over warm espresso, almond milk, or protein shakes for an elevated recipe.'
+        step: '2. Pre-Workout Booster',
+        instruction: 'Take 30 minutes before high-intensity gym sessions or outdoor endurance runs.'
+      },
+      {
+        step: '3. Beverage Sweetener',
+        instruction: 'Squeeze into herbal tea, lemon water, or morning oatmeal for delicious earthy sweetness.'
       }
     ],
     qualityNotes: [
@@ -373,12 +377,16 @@ export const PRODUCTS: Product[] = [
     ],
     usage: [
       {
-        step: 'Step 1: Direct Intake',
-        instruction: 'Tear and consume directly, or mix into iced water or fruit smoothies.'
+        step: '1. Direct Consumption (ON-THE-GO)',
+        instruction: 'Tear open one stick and consume directly from the pouch for convenient, on-the-go use.'
       },
       {
-        step: 'Step 2: Yogurt & Breakfast Bowl',
-        instruction: 'Drizzle over Greek yogurt, chia pudding, or fresh seasonal fruits.'
+        step: '2. Pre-Workout Booster',
+        instruction: 'Take 30 minutes before high-intensity gym sessions or outdoor endurance runs.'
+      },
+      {
+        step: '3. Beverage Sweetener',
+        instruction: 'Squeeze into herbal tea, lemon water, or morning oatmeal for delicious earthy sweetness.'
       }
     ],
     qualityNotes: [
@@ -467,12 +475,12 @@ export const PRODUCTS: Product[] = [
     ],
     usage: [
       {
-        step: 'Home Routine',
-        instruction: 'Use the stainless spoon to dissolve a pea-sized portion of resin in warm water each morning.'
+        step: 'Resin Morning Ritual',
+        instruction: 'Measure a pea-sized amount (200mg to 250mg) with the measuring spoon and stir into 200ml lukewarm water on an empty stomach 20-30 min before breakfast.'
       },
       {
-        step: 'Travel Routine',
-        instruction: 'Take 1 honey stick with you on active days or workouts when away from home.'
+        step: 'Honey Sticks (ON-THE-GO)',
+        instruction: 'Tear open and consume directly from pouch, take 30 mins before workouts, or squeeze into herbal tea or morning oatmeal.'
       }
     ],
     qualityNotes: [
@@ -561,12 +569,16 @@ export const PRODUCTS: Product[] = [
     ],
     usage: [
       {
-        step: 'Morning',
-        instruction: 'Try Classic Honey with your morning green tea.'
+        step: '1. Direct Consumption (ON-THE-GO)',
+        instruction: 'Tear open one stick and consume directly from the pouch for convenient, on-the-go use.'
       },
       {
-        step: 'Afternoon / Gym',
-        instruction: 'Enjoy Dark Chocolate 30 mins before workout or Strawberry with cold water.'
+        step: '2. Pre-Workout Booster',
+        instruction: 'Take 30 minutes before high-intensity gym sessions or outdoor endurance runs.'
+      },
+      {
+        step: '3. Beverage Sweetener',
+        instruction: 'Squeeze into herbal tea, lemon water, or morning oatmeal for delicious earthy sweetness.'
       }
     ],
     qualityNotes: [

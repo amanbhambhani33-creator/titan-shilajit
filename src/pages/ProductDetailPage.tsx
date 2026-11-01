@@ -25,6 +25,7 @@ import { useStoreContent } from '../context/StoreContentContext';
 import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
 import { ReturnProductModal } from '../components/ReturnProductModal';
+import { ProductHowToUseSection } from '../components/ProductHowToUseSection';
 import { useCart } from '../context/CartContext';
 import { Product, ProductPack } from '../types';
 import { getProductPacks, getPackShortBadge, getPackShortName, getPackShortQuantity } from '../utils/productPacks';
@@ -590,6 +591,66 @@ export const ProductDetailPage: React.FC = () => {
                   </button>
                 </div>
               </div>
+
+              {/* Daily Ritual & How to Use Snapshot */}
+              <div className="mt-3 p-3.5 sm:p-4 rounded-xs bg-[#F7F3E8] border border-[#B88A32]/40 shadow-xs space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-[#183D27] text-[#D4B66A] flex items-center justify-center shrink-0">
+                      <Droplet className="w-3.5 h-3.5 text-[#D4B66A]" />
+                    </div>
+                    <span className="font-serif font-bold text-xs uppercase tracking-wider text-[#10110F]">
+                      {product.category === 'resin' ? 'Daily Resin Ritual (3 Steps)' : 'How to Use (On-The-Go)'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('how-to-use');
+                      const tabElement = document.getElementById('product-in-depth-tabs');
+                      if (tabElement) tabElement.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="text-[10px] font-bold text-[#183D27] hover:underline uppercase flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Full Guide</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+                  {product.category === 'resin' ? (
+                    <>
+                      <div className="p-2 rounded-xs bg-white border border-[#10110F]/10 space-y-0.5">
+                        <span className="font-bold text-[#183D27] block">1. 200–250mg</span>
+                        <span className="text-[#66704B] block leading-tight">Pea-sized portion</span>
+                      </div>
+                      <div className="p-2 rounded-xs bg-white border border-[#10110F]/10 space-y-0.5">
+                        <span className="font-bold text-[#183D27] block">2. 200ml Warm</span>
+                        <span className="text-[#66704B] block leading-tight">Water/Milk/Tea</span>
+                      </div>
+                      <div className="p-2 rounded-xs bg-white border border-[#10110F]/10 space-y-0.5">
+                        <span className="font-bold text-[#183D27] block">3. Morning</span>
+                        <span className="text-[#66704B] block leading-tight">Empty stomach</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="p-2 rounded-xs bg-white border border-[#10110F]/10 space-y-0.5">
+                        <span className="font-bold text-[#183D27] block">1. Direct</span>
+                        <span className="text-[#66704B] block leading-tight">Tear & squeeze</span>
+                      </div>
+                      <div className="p-2 rounded-xs bg-white border border-[#10110F]/10 space-y-0.5">
+                        <span className="font-bold text-[#183D27] block">2. Pre-Workout</span>
+                        <span className="text-[#66704B] block leading-tight">30 mins prior</span>
+                      </div>
+                      <div className="p-2 rounded-xs bg-white border border-[#10110F]/10 space-y-0.5">
+                        <span className="font-bold text-[#183D27] block">3. Sweetener</span>
+                        <span className="text-[#66704B] block leading-tight">Tea, oats, bowls</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -600,7 +661,7 @@ export const ProductDetailPage: React.FC = () => {
           <div className="flex overflow-x-auto no-scrollbar border-b border-[#10110F]/10 gap-4 sm:gap-8 mb-6 sm:mb-8 whitespace-nowrap">
             {[
               { id: 'overview', label: 'Overview & Profile' },
-              { id: 'how-to-use', label: 'How to Consume' },
+              { id: 'how-to-use', label: 'How to Use & Dosage' },
               { id: 'lab-testing', label: 'Lab Verification' },
               { id: 'return-policy', label: 'Return & Cancellation (6h / 24h)' },
               { id: 'reviews', label: `Reviews (${product.reviewCount})` },
@@ -647,48 +708,7 @@ export const ProductDetailPage: React.FC = () => {
 
           {/* Tab Content: How to Use */}
           {activeTab === 'how-to-use' && (
-            <div className="space-y-6 text-sm text-[#10110F]/85 font-sans leading-relaxed">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-5 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10 flex flex-col gap-2">
-                  <div className="w-8 h-8 rounded-full bg-[#183D27] text-[#D4B66A] flex items-center justify-center text-xs font-bold">
-                    1
-                  </div>
-                  <h5 className="font-serif font-bold text-sm text-[#10110F]">Measure Serving</h5>
-                  <p className="text-xs text-[#66704B]">
-                    {product.slug.includes('resin')
-                      ? 'Use the included stainless spoon to measure a pea-sized portion (300mg to 500mg).'
-                      : 'Take 1 single-origin stick directly or stir into warm beverage.'}
-                  </p>
-                </div>
-
-                <div className="p-5 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10 flex flex-col gap-2">
-                  <div className="w-8 h-8 rounded-full bg-[#183D27] text-[#D4B66A] flex items-center justify-center text-xs font-bold">
-                    2
-                  </div>
-                  <h5 className="font-serif font-bold text-sm text-[#10110F]">Dissolve in Liquid</h5>
-                  <p className="text-xs text-[#66704B]">
-                    Dissolve completely in lukewarm water, green tea, or warm milk. Stir for 60 seconds until liquid turns golden-amber.
-                  </p>
-                </div>
-
-                <div className="p-5 rounded-xs bg-[#F7F3E8] border border-[#10110F]/10 flex flex-col gap-2">
-                  <div className="w-8 h-8 rounded-full bg-[#183D27] text-[#D4B66A] flex items-center justify-center text-xs font-bold">
-                    3
-                  </div>
-                  <h5 className="font-serif font-bold text-sm text-[#10110F]">Morning Consistency</h5>
-                  <p className="text-xs text-[#66704B]">
-                    Consume first thing in the morning on an empty stomach. Continue for 60–90 consecutive days for natural metabolic adaptation.
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-xs bg-[#183D27]/10 border border-[#183D27]/20 flex items-start gap-3 text-xs text-[#183D27]">
-                <Clock className="w-4 h-4 shrink-0 mt-0.5" />
-                <p>
-                  <strong>Recommended Schedule:</strong> Maintain daily morning intake for 2 to 3 months. If taking other medications, maintain a 2-hour interval and consult your physician.
-                </p>
-              </div>
-            </div>
+            <ProductHowToUseSection product={product} variant="full" />
           )}
 
           {/* Tab Content: Lab Testing */}

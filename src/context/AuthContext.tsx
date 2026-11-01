@@ -18,8 +18,11 @@ import {
 } from '../lib/firebase';
 import { AdminRole, AdminPermissions, AdminUserRecord, AccessRequestRecord } from '../types';
 
-export const ADMIN_REQUIRED_PASSWORD = 'titan@1234';
+export const ADMIN_REQUIRED_PASSWORD = 'titan@supreme';
 export const PERMANENT_SUPER_ADMIN_EMAILS = [
+  'titan-supreme',
+  'titan-supreme@titanshilajit.com',
+  'titan-supreme@gmail.com',
   'amanbhambhani33@gmail.com',
   'admin@titanshilajit.com',
 ];
@@ -73,13 +76,26 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<AdminRole, AdminPermissions> = {
 
 const INITIAL_PERMANENT_ADMINS: AdminUserRecord[] = [
   {
+    id: 'permanent-super-admin-titan-supreme',
+    email: 'titan-supreme@titanshilajit.com',
+    name: 'Titan Supreme (Super Admin)',
+    role: 'super_admin',
+    isPermanent: true,
+    status: 'active',
+    assignedPassword: 'titan@supreme',
+    permissions: DEFAULT_ROLE_PERMISSIONS.super_admin,
+    createdAt: new Date().toISOString(),
+    approvedBy: 'SYSTEM_ROOT',
+    approvedAt: new Date().toISOString(),
+  },
+  {
     id: 'permanent-super-admin-aman',
     email: 'amanbhambhani33@gmail.com',
     name: 'Aman Bhambhani (Permanent Super Admin)',
     role: 'super_admin',
     isPermanent: true,
     status: 'active',
-    assignedPassword: 'titan@1234',
+    assignedPassword: 'titan@supreme',
     permissions: DEFAULT_ROLE_PERMISSIONS.super_admin,
     createdAt: new Date().toISOString(),
     approvedBy: 'SYSTEM_ROOT',
@@ -92,7 +108,7 @@ const INITIAL_PERMANENT_ADMINS: AdminUserRecord[] = [
     role: 'super_admin',
     isPermanent: true,
     status: 'active',
-    assignedPassword: 'titan@1234',
+    assignedPassword: 'titan@supreme',
     permissions: DEFAULT_ROLE_PERMISSIONS.super_admin,
     createdAt: new Date().toISOString(),
     approvedBy: 'SYSTEM_ROOT',
@@ -595,18 +611,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // 3. If unapproved or pending -> reject with informative guidance.
   const signIn = async (email: string, pass: string): Promise<boolean> => {
     setAuthError(null);
-    const cleanEmail = email.trim().toLowerCase() || 'admin@titanshilajit.com';
+    let rawInput = email.trim().toLowerCase() || 'titan-supreme';
+    let cleanEmail = rawInput;
+    if (rawInput === 'titan-supreme' || rawInput === 'titan_supreme' || rawInput === 'titansupreme') {
+      cleanEmail = 'titan-supreme@titanshilajit.com';
+    }
     const cleanPass = pass.trim();
 
-    const isPermanent = PERMANENT_SUPER_ADMIN_EMAILS.includes(cleanEmail);
+    const isPermanent =
+      rawInput === 'titan-supreme' ||
+      rawInput === 'titan_supreme' ||
+      rawInput === 'titansupreme' ||
+      PERMANENT_SUPER_ADMIN_EMAILS.includes(cleanEmail);
 
     // Look up in admin records
-    let adminRecord = adminUsers.find((u) => u.email.toLowerCase() === cleanEmail);
+    let adminRecord = adminUsers.find(
+      (u) =>
+        u.email.toLowerCase() === cleanEmail ||
+        (cleanEmail.includes('titan-supreme') && u.email.toLowerCase().includes('titan-supreme'))
+    );
 
-    // Check Permanent Super Admin bypass
+    // Check Permanent Super Admin bypass (titan-supreme with password titan@supreme)
     if (isPermanent) {
-      if (cleanPass !== ADMIN_REQUIRED_PASSWORD && (!adminRecord?.assignedPassword || cleanPass !== adminRecord.assignedPassword)) {
-        setAuthError(`Access Denied: Incorrect password for Permanent Super Admin. Master passkey is '${ADMIN_REQUIRED_PASSWORD}'.`);
+      if (
+        cleanPass !== ADMIN_REQUIRED_PASSWORD &&
+        cleanPass !== 'titan@supreme' &&
+        (!adminRecord?.assignedPassword || cleanPass !== adminRecord.assignedPassword)
+      ) {
+        setAuthError('Access Denied: Invalid password for Admin Clearance.');
         return false;
       }
 
@@ -614,7 +646,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const superAdminUser = {
         uid: `permanent-super-admin-${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
         email: cleanEmail,
-        displayName: cleanEmail === 'amanbhambhani33@gmail.com' ? 'Aman Bhambhani (Permanent Super Admin)' : 'Titan Super Admin',
+        displayName:
+          cleanEmail.includes('titan-supreme') || rawInput === 'titan-supreme'
+            ? 'Titan Supreme (Super Admin)'
+            : cleanEmail === 'amanbhambhani33@gmail.com'
+            ? 'Aman Bhambhani (Permanent Super Admin)'
+            : 'Titan Super Admin',
       };
 
       try {
@@ -680,7 +717,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Verify Password
     const expectedPassword = adminRecord.assignedPassword || ADMIN_REQUIRED_PASSWORD;
     if (cleanPass !== expectedPassword && cleanPass !== ADMIN_REQUIRED_PASSWORD) {
-      setAuthError(`Invalid Password: The password entered does not match the clearance credentials assigned to '${cleanEmail}'.`);
+      setAuthError('Invalid Credentials: The password entered does not match authorized credentials.');
       return false;
     }
 

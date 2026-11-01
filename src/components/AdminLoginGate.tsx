@@ -268,14 +268,14 @@ export const AdminLoginGate: React.FC<AdminLoginGateProps> = ({ onSuccessToast }
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-[#EEE8D7]/90 mb-1.5 flex items-center gap-1.5">
                   <Mail className="w-3.5 h-3.5 text-[#D4B66A]" />
-                  <span>Authorized Email</span>
+                  <span>Admin ID or Email</span>
                 </label>
                 <input
-                  type="email"
+                  type="text"
                   required
                   value={emailInput}
                   onChange={(e) => setEmailInput(e.target.value)}
-                  placeholder="e.g. amanbhambhani33@gmail.com"
+                  placeholder="Enter admin ID or email"
                   className="w-full px-4 py-3 rounded-xs bg-[#10110F] border border-[#B88A32]/40 text-[#F7F3E8] text-xs focus:border-[#D4B66A] focus:outline-none transition-colors"
                 />
               </div>
@@ -286,9 +286,6 @@ export const AdminLoginGate: React.FC<AdminLoginGateProps> = ({ onSuccessToast }
                     <KeyRound className="w-3.5 h-3.5 text-[#D4B66A]" />
                     <span>Login Password</span>
                   </label>
-                  <span className="text-[10px] text-[#D4B66A] font-mono">
-                    Master / Assigned Pass
-                  </span>
                 </div>
                 <div className="relative">
                   <input
@@ -296,7 +293,7 @@ export const AdminLoginGate: React.FC<AdminLoginGateProps> = ({ onSuccessToast }
                     required
                     value={passwordInput}
                     onChange={(e) => setPasswordInput(e.target.value)}
-                    placeholder="Enter password or master key (titan@1234)"
+                    placeholder="Enter password"
                     className="w-full px-4 py-3 rounded-xs bg-[#10110F] border border-[#B88A32]/40 text-[#F7F3E8] text-xs pr-10 focus:border-[#D4B66A] focus:outline-none transition-colors font-mono"
                   />
                   <button
@@ -312,45 +309,12 @@ export const AdminLoginGate: React.FC<AdminLoginGateProps> = ({ onSuccessToast }
               <button
                 type="submit"
                 disabled={isSigningIn}
-                className="w-full py-3.5 mt-2 rounded-xs bg-[#B88A32] hover:bg-[#D4B66A] text-[#10110F] font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg transition-all disabled:opacity-50"
+                className="w-full py-3.5 mt-2 rounded-xs bg-[#B88A32] hover:bg-[#D4B66A] text-[#10110F] font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg transition-all disabled:opacity-50 cursor-pointer"
               >
                 <ShieldCheck className="w-4 h-4" />
                 <span>{isSigningIn ? 'Authenticating Clearance...' : 'Sign In to Admin Desk'}</span>
               </button>
             </form>
-
-            {/* Fast Autofill Credentials for Permanent Super Admin */}
-            <div className="mt-5 pt-4 border-t border-[#B88A32]/20 text-center space-y-2">
-              <div className="text-[10px] uppercase tracking-wider text-[#EEE8D7]/50 font-semibold">
-                Permanent Super Admin Quick Access
-              </div>
-              <div className="flex flex-wrap gap-2 justify-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmailInput('amanbhambhani33@gmail.com');
-                    setPasswordInput('titan@1234');
-                    setLocalError(null);
-                  }}
-                  className="px-3 py-1.5 rounded-xs bg-[#183D27] hover:bg-[#205234] border border-[#B88A32]/40 text-[11px] text-[#D4B66A] font-semibold flex items-center gap-1.5"
-                >
-                  <Crown className="w-3 h-3 text-[#D4B66A]" />
-                  <span>Aman Bhambhani (Permanent Admin)</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmailInput('admin@titanshilajit.com');
-                    setPasswordInput('titan@1234');
-                    setLocalError(null);
-                  }}
-                  className="px-3 py-1.5 rounded-xs bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] text-[#EEE8D7] font-medium"
-                >
-                  <span>Titan Root (titan@1234)</span>
-                </button>
-              </div>
-            </div>
           </div>
         )}
 

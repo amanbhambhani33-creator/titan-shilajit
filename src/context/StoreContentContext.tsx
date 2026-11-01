@@ -263,13 +263,14 @@ const DEFAULT_BRAND_STORY: BrandStoryConfig = {
 };
 
 export const DEFAULT_BRAND_LOGO: BrandLogoConfig = {
-  imageUrl: '/assets/aistudio/image_29351190.png',
-  useCustomImage: true,
+  imageUrl: '',
+  useCustomImage: false,
   symbolText: 'T',
   titlePrefix: 'TITAN ',
   titleSuffix: 'SHILAJIT',
   tagline: 'Himalayan Apothecary',
   heightPx: 44,
+  showSymbol: false,
 };
 
 export const DEFAULT_THEME_FONT: ThemeFontConfig = {
@@ -501,6 +502,22 @@ try {
   legacyKeys.forEach((key) => localStorage.removeItem(key));
 } catch {}
 
+// Utility to ensure stale screenshot logo images are cleaned up
+export function sanitizeBrandLogo(logo?: Partial<BrandLogoConfig>): BrandLogoConfig {
+  const merged: BrandLogoConfig = { ...DEFAULT_BRAND_LOGO, ...(logo || {}) };
+  if (
+    merged.imageUrl &&
+    (merged.imageUrl.includes('image_29351190') ||
+      merged.imageUrl.includes('image_db3960dc') ||
+      merged.imageUrl.includes('titan_logo_clean') ||
+      merged.imageUrl.includes('image_9c620fbf'))
+  ) {
+    merged.imageUrl = '';
+    merged.useCustomImage = false;
+  }
+  return merged;
+}
+
 // Utility to sanitize, normalize and preserve all direct image URLs without clobbering user choices
 function sanitizeProductsImages(items: Product[]): Product[] {
   if (!Array.isArray(items)) return [];
@@ -539,11 +556,14 @@ function sanitizeProductsImages(items: Product[]): Product[] {
       };
     });
 
+    const def = DEFAULT_PRODUCTS.find((d) => d.id === p.id);
+
     return {
       ...p,
       image: primaryImg,
       images: cleanImgs,
       packs: cleanPacks,
+      usage: def?.usage || p.usage,
     };
   });
 }
@@ -648,9 +668,7 @@ function addDeletedProductId(id: string) {
             }
           : DEFAULT_QUALITY_TRUST;
 
-        const logoData = parsed.logo
-          ? { ...DEFAULT_BRAND_LOGO, ...parsed.logo }
-          : DEFAULT_BRAND_LOGO;
+        const logoData = sanitizeBrandLogo(parsed.logo);
 
         return {
           ...DEFAULT_PAGE_CONTENT,
@@ -710,11 +728,10 @@ function addDeletedProductId(id: string) {
             setContent((prev) => ({
               ...prev,
               ...data,
-              logo: {
-                ...DEFAULT_BRAND_LOGO,
+              logo: sanitizeBrandLogo({
                 ...(prev.logo || {}),
                 ...(data.logo || {}),
-              },
+              }),
               hero: {
                 ...prev.hero,
                 ...(data.hero || {}),

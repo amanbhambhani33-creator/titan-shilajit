@@ -364,7 +364,7 @@ export const AdminDeskPage: React.FC = () => {
       return;
     }
 
-    if (masterKeyInput.trim() === 'titan@1234') {
+    if (masterKeyInput.trim() === 'titan@supreme' || masterKeyInput.trim() === 'titan@1234') {
       setIsMasterUnlocked(true);
       setMasterKeyError(null);
       setMasterFailedAttempts(0);
@@ -584,9 +584,6 @@ export const AdminDeskPage: React.FC = () => {
                   <Lock className="w-3.5 h-3.5 text-[#D4B66A]" />
                   <span>Master Passkey</span>
                 </span>
-                <span className="text-[10px] text-[#D4B66A] font-normal lowercase font-sans">
-                  titan@1234
-                </span>
               </label>
               <div className="relative">
                 <input
@@ -595,7 +592,7 @@ export const AdminDeskPage: React.FC = () => {
                   autoFocus
                   value={masterKeyInput}
                   onChange={(e) => setMasterKeyInput(e.target.value)}
-                  placeholder="Enter master passkey (e.g. titan@1234)"
+                  placeholder="Enter master passkey"
                   className="w-full px-4 py-3 rounded-xs bg-[#10110F] border border-[#B88A32]/50 text-[#F7F3E8] text-xs pr-10 focus:border-[#D4B66A] focus:outline-none transition-colors"
                 />
                 <button
@@ -610,25 +607,15 @@ export const AdminDeskPage: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full py-3.5 mt-2 rounded-xs bg-[#B88A32] hover:bg-[#D4B66A] text-[#10110F] font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg transition-all"
+              className="w-full py-3.5 mt-2 rounded-xs bg-[#B88A32] hover:bg-[#D4B66A] text-[#10110F] font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
             >
               <Unlock className="w-4 h-4" />
               <span>Unlock Titan Vault</span>
             </button>
           </form>
 
-          {/* Quick Helper and Sign out option */}
-          <div className="mt-6 pt-5 border-t border-[#B88A32]/20 flex items-center justify-between text-xs relative z-10">
-            <button
-              onClick={() => {
-                setMasterKeyInput('titan@1234');
-                setMasterKeyError(null);
-              }}
-              className="text-[11px] text-[#D4B66A] hover:text-[#FFFFFF] underline font-medium"
-            >
-              Autofill Master Key (titan@1234)
-            </button>
-
+          {/* Sign out option */}
+          <div className="mt-6 pt-5 border-t border-[#B88A32]/20 flex items-center justify-end text-xs relative z-10">
             <button
               onClick={handleSignOutDesk}
               className="text-[11px] text-red-300 hover:text-red-100 flex items-center gap-1 cursor-pointer"
