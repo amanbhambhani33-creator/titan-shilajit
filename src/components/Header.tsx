@@ -86,16 +86,29 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch }) => {
             className="flex items-center gap-2 sm:gap-2.5 group focus:outline-none min-h-[44px] cursor-pointer"
           >
             {logoConfig?.useCustomImage && logoConfig?.imageUrl ? (
-              <img
-                src={logoConfig.imageUrl}
-                alt={logoConfig.titlePrefix ? `${logoConfig.titlePrefix}${logoConfig.titleSuffix || ''}` : 'Titan Shilajit'}
-                referrerPolicy="no-referrer"
-                style={{ height: `${logoConfig.heightPx || 44}px` }}
-                className="w-auto max-w-[240px] sm:max-w-[290px] object-contain transition-transform group-hover:scale-105"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none';
-                }}
-              />
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                <img
+                  src={logoConfig.imageUrl}
+                  alt={logoConfig.titlePrefix ? `${logoConfig.titlePrefix}${logoConfig.titleSuffix || ''}` : 'Titan Shilajit'}
+                  referrerPolicy="no-referrer"
+                  style={{ height: `${logoConfig.heightPx || 44}px` }}
+                  className="w-auto max-w-[240px] sm:max-w-[290px] object-contain rounded-full border border-[#B88A32]/40 shadow-xs transition-transform group-hover:scale-105"
+                  onError={(e) => handleImageError(e, '/assets/titan_official_logo.jpg')}
+                />
+                <div className="flex flex-col">
+                  <span className="font-serif text-base sm:text-xl font-bold tracking-tight uppercase leading-none">
+                    <span className="text-[#10110F] group-hover:text-[#183D27] transition-colors">
+                      {logoConfig?.titlePrefix || 'TITAN '}
+                    </span>
+                    <span className="text-[#B88A32] drop-shadow-xs">
+                      {logoConfig?.titleSuffix || 'SHILAJIT'}
+                    </span>
+                  </span>
+                  <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.25em] text-[#183D27] font-semibold mt-0.5 opacity-80 block">
+                    {logoConfig?.tagline || 'Himalayan Apothecary'}
+                  </span>
+                </div>
+              </div>
             ) : (
               <>
                 {logoConfig?.showSymbol && (

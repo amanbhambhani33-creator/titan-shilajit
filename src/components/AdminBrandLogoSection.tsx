@@ -12,7 +12,7 @@ import {
   ShieldCheck,
   Zap,
 } from 'lucide-react';
-import { useStoreContent, DEFAULT_BRAND_LOGO } from '../context/StoreContentContext';
+import { useStoreContent, DEFAULT_BRAND_LOGO, PERMANENT_OFFICIAL_LOGO_URL } from '../context/StoreContentContext';
 import { BrandLogoConfig } from '../types';
 import { normalizeImageUrl, handleImageError, downloadAndCacheImageUrl } from '../utils/imageUrl';
 
@@ -213,6 +213,28 @@ export const AdminBrandLogoSection: React.FC<AdminBrandLogoSectionProps> = ({ on
     onToast('Enabled typography with [T] monogram box!');
   };
 
+  // Switch to permanent official seal logo
+  const handleSelectOfficialLogo = () => {
+    setImageUrl(PERMANENT_OFFICIAL_LOGO_URL);
+    setUseCustomImage(true);
+    setShowSymbol(false);
+    setHeightPx(48);
+    setTitlePrefix('TITAN ');
+    setTitleSuffix('SHILAJIT');
+    setTagline('Himalayan Apothecary');
+
+    updateBrandLogo({
+      imageUrl: PERMANENT_OFFICIAL_LOGO_URL,
+      useCustomImage: true,
+      showSymbol: false,
+      heightPx: 48,
+      titlePrefix: 'TITAN ',
+      titleSuffix: 'SHILAJIT',
+      tagline: 'Himalayan Apothecary',
+    });
+    onToast('Restored to permanent official brand logo seal!');
+  };
+
   return (
     <div id="admin-brand-logo-section" className="bg-white p-6 sm:p-8 rounded-xs border-2 border-[#B88A32]/40 shadow-sm space-y-6">
       {/* Header Strip */}
@@ -340,6 +362,19 @@ export const AdminBrandLogoSection: React.FC<AdminBrandLogoSectionProps> = ({ on
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
+            onClick={handleSelectOfficialLogo}
+            className={`px-3 py-1.5 rounded-xs text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+              useCustomImage && (imageUrl === PERMANENT_OFFICIAL_LOGO_URL || imageUrl.includes('fbcdn.net') || imageUrl.includes('titan_official_logo'))
+                ? 'bg-[#183D27] text-[#D4B66A] font-bold shadow-xs'
+                : 'bg-white hover:bg-[#10110F] hover:text-[#F7F3E8] text-[#10110F] border border-[#10110F]/15'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-[#D4B66A]" />
+            <span>Permanent Official Seal Logo (Recommended)</span>
+          </button>
+
+          <button
+            type="button"
             onClick={handleSelectCleanTypography}
             className={`px-3 py-1.5 rounded-xs text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               !useCustomImage && !showSymbol
@@ -348,7 +383,7 @@ export const AdminBrandLogoSection: React.FC<AdminBrandLogoSectionProps> = ({ on
             }`}
           >
             <Type className="w-3.5 h-3.5" />
-            <span>Clean Typography Wordmark (Default)</span>
+            <span>Clean Typography Wordmark</span>
           </button>
 
           <button

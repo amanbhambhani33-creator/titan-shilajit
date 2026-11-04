@@ -42,14 +42,24 @@ export const Footer: React.FC = () => {
           <div className="lg:col-span-2 flex flex-col gap-5">
             <Link to="/" className="flex items-center gap-2.5">
               {content.logo?.useCustomImage && content.logo?.imageUrl ? (
-                <img
-                  src={content.logo.imageUrl}
-                  alt={content.logo.titlePrefix ? `${content.logo.titlePrefix}${content.logo.titleSuffix || ''}` : 'Titan Shilajit'}
-                  referrerPolicy="no-referrer"
-                  style={{ height: `${Math.min(content.logo.heightPx || 44, 40)}px` }}
-                  className="w-auto object-contain brightness-110"
-                  onError={(e) => handleImageError(e, '/assets/aistudio/image_29351190.png')}
-                />
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src={content.logo.imageUrl}
+                    alt={content.logo.titlePrefix ? `${content.logo.titlePrefix}${content.logo.titleSuffix || ''}` : 'Titan Shilajit'}
+                    referrerPolicy="no-referrer"
+                    style={{ height: `${Math.min(content.logo.heightPx || 44, 40)}px` }}
+                    className="w-auto object-contain rounded-full border border-[#B88A32]/40 shadow-xs brightness-110"
+                    onError={(e) => handleImageError(e, '/assets/titan_official_logo.jpg')}
+                  />
+                  <div className="flex flex-col">
+                    <span className="font-serif tracking-tight font-bold text-xl text-[#F7F3E8] uppercase">
+                      {(content.logo?.titlePrefix || 'Titan ') + (content.logo?.titleSuffix || 'Shilajit')}
+                    </span>
+                    <span className="text-[9px] tracking-[0.3em] uppercase text-[#D4B66A] font-medium font-sans">
+                      {content.logo?.tagline || 'Pure Power of the Himalayas'}
+                    </span>
+                  </div>
+                </div>
               ) : (
                 <>
                   <div className="w-8 h-8 rounded-sm bg-[#183D27] text-[#B88A32] border border-[#B88A32]/40 flex items-center justify-center font-serif font-bold text-lg">

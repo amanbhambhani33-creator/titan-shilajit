@@ -262,14 +262,19 @@ const DEFAULT_BRAND_STORY: BrandStoryConfig = {
   badgeSubtitle: 'Granite Ridge Wild Foraging',
 };
 
+export const PERMANENT_OFFICIAL_LOGO_URL =
+  'https://scontent.fdel1-8.fna.fbcdn.net/v/t39.30808-1/844381033_122094909513513507_1928099859749405155_n.jpg?stp=cp0_dst-jpg_tt6&cstp=mx1254x1254&ctp=s40x40&_nc_cat=103&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=2d3e12&_nc_ohc=SnuSP8T_6QQQ7kNvwGn0H5w&_nc_oc=Adpdwg7kyfCQeSJIvcWzUBFOfGh6gq9sBylhSvYyLgvhUzhZJAbZF1ZcEgZ1Jfqqh01H1mktaSCB7oAr_nzcpc4G&_nc_zt=24&_nc_ht=scontent.fdel1-8.fna&_nc_gid=iAIbMu9UjVmkO1q5lnh--g&_nc_ss=7b2a8&oh=00_AQTbOQTN9DfNuiuGrjqBPU-w9bzf_PKqc8LzixbDoMwbOw&oe=6AF0EB8B';
+
+export const LOCAL_OFFICIAL_LOGO_PATH = '/assets/titan_official_logo.jpg';
+
 export const DEFAULT_BRAND_LOGO: BrandLogoConfig = {
-  imageUrl: '',
-  useCustomImage: false,
-  symbolText: 'T',
+  imageUrl: PERMANENT_OFFICIAL_LOGO_URL,
+  useCustomImage: true,
+  symbolText: 'SRT',
   titlePrefix: 'TITAN ',
   titleSuffix: 'SHILAJIT',
   tagline: 'Himalayan Apothecary',
-  heightPx: 44,
+  heightPx: 48,
   showSymbol: false,
 };
 
@@ -502,18 +507,18 @@ try {
   legacyKeys.forEach((key) => localStorage.removeItem(key));
 } catch {}
 
-// Utility to ensure stale screenshot logo images are cleaned up
+// Utility to ensure stale screenshot logo images are cleaned up and permanent official logo is active
 export function sanitizeBrandLogo(logo?: Partial<BrandLogoConfig>): BrandLogoConfig {
   const merged: BrandLogoConfig = { ...DEFAULT_BRAND_LOGO, ...(logo || {}) };
   if (
-    merged.imageUrl &&
-    (merged.imageUrl.includes('image_29351190') ||
-      merged.imageUrl.includes('image_db3960dc') ||
-      merged.imageUrl.includes('titan_logo_clean') ||
-      merged.imageUrl.includes('image_9c620fbf'))
+    !merged.imageUrl ||
+    merged.imageUrl.includes('image_29351190') ||
+    merged.imageUrl.includes('image_db3960dc') ||
+    merged.imageUrl.includes('titan_logo_clean') ||
+    merged.imageUrl.includes('image_9c620fbf')
   ) {
-    merged.imageUrl = '';
-    merged.useCustomImage = false;
+    merged.imageUrl = PERMANENT_OFFICIAL_LOGO_URL;
+    merged.useCustomImage = true;
   }
   return merged;
 }
@@ -717,6 +722,9 @@ function addDeletedProductId(id: string) {
     let unsubscribeProducts: (() => void) | null = null;
     let unsubscribeReviews: (() => void) | null = null;
     let unsubscribeOrders: (() => void) | null = null;
+    let pollInterval: any = null;
+    let handleWindowFocus: any = null;
+    let handleStorageChange: any = null;
 
     try {
       const contentDocRef = doc(db, 'store_content', 'main');
@@ -839,45 +847,88 @@ function addDeletedProductId(id: string) {
         }
       );
 
-      // Resilient server-side fetch fallback for store content, products & reviews
-      fetch('/api/store-content')
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
+      // Automated periodic and event-driven sync for Hostinger & Firestore
+      const syncStoreContentFromServer = async () => {
+        try {
+          const res = await fetch('/api/store-content');
+          if (!res.ok) return;
+          const data = await res.json();
           if (data && data.success) {
             if (Array.isArray(data.products)) {
-              if (Date.now() - lastLocalSaveTimeRef.current < 25000) {
+              if (Date.now() - lastLocalSaveTimeRef.current < 15000) {
                 return;
               }
               const deletedIds = getDeletedProductIds();
               const active = data.products.filter((p: any) => !deletedIds.has(p.id));
               const clean = sanitizeProductsImages(active);
-              setProducts(clean);
+              setProducts((prev) => {
+                // If deep equal or same timestamp, avoid unnecessary re-render
+                if (JSON.stringify(prev) === JSON.stringify(clean)) return prev;
+                return clean;
+              });
               try { localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(clean)); } catch {}
             }
             if (Array.isArray(data.reviews) && data.reviews.length > 0) {
-              setReviews(data.reviews);
+              setReviews((prev) => {
+                if (JSON.stringify(prev) === JSON.stringify(data.reviews)) return prev;
+                return data.reviews;
+              });
               try { localStorage.setItem(REVIEWS_STORAGE_KEY, JSON.stringify(data.reviews)); } catch {}
             }
             if (data.content && typeof data.content === 'object') {
-              setContent((prev) => ({
-                ...prev,
-                ...data.content,
-                hero: {
-                  ...prev.hero,
-                  ...(data.content.hero || {}),
-                },
-                footer: {
-                  ...prev.footer,
-                  ...(data.content.footer || {}),
-                  creditText: 'Designed by Supreme Ads',
-                  designedBy: 'Designed by Supreme Ads',
-                },
-              }));
-              try { localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(data.content)); } catch {}
+              setContent((prev) => {
+                const updated = {
+                  ...prev,
+                  ...data.content,
+                  logo: sanitizeBrandLogo({
+                    ...(prev.logo || {}),
+                    ...(data.content.logo || {}),
+                  }),
+                  hero: {
+                    ...prev.hero,
+                    ...(data.content.hero || {}),
+                  },
+                  footer: {
+                    ...prev.footer,
+                    ...(data.content.footer || {}),
+                    creditText: 'Designed by Supreme Ads',
+                    designedBy: 'Designed by Supreme Ads',
+                  },
+                };
+                return updated;
+              });
             }
           }
-        })
-        .catch(() => {});
+        } catch {
+          // Silent fallback to local state
+        }
+      };
+
+      // Initial fetch
+      syncStoreContentFromServer();
+
+      // Recurring automated poll every 12 seconds so Hostinger stock/pricing updates appear live
+      pollInterval = setInterval(syncStoreContentFromServer, 12000);
+
+      // Re-sync when tab regains focus or becomes visible
+      handleWindowFocus = () => {
+        syncStoreContentFromServer();
+      };
+      window.addEventListener('focus', handleWindowFocus);
+      document.addEventListener('visibilitychange', handleWindowFocus);
+
+      // Multi-tab sync via storage events
+      handleStorageChange = (e: StorageEvent) => {
+        if (e.key === PRODUCTS_STORAGE_KEY && e.newValue) {
+          try {
+            const parsed = JSON.parse(e.newValue);
+            if (Array.isArray(parsed)) {
+              setProducts(sanitizeProductsImages(parsed));
+            }
+          } catch {}
+        }
+      };
+      window.addEventListener('storage', handleStorageChange);
 
       // Resilient server-side fetch fallback for orders
       fetch('/api/orders')
@@ -898,6 +949,14 @@ function addDeletedProductId(id: string) {
     }
 
     return () => {
+      if (pollInterval) clearInterval(pollInterval);
+      if (handleWindowFocus) {
+        window.removeEventListener('focus', handleWindowFocus);
+        document.removeEventListener('visibilitychange', handleWindowFocus);
+      }
+      if (handleStorageChange) {
+        window.removeEventListener('storage', handleStorageChange);
+      }
       if (unsubscribeContent) unsubscribeContent();
       if (unsubscribeProducts) unsubscribeProducts();
       if (unsubscribeReviews) unsubscribeReviews();

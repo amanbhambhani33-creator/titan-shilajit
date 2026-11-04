@@ -963,10 +963,90 @@ apiRouter.get('/hostinger/products', (req, res) => {
   }
 });
 
-apiRouter.post('/hostinger/products', (req, res) => {
+apiRouter.post('/hostinger/products', async (req, res) => {
   try {
-    saveHostingerProducts(req.body.products || []);
-    return res.json({ success: true, message: 'Products saved to Hostinger database.' });
+    const rawProducts = req.body.products || [];
+    if (!Array.isArray(rawProducts)) {
+      return res.status(400).json({ success: false, error: 'Products array is required.' });
+    }
+
+    const sanitizedProducts = rawProducts.map((prod: any) => {
+      const cleanImages = (prod.images || []).map((img: string, idx: number) => {
+        if (typeof img === 'string' && img.startsWith('data:image')) {
+          return saveBase64ToUploadFile(img, `${prod.id || 'prod'}-${idx}`);
+        }
+        return normalizeServerImageUrl(img);
+      }).filter(Boolean);
+
+      const primaryCover = cleanImages[0] || (typeof prod.image === 'string' && prod.image.startsWith('data:image') ? saveBase64ToUploadFile(prod.image, `${prod.id || 'prod'}-cover`) : normalizeServerImageUrl(prod.image)) || '';
+
+      const cleanPacks = (prod.packs || []).map((pk: any, pIdx: number) => {
+        let pkImg = pk.image;
+        if (typeof pkImg === 'string' && pkImg.startsWith('data:image')) {
+          pkImg = saveBase64ToUploadFile(pkImg, `${prod.id || 'prod'}-pack-${pk.id || pIdx}`);
+        } else if (typeof pkImg === 'string') {
+          pkImg = normalizeServerImageUrl(pkImg);
+        }
+        return {
+          ...pk,
+          image: pkImg || primaryCover,
+        };
+      });
+
+      return {
+        ...prod,
+        image: primaryCover,
+        images: cleanImages,
+        packs: cleanPacks,
+      };
+    });
+
+    saveHostingerProducts(sanitizedProducts);
+    await saveProductsToFirestore(sanitizedProducts);
+    syncProductsToSourceFile(sanitizedProducts);
+
+    return res.json({
+      success: true,
+      message: 'Products saved and synced across Hostinger, Firestore and Local Catalog.',
+      products: sanitizedProducts,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// Realtime Hostinger stock and pricing update endpoint
+apiRouter.post('/hostinger/stock', async (req, res) => {
+  try {
+    const { id, slug, inStock, stockQty, price, originalPrice } = req.body;
+    let products = getHostingerProducts();
+    if (!products || products.length === 0) {
+      products = (await getProductsFromFirestore()) || [];
+    }
+    const idx = products.findIndex(
+      (p: any) =>
+        (id && p.id === id) ||
+        (slug && p.slug === slug) ||
+        (id && String(p.id) === String(id)) ||
+        (slug && String(p.slug) === String(slug))
+    );
+    if (idx !== -1) {
+      if (inStock !== undefined) products[idx].inStock = Boolean(inStock);
+      if (stockQty !== undefined) products[idx].stockQty = Number(stockQty);
+      if (price !== undefined) products[idx].price = Number(price);
+      if (originalPrice !== undefined) products[idx].originalPrice = Number(originalPrice);
+
+      saveHostingerProducts(products);
+      await saveProductsToFirestore(products);
+      syncProductsToSourceFile(products);
+
+      return res.json({
+        success: true,
+        message: 'Product stock and pricing updated across Hostinger, Firestore and UI.',
+        product: products[idx],
+      });
+    }
+    return res.status(404).json({ success: false, error: 'Product not found in catalog' });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message });
   }

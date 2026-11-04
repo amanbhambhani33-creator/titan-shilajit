@@ -77,45 +77,28 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       {/* Upper Section: Image Container (Amazon-style large prominent product view) */}
       <div>
         <div
-          onClick={() => (isHomeScreen ? onQuickView(product) : undefined)}
-          className="relative aspect-square overflow-hidden bg-[#F7F3E8] border border-[#10110F]/10 rounded-xs cursor-pointer mb-4 flex items-center justify-center p-2 sm:p-3"
+          className="relative aspect-square overflow-hidden bg-[#F7F3E8] border border-[#10110F]/10 rounded-xs mb-4 flex items-center justify-center p-2 sm:p-3"
         >
           {displayImage ? (
-            isHomeScreen ? (
-              <div className="block w-full h-full">
-                <img
-                  key={displayImage}
-                  src={displayImage}
-                  alt={`${product.name} - ${currentPack.name}`}
-                  referrerPolicy="no-referrer"
-                  className={`w-full h-full object-contain object-center group-hover:scale-105 transition-all duration-500 ${
-                    isOutOfStock ? 'opacity-50 grayscale' : 'opacity-100'
-                  }`}
-                  loading="lazy"
-                  onError={(e) => handleImageError(e, DEFAULT_PRODUCT_FALLBACK)}
-                />
-              </div>
-            ) : (
-              <Link to={`/product/${product.slug}`} className="block w-full h-full">
-                <img
-                  key={displayImage}
-                  src={displayImage}
-                  alt={`${product.name} - ${currentPack.name}`}
-                  referrerPolicy="no-referrer"
-                  className={`w-full h-full object-contain object-center group-hover:scale-105 transition-all duration-500 ${
-                    isOutOfStock ? 'opacity-50 grayscale' : 'opacity-100'
-                  }`}
-                  loading="lazy"
-                  onError={(e) => handleImageError(e, DEFAULT_PRODUCT_FALLBACK)}
-                />
-              </Link>
-            )
+            <Link to={`/product/${product.slug}`} className="block w-full h-full cursor-pointer">
+              <img
+                key={displayImage}
+                src={displayImage}
+                alt={`${product.name} - ${currentPack.name}`}
+                referrerPolicy="no-referrer"
+                className={`w-full h-full object-contain object-center group-hover:scale-105 transition-all duration-500 ${
+                  isOutOfStock ? 'opacity-50 grayscale' : 'opacity-100'
+                }`}
+                loading="lazy"
+                onError={(e) => handleImageError(e, DEFAULT_PRODUCT_FALLBACK)}
+              />
+            </Link>
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#183D27] via-[#10110F] to-[#183D27]/80 text-[#D4B66A]">
+            <Link to={`/product/${product.slug}`} className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#183D27] via-[#10110F] to-[#183D27]/80 text-[#D4B66A] cursor-pointer">
               <span className="text-[10px] uppercase tracking-[0.25em] text-[#D4B66A]/80 font-bold mb-1">TITAN SHILAJIT</span>
               <span className="font-serif text-sm font-bold text-[#F7F3E8] line-clamp-2">{product.name}</span>
               <span className="text-[10px] text-[#EEE8D7]/60 mt-2 font-mono">{currentPack.name}</span>
-            </div>
+            </Link>
           )}
 
           {/* Badges & Pack indicator */}
@@ -212,21 +195,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             </div>
           </div>
 
-          {isHomeScreen ? (
-            <button
-              onClick={() => onQuickView(product)}
-              className="font-serif text-base sm:text-lg font-bold text-[#10110F] hover:text-[#183D27] transition-colors leading-snug line-clamp-2 text-left cursor-pointer"
-            >
-              {product.name}
-            </button>
-          ) : (
-            <Link
-              to={`/product/${product.slug}`}
-              className="font-serif text-base sm:text-lg font-bold text-[#10110F] hover:text-[#183D27] transition-colors leading-snug line-clamp-2"
-            >
-              {product.name}
-            </Link>
-          )}
+          <Link
+            to={`/product/${product.slug}`}
+            className="font-serif text-base sm:text-lg font-bold text-[#10110F] hover:text-[#183D27] transition-colors leading-snug line-clamp-2 cursor-pointer"
+          >
+            {product.name}
+          </Link>
 
           <p className="text-xs text-[#66704B] font-sans line-clamp-2 leading-relaxed font-light">
             {product.shortDescription}
