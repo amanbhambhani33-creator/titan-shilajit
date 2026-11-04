@@ -27,6 +27,9 @@ export interface HeroBannerConfig {
   autoplayInterval?: number; // In milliseconds (e.g. 4500)
   transitionEffect?: 'fade' | 'slide';
   pictures?: HeroSlideImage[];
+  // Automatic mobile banner adjustment settings
+  mobileFit?: 'auto' | 'contain' | 'cover';
+  mobileAspectRatio?: 'auto' | '16/9' | '4/3' | '1/1' | '4/5';
 }
 
 export interface LaunchBannerConfig {
@@ -221,6 +224,8 @@ const DEFAULT_HERO: HeroBannerConfig = {
   autoplayInterval: 7500,
   transitionEffect: 'fade',
   pictures: DEFAULT_HERO_PICTURES,
+  mobileFit: 'auto',
+  mobileAspectRatio: 'auto',
 };
 
 const DEFAULT_LAUNCH_BANNER: LaunchBannerConfig = {

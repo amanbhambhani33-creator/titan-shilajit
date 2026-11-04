@@ -148,6 +148,7 @@ export interface BrandLogoConfig {
 export interface HeroSlideImage {
   id: string;
   imageUrl: string;
+  mobileImageUrl?: string;
   title?: string;
   linkUrl?: string;
   altText?: string;

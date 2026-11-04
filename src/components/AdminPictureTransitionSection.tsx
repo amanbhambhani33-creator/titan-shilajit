@@ -14,6 +14,7 @@ import {
   Sliders,
   Play,
   Layers,
+  Smartphone,
 } from 'lucide-react';
 import { HeroBannerConfig, DEFAULT_HERO_PICTURES } from '../context/StoreContentContext';
 import { HeroSlideImage } from '../types';
@@ -75,6 +76,7 @@ export const AdminPictureTransitionSection: React.FC<AdminPictureTransitionSecti
 
   const [previewIdx, setPreviewIdx] = useState(0);
   const [newUrl, setNewUrl] = useState('');
+  const [newMobileUrl, setNewMobileUrl] = useState('');
   const [newTitle, setNewTitle] = useState('');
   const [newLink, setNewLink] = useState('/shop');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -129,6 +131,7 @@ export const AdminPictureTransitionSection: React.FC<AdminPictureTransitionSecti
     const newSlide: HeroSlideImage = {
       id: `pic-${Date.now()}`,
       imageUrl: newUrl.trim(),
+      mobileImageUrl: newMobileUrl.trim() || undefined,
       title: newTitle.trim() || 'Himalayan Shilajit Picture',
       linkUrl: newLink.trim() || '/shop',
       altText: newTitle.trim() || 'Titan Shilajit Picture',
@@ -137,6 +140,7 @@ export const AdminPictureTransitionSection: React.FC<AdminPictureTransitionSecti
     const next = [...pictures, newSlide];
     setPictures(next);
     setNewUrl('');
+    setNewMobileUrl('');
     setNewTitle('');
     setShowAddForm(false);
     setPreviewIdx(next.length - 1);
@@ -333,6 +337,68 @@ export const AdminPictureTransitionSection: React.FC<AdminPictureTransitionSecti
         </div>
       </div>
 
+      {/* Mobile Device Automatic Adaptation Settings (iPhone & Samsung Galaxy) */}
+      <div className="bg-[#183D27]/10 p-4 rounded-xs border border-[#183D27]/25 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-[#183D27] text-[#D4B66A] flex items-center justify-center shrink-0">
+              <Smartphone className="w-4 h-4" />
+            </div>
+            <div>
+              <h5 className="font-serif text-sm font-bold text-[#183D27] uppercase tracking-wider flex items-center gap-2">
+                <span>Mobile Banner Auto-Adjustment</span>
+                <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#183D27] text-[#D4B66A] font-sans font-bold">
+                  iPhone &amp; Samsung Ready
+                </span>
+              </h5>
+              <p className="text-[11px] text-[#66704B]">
+                Automatically adjusts aspect ratio and width so banner images and text never get cropped on smartphones.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-[#10110F] mb-1">
+              Mobile Banner Image Fit
+            </label>
+            <select
+              value={hero.mobileFit || 'auto'}
+              onChange={(e) => updateHeroBanner({ mobileFit: e.target.value as any })}
+              className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs bg-white font-medium cursor-pointer"
+            >
+              <option value="auto">Auto-Adjust Container (Zero Crop • Recommended)</option>
+              <option value="contain">Contain with Ambient Aura (100% Complete Banner)</option>
+              <option value="cover">Full Bleed Cover (Classic Viewport Fill)</option>
+            </select>
+            <span className="text-[10px] text-[#66704B] block mt-1">
+              Auto-Adjust detects image height and width to preserve your entire graphic without cutting edges.
+            </span>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-[#10110F] mb-1">
+              Mobile Screen Aspect Ratio
+            </label>
+            <select
+              value={hero.mobileAspectRatio || 'auto'}
+              onChange={(e) => updateHeroBanner({ mobileAspectRatio: e.target.value as any })}
+              className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs bg-white font-medium cursor-pointer"
+            >
+              <option value="auto">Auto-Detect Image Ratio (Exact Match)</option>
+              <option value="16/9">16:9 Widescreen Landscape</option>
+              <option value="4/3">4:3 Standard Mobile</option>
+              <option value="1/1">1:1 Square</option>
+              <option value="4/5">4:5 Vertical Portrait</option>
+            </select>
+            <span className="text-[10px] text-[#66704B] block mt-1">
+              Auto-detect adjusts dynamically for every individual slide in the transition.
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* Picture Slides List */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -390,6 +456,22 @@ export const AdminPictureTransitionSection: React.FC<AdminPictureTransitionSecti
                   value={newLink}
                   onChange={(e) => setNewLink(e.target.value)}
                   placeholder="e.g. /shop or /why-titan"
+                  className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs bg-white"
+                />
+              </div>
+
+              <div className="sm:col-span-3">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#10110F]">
+                    Mobile-Specific Image URL (Optional for iPhone &amp; Samsung)
+                  </label>
+                  <span className="text-[9px] text-[#B88A32] font-semibold">4:5, 1:1 or 9:16 Portrait</span>
+                </div>
+                <input
+                  type="url"
+                  value={newMobileUrl}
+                  onChange={(e) => setNewMobileUrl(e.target.value)}
+                  placeholder="Leave empty to auto-adjust desktop banner"
                   className="w-full px-3 py-2 rounded-xs border border-[#10110F]/20 text-xs bg-white"
                 />
               </div>
@@ -500,6 +582,22 @@ export const AdminPictureTransitionSection: React.FC<AdminPictureTransitionSecti
                       onChange={(e) => handleUpdateSlide(slide.id, { linkUrl: e.target.value })}
                       placeholder="/shop"
                       className="w-full px-2.5 py-1.5 rounded-xs border border-[#10110F]/20 text-xs bg-white"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-3">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <label className="block text-[9px] font-bold uppercase tracking-wider text-[#66704B]">
+                        Mobile-Specific Image URL (Optional)
+                      </label>
+                      <span className="text-[9px] text-[#B88A32] font-semibold">iPhone &amp; Samsung</span>
+                    </div>
+                    <input
+                      type="url"
+                      value={slide.mobileImageUrl || ''}
+                      onChange={(e) => handleUpdateSlide(slide.id, { mobileImageUrl: e.target.value })}
+                      placeholder="Leave blank to auto-adjust desktop banner image"
+                      className="w-full px-2.5 py-1.5 rounded-xs border border-[#10110F]/20 text-xs font-mono bg-white"
                     />
                   </div>
 

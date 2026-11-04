@@ -97,25 +97,35 @@ export const LaunchProductBanner: React.FC = () => {
               </div>
             </div>
 
-            {/* Right Showcase Image (5 cols) */}
-            <div className="lg:col-span-5 relative flex items-center justify-center mt-4 lg:mt-0">
-              <div className="relative w-full max-w-[280px] sm:max-w-[400px] aspect-4/5 rounded-sm overflow-hidden border-2 border-[#B88A32]/50 shadow-2xl group">
+            {/* Right Showcase Image (5 cols - Mobile Adaptive) */}
+            <div className="lg:col-span-5 relative flex items-center justify-center mt-6 lg:mt-0 w-full">
+              <div className="relative w-full max-w-[340px] sm:max-w-[420px] aspect-square sm:aspect-4/5 rounded-sm overflow-hidden border-2 border-[#B88A32]/50 shadow-2xl group bg-[#0A0B0A]">
+                {/* Ambient Soft Glow Backdrop */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
+                  <img
+                    src={banner.imageUrl}
+                    alt=""
+                    aria-hidden="true"
+                    className="w-full h-full object-cover blur-xl scale-110"
+                  />
+                </div>
+
                 <img
                   src={banner.imageUrl}
                   alt={banner.title}
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  className="w-full h-full object-contain sm:object-cover group-hover:scale-105 transition-transform duration-700 relative z-10"
                   onError={(e) => handleImageError(e, 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85')}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#10110F] via-transparent to-transparent opacity-60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#10110F]/80 via-transparent to-transparent opacity-60 z-20 pointer-events-none" />
 
                 {/* Floating Banner Label */}
-                <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 bg-[#10110F]/90 backdrop-blur-sm border border-[#B88A32]/40 p-2.5 sm:p-3 rounded-xs flex items-center justify-between">
+                <div className="absolute bottom-2.5 left-2.5 right-2.5 sm:bottom-4 sm:left-4 sm:right-4 bg-[#10110F]/90 backdrop-blur-sm border border-[#B88A32]/40 p-2 sm:p-3 rounded-xs flex items-center justify-between z-30">
                   <div>
-                    <span className="text-[8px] sm:text-[9px] uppercase tracking-widest text-[#D4B66A] font-bold block">
+                    <span className="text-[7.5px] sm:text-[9px] uppercase tracking-widest text-[#D4B66A] font-bold block">
                       LIMITED BATCH HARVEST
                     </span>
-                    <span className="font-serif text-xs font-bold text-[#F7F3E8]">
+                    <span className="font-serif text-[11px] sm:text-xs font-bold text-[#F7F3E8]">
                       Certified Authentic Himalayan
                     </span>
                   </div>
