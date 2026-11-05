@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Instagram, MapPin, Phone, Mail, ShieldCheck, RotateCcw } from 'lucide-react';
-import { BRAND_CONTACT } from '../data/content';
+import { Instagram, Facebook, MessageCircle, MapPin, Phone, Mail, ShieldCheck, RotateCcw } from 'lucide-react';
+import { BRAND_CONTACT, getStoredBrandContact } from '../data/content';
 import { useStoreContent } from '../context/StoreContentContext';
 import { ReturnProductModal } from './ReturnProductModal';
 import { AmazonFlipkartBadge } from './AmazonFlipkartBadge';
@@ -10,7 +10,11 @@ import { handleImageError } from '../utils/imageUrl';
 export const Footer: React.FC = () => {
   const { content } = useStoreContent();
   const footerConfig = content.footer;
+  const contact = content.contact || getStoredBrandContact();
   const [returnModalOpen, setReturnModalOpen] = useState(false);
+
+  const activeWhatsAppRaw = contact.whatsappNumber || contact.phoneRaw || BRAND_CONTACT.phoneRaw;
+  const whatsAppDirectUrl = contact.ctaWhatsappLink || `https://wa.me/${activeWhatsAppRaw}?text=${encodeURIComponent(contact.whatsappDefaultMessage || 'Hello Titan Shilajit Team, I would like to inquire about authentic Himalayan Shilajit.')}`;
 
   return (
     <>
@@ -83,29 +87,54 @@ export const Footer: React.FC = () => {
             </p>
 
             <div className="flex items-center gap-3 pt-2">
+              {contact.instagramUrl && (
+                <a
+                  href={contact.instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Follow Titan Shilajit on Instagram"
+                  title="Follow us on Instagram"
+                  className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-[#D4B66A] hover:border-[#D4B66A] hover:bg-[#B88A32]/10 transition-colors"
+                >
+                  <Instagram className="w-4 h-4" />
+                </a>
+              )}
+              {contact.facebookUrl && (
+                <a
+                  href={contact.facebookUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Follow Titan Shilajit on Facebook"
+                  title="Follow us on Facebook"
+                  className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-[#D4B66A] hover:border-[#D4B66A] hover:bg-[#B88A32]/10 transition-colors"
+                >
+                  <Facebook className="w-4 h-4" />
+                </a>
+              )}
               <a
-                href={BRAND_CONTACT.instagramUrl}
+                href={whatsAppDirectUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="Follow Titan Shilajit on Instagram"
-                className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-[#D4B66A] hover:border-[#D4B66A] hover:bg-[#B88A32]/10 transition-colors"
+                aria-label="Chat with Titan Shilajit on WhatsApp"
+                title="Direct WhatsApp Concierge"
+                className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-[#25D366] hover:border-[#25D366] hover:bg-[#25D366]/10 transition-colors"
               >
-                <Instagram className="w-4 h-4" />
+                <MessageCircle className="w-4 h-4" />
               </a>
             </div>
 
             <div className="flex flex-col gap-2 pt-2 text-xs text-[#EEE8D7]/75 font-light">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5 text-[#D4B66A]" />
-                <span>{BRAND_CONTACT.location}</span>
+              <div className="flex items-start gap-2">
+                <MapPin className="w-3.5 h-3.5 text-[#D4B66A] shrink-0 mt-0.5" />
+                <span>{contact.address || contact.location || BRAND_CONTACT.address}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 text-[#D4B66A]" />
-                <span>Customer Care: {BRAND_CONTACT.phoneDisplay}</span>
+                <Phone className="w-3.5 h-3.5 text-[#D4B66A] shrink-0" />
+                <span>Customer Care: {contact.phoneDisplay || contact.phone || BRAND_CONTACT.phoneDisplay}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Mail className="w-3.5 h-3.5 text-[#D4B66A]" />
-                <span>{BRAND_CONTACT.email}</span>
+                <Mail className="w-3.5 h-3.5 text-[#D4B66A] shrink-0" />
+                <span>{contact.email || BRAND_CONTACT.email}</span>
               </div>
             </div>
           </div>

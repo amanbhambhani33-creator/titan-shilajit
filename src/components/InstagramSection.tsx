@@ -1,8 +1,14 @@
 import React from 'react';
 import { Instagram, ArrowUpRight } from 'lucide-react';
-import { INSTAGRAM_POSTS, BRAND_CONTACT } from '../data/content';
+import { INSTAGRAM_POSTS, BRAND_CONTACT, getStoredBrandContact } from '../data/content';
+import { useStoreContent } from '../context/StoreContentContext';
 
 export const InstagramSection: React.FC = () => {
+  const { content } = useStoreContent();
+  const contact = content.contact || getStoredBrandContact();
+  const activeInstagramUrl = contact.instagramUrl || BRAND_CONTACT.instagramUrl;
+  const activeInstagramHandle = contact.instagram || BRAND_CONTACT.instagram;
+
   return (
     <section id="instagram-section" className="py-20 bg-[#F7F3E8] text-[#10110F] border-b border-[#10110F]/5">
       <div className="max-w-7xl mx-auto px-6 lg:px-10">
@@ -18,12 +24,12 @@ export const InstagramSection: React.FC = () => {
           </div>
 
           <a
-            href={BRAND_CONTACT.instagramUrl}
+            href={activeInstagramUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-[#10110F] hover:text-[#183D27] border-b border-[#10110F] pb-1 transition-colors"
           >
-            <span>{BRAND_CONTACT.instagram}</span>
+            <span>{activeInstagramHandle}</span>
             <ArrowUpRight className="w-4 h-4" />
           </a>
         </div>
@@ -33,7 +39,7 @@ export const InstagramSection: React.FC = () => {
           {INSTAGRAM_POSTS.map((post) => (
             <a
               key={post.id}
-              href={BRAND_CONTACT.instagramUrl}
+              href={activeInstagramUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="group relative aspect-square overflow-hidden rounded-sm bg-[#10110F] border border-[#10110F]/5 shadow-xs"

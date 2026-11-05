@@ -1,9 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Mountain, ShieldCheck, Heart, MapPin, Phone, Mail, ArrowRight } from 'lucide-react';
-import { BRAND_CONTACT } from '../data/content';
+import { BRAND_CONTACT, getStoredBrandContact } from '../data/content';
+import { useStoreContent } from '../context/StoreContentContext';
 
 export const AboutPage: React.FC = () => {
+  const { content } = useStoreContent();
+  const contact = content.contact || getStoredBrandContact();
   return (
     <div id="about-page" className="min-h-screen pt-28 pb-24 bg-[#F7F3E8] text-[#10110F]">
       {/* Hero */}
@@ -77,17 +80,17 @@ export const AboutPage: React.FC = () => {
               Connect Directly with Titan Shilajit
             </h3>
             <div className="space-y-1 text-xs text-[#EEE8D7]/80">
-              <p className="flex items-center justify-center md:justify-start gap-2">
-                <MapPin className="w-3.5 h-3.5 text-[#D4B66A]" />
-                <span>{BRAND_CONTACT.location}</span>
+              <p className="flex items-start justify-center md:justify-start gap-2">
+                <MapPin className="w-3.5 h-3.5 text-[#D4B66A] shrink-0 mt-0.5" />
+                <span>{contact.address || contact.location || BRAND_CONTACT.address}</span>
               </p>
               <p className="flex items-center justify-center md:justify-start gap-2">
-                <Phone className="w-3.5 h-3.5 text-[#D4B66A]" />
-                <span>Customer Care: {BRAND_CONTACT.phoneDisplay}</span>
+                <Phone className="w-3.5 h-3.5 text-[#D4B66A] shrink-0" />
+                <span>Customer Care: {contact.phoneDisplay || contact.phone || BRAND_CONTACT.phoneDisplay}</span>
               </p>
               <p className="flex items-center justify-center md:justify-start gap-2">
-                <Mail className="w-3.5 h-3.5 text-[#D4B66A]" />
-                <span>{BRAND_CONTACT.email}</span>
+                <Mail className="w-3.5 h-3.5 text-[#D4B66A] shrink-0" />
+                <span>{contact.email || BRAND_CONTACT.email}</span>
               </p>
             </div>
           </div>

@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useStoreContent } from '../context/StoreContentContext';
-import { BRAND_CONTACT } from '../data/content';
+import { BRAND_CONTACT, getStoredBrandContact } from '../data/content';
 import { OrderRecord, ShippingAddressData, BillingAddressData } from '../types';
 import { trackInitiateCheckout, trackPurchase } from '../utils/metaPixel';
 import { ReturnProductModal } from '../components/ReturnProductModal';
@@ -94,7 +94,10 @@ export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { items, totalPrice, clearCart, addToCart, totalItems } = useCart();
-  const { checkCustomerFirstOrder, recordOrder, products } = useStoreContent();
+  const { checkCustomerFirstOrder, recordOrder, products, content } = useStoreContent();
+  const contact = content?.contact || getStoredBrandContact();
+  const activeWhatsAppRaw = contact.whatsappNumber || contact.phoneRaw || BRAND_CONTACT.phoneRaw;
+  const activePhoneDisplay = contact.phoneDisplay || contact.phone || BRAND_CONTACT.phoneDisplay;
 
   // Address and Contact Information State
   const [customerName, setCustomerName] = useState(() => {
@@ -2418,14 +2421,14 @@ export const CheckoutPage: React.FC = () => {
                 Our Delhi concierge team is available to assist with custom pack selections, corporate orders, and wellness guidance.
               </p>
               <a
-                href={`https://wa.me/${BRAND_CONTACT.phoneRaw}?text=${encodeURIComponent(
+                href={contact.ctaWhatsappLink || `https://wa.me/${activeWhatsAppRaw}?text=${encodeURIComponent(
                   `Hello Titan Shilajit Concierge, I have a question regarding my checkout order of ₹${finalTotal}.`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[11px] font-bold text-[#183D27] hover:underline inline-flex items-center gap-1.5"
               >
-                <span>Chat with Titan Concierge (+91 99584 74229)</span>
+                <span>Chat with Titan Concierge ({activePhoneDisplay})</span>
                 <ArrowRight className="w-3 h-3" />
               </a>
             </div>

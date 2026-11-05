@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage, OrderRecord, Review, BrandLogoConfig, FaqItem, ThemeFontConfig } from '../types';
+import { Product, BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage, OrderRecord, Review, BrandLogoConfig, FaqItem, ThemeFontConfig, ContactConfig } from '../types';
 import { PRODUCTS as DEFAULT_PRODUCTS } from '../data/products';
 import { REVIEWS as DEFAULT_REVIEWS } from '../data/reviews';
-import { TRUST_STRIP_ITEMS, BRAND_CONTACT } from '../data/content';
+import { TRUST_STRIP_ITEMS, BRAND_CONTACT, getStoredBrandContact } from '../data/content';
 import { db, doc, getDoc, setDoc, safeSetDoc, isFirestoreQuotaExhausted, onSnapshot, collection, getDocs, query, where } from '../lib/firebase';
 import { normalizeImageUrl } from '../utils/imageUrl';
 
-export type { BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage, BrandLogoConfig, FaqItem, ThemeFontConfig };
+export type { BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage, BrandLogoConfig, FaqItem, ThemeFontConfig, ContactConfig };
 
 export interface HeroBannerConfig {
   kicker: string;
@@ -77,7 +77,19 @@ export interface PageContentConfig {
   productBenefits: BenefitCard[];
   qualityTrust: QualityTrustConfig;
   cta: { kicker: string; titleLine1: string; titleLine2: string; description: string; shopBtnText: string; whatsappBtnText: string };
-  footer: { aboutText: string; creditText: string; location: string; phoneDisplay: string; email: string; tagline?: string; designedBy?: string };
+  footer: { 
+    aboutText: string; 
+    creditText: string; 
+    location: string; 
+    phoneDisplay: string; 
+    email: string; 
+    tagline?: string; 
+    designedBy?: string;
+    address?: string;
+    instagramUrl?: string;
+    facebookUrl?: string;
+  };
+  contact: ContactConfig;
   faqs?: FaqItem[];
   themeFont?: ThemeFontConfig;
 }
@@ -397,6 +409,23 @@ export const DEFAULT_FAQS: FaqItem[] = [
   },
 ];
 
+export const DEFAULT_CONTACT: ContactConfig = {
+  phone: BRAND_CONTACT.phone,
+  phoneDisplay: BRAND_CONTACT.phoneDisplay,
+  phoneRaw: BRAND_CONTACT.phoneRaw,
+  whatsappNumber: BRAND_CONTACT.whatsappNumber || BRAND_CONTACT.phoneRaw,
+  whatsappDisplay: BRAND_CONTACT.phone,
+  whatsappDefaultMessage: 'Hello Titan Shilajit Team, I would like to inquire about your pure Himalayan Shilajit products.',
+  email: BRAND_CONTACT.email,
+  address: BRAND_CONTACT.address || 'Shiv Ram Traders, Delhi, India - 110006',
+  location: BRAND_CONTACT.location,
+  instagram: BRAND_CONTACT.instagram,
+  instagramUrl: BRAND_CONTACT.instagramUrl,
+  facebookUrl: BRAND_CONTACT.facebookUrl || 'https://facebook.com/titanshilajit',
+  hours: BRAND_CONTACT.hours,
+  ctaWhatsappLink: '',
+};
+
 const DEFAULT_PAGE_CONTENT: PageContentConfig = {
   logo: DEFAULT_BRAND_LOGO,
   announcement: DEFAULT_ANNOUNCEMENT,
@@ -425,9 +454,13 @@ const DEFAULT_PAGE_CONTENT: PageContentConfig = {
     designedBy: 'Designed by Supreme Ads',
     tagline: 'Titan Shilajit brings the ancient strength of pure Himalayan Shilajit into the rhythm of modern life. Naturally rich, traditionally purified, and lab-tested for uncompromising daily vitality.',
     location: BRAND_CONTACT.location,
+    address: BRAND_CONTACT.address || 'Shiv Ram Traders, Delhi, India - 110006',
     phoneDisplay: BRAND_CONTACT.phoneDisplay,
     email: BRAND_CONTACT.email,
+    instagramUrl: BRAND_CONTACT.instagramUrl,
+    facebookUrl: BRAND_CONTACT.facebookUrl || 'https://facebook.com/titanshilajit',
   },
+  contact: DEFAULT_CONTACT,
   faqs: DEFAULT_FAQS,
   themeFont: DEFAULT_THEME_FONT,
 };
@@ -466,6 +499,8 @@ interface StoreContentContextType {
   updateQualityTrust: (updates: Partial<QualityTrustConfig>) => Promise<boolean>;
   updateQualityTrustCard: (cardId: string, updates: Partial<QualityTrustCard>) => Promise<boolean>;
   updatePageContent: <K extends keyof PageContentConfig>(section: K, updates: Partial<PageContentConfig[K]>) => void;
+  // Contact & Social Links Management
+  updateContact: (updates: Partial<ContactConfig>) => Promise<boolean>;
   // FAQs Management (AEO & Search)
   faqs: FaqItem[];
   updateFaqItem: (id: string, updates: Partial<FaqItem>) => Promise<boolean>;
@@ -691,6 +726,7 @@ function addDeletedProductId(id: string) {
           productBenefits: productBenefitsData,
           qualityTrust: qualityTrustData,
           footer: { ...DEFAULT_PAGE_CONTENT.footer, ...parsed.footer, creditText: 'Designed by Supreme Ads', designedBy: 'Designed by Supreme Ads' },
+          contact: parsed.contact ? { ...DEFAULT_CONTACT, ...parsed.contact } : DEFAULT_CONTACT,
           faqs: Array.isArray(parsed.faqs) && parsed.faqs.length > 0 ? parsed.faqs : DEFAULT_FAQS,
           themeFont: parsed.themeFont ? { ...DEFAULT_THEME_FONT, ...parsed.themeFont } : DEFAULT_THEME_FONT,
         };
@@ -769,6 +805,7 @@ function addDeletedProductId(id: string) {
                   }
                 : prev.qualityTrust || DEFAULT_QUALITY_TRUST,
               footer: { ...prev.footer, ...(data.footer || {}), creditText: 'Designed by Supreme Ads', designedBy: 'Designed by Supreme Ads' },
+              contact: data.contact ? { ...DEFAULT_CONTACT, ...(prev.contact || {}), ...data.contact } : (prev.contact || DEFAULT_CONTACT),
               faqs: Array.isArray(data.faqs) && data.faqs.length > 0 ? data.faqs : (prev.faqs || DEFAULT_FAQS),
               themeFont: data.themeFont ? { ...DEFAULT_THEME_FONT, ...(prev.themeFont || {}), ...data.themeFont } : (prev.themeFont || DEFAULT_THEME_FONT),
             }));
@@ -899,6 +936,9 @@ function addDeletedProductId(id: string) {
                     creditText: 'Designed by Supreme Ads',
                     designedBy: 'Designed by Supreme Ads',
                   },
+                  contact: data.content.contact
+                    ? { ...DEFAULT_CONTACT, ...(prev.contact || {}), ...data.content.contact }
+                    : (prev.contact || DEFAULT_CONTACT),
                 };
                 return updated;
               });
@@ -1716,6 +1756,46 @@ function addDeletedProductId(id: string) {
     syncContentToFirestore(newContent);
   };
 
+  const updateContact = async (updates: Partial<ContactConfig>): Promise<boolean> => {
+    let cleanPhoneRaw = updates.phoneRaw;
+    if (updates.whatsappNumber && !cleanPhoneRaw) {
+      cleanPhoneRaw = updates.whatsappNumber.replace(/[^0-9]/g, '');
+    }
+    if (updates.phone && !cleanPhoneRaw) {
+      cleanPhoneRaw = updates.phone.replace(/[^0-9]/g, '');
+    }
+
+    const currentContact = content.contact || DEFAULT_CONTACT;
+    const newContact: ContactConfig = {
+      ...currentContact,
+      ...updates,
+      phoneRaw: cleanPhoneRaw || currentContact.phoneRaw,
+      whatsappNumber: updates.whatsappNumber || currentContact.whatsappNumber || cleanPhoneRaw || currentContact.phoneRaw,
+    };
+
+    const newFooter = {
+      ...content.footer,
+      location: updates.location || updates.address || content.footer.location,
+      phoneDisplay: updates.phoneDisplay || updates.phone || content.footer.phoneDisplay,
+      email: updates.email || content.footer.email,
+      address: updates.address || content.footer.address || newContact.address,
+      instagramUrl: updates.instagramUrl || content.footer.instagramUrl || newContact.instagramUrl,
+      facebookUrl: updates.facebookUrl || content.footer.facebookUrl || newContact.facebookUrl,
+    };
+
+    const newContent: PageContentConfig = {
+      ...content,
+      contact: newContact,
+      footer: newFooter,
+    };
+
+    setContent(newContent);
+    try {
+      localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(newContent));
+    } catch {}
+    return await syncContentToFirestore(newContent);
+  };
+
   // Dynamic Font CSS Variables
   useEffect(() => {
     const fonts = content.themeFont || DEFAULT_THEME_FONT;
@@ -1828,6 +1908,7 @@ function addDeletedProductId(id: string) {
         updateQualityTrust,
         updateQualityTrustCard,
         updatePageContent,
+        updateContact,
         faqs: content.faqs || DEFAULT_FAQS,
         updateFaqItem,
         addFaqItem,

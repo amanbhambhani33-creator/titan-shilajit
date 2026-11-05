@@ -42,6 +42,7 @@ import {
   Type,
   Globe,
   Bot,
+  PhoneCall,
 } from 'lucide-react';
 import { useStoreContent, HeroBannerConfig, LaunchBannerConfig, BrandStoryConfig } from '../context/StoreContentContext';
 import { useAuth } from '../context/AuthContext';
@@ -61,6 +62,7 @@ import { AdminBannerGuideSection } from '../components/AdminBannerGuideSection';
 import { AdminFontSection } from '../components/AdminFontSection';
 import { AdminFaqSection } from '../components/AdminFaqSection';
 import { AdminSeoMasterSection } from '../components/AdminSeoMasterSection';
+import { AdminContactSection } from '../components/AdminContactSection';
 import { normalizeImageUrl } from '../utils/imageUrl';
 
 export const AdminDeskPage: React.FC = () => {
@@ -115,7 +117,7 @@ export const AdminDeskPage: React.FC = () => {
     refreshStoreData,
   } = useStoreContent();
 
-  const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'quality' | 'developer' | 'rbac' | 'settings' | 'orders' | 'reviews' | 'coupons' | 'hostinger' | 'faq' | 'seo' | 'fonts'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'contact' | 'quality' | 'developer' | 'rbac' | 'settings' | 'orders' | 'reviews' | 'coupons' | 'hostinger' | 'faq' | 'seo' | 'fonts'>('products');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
   const navigate = useNavigate();
@@ -762,6 +764,11 @@ export const AdminDeskPage: React.FC = () => {
               icon: Package,
             },
             { id: 'banners', label: 'Brand Logo & Banners', icon: ImageIcon },
+            {
+              id: 'contact',
+              label: 'Contact, WhatsApp & Social Links',
+              icon: PhoneCall,
+            },
             {
               id: 'faq',
               label: `FAQs & AEO Q&A (${faqs?.length || 0})`,
@@ -1813,6 +1820,13 @@ export const AdminDeskPage: React.FC = () => {
         {/* ========================================================================= */}
         {activeTab === 'seo' && (
           <AdminSeoMasterSection onSuccessToast={showToast} />
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB: CONTACT, WHATSAPP, INSTAGRAM, FACEBOOK, PHONE & ADDRESS CONTROLLER */}
+        {/* ========================================================================= */}
+        {activeTab === 'contact' && (
+          <AdminContactSection onSuccessToast={showToast} />
         )}
       </div>
 

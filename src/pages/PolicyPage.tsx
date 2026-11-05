@@ -1,11 +1,15 @@
 import React, { useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { ShieldCheck, Truck, RotateCcw, FileText, AlertCircle, ArrowLeft } from 'lucide-react';
-import { BRAND_CONTACT } from '../data/content';
+import { BRAND_CONTACT, getStoredBrandContact } from '../data/content';
 import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
+import { useStoreContent } from '../context/StoreContentContext';
 
 export const PolicyPage: React.FC = () => {
   const location = useLocation();
+  const { content: storeContent } = useStoreContent();
+  const contact = storeContent?.contact || getStoredBrandContact();
+  const activePhoneDisplay = contact.phoneDisplay || contact.phone || BRAND_CONTACT.phoneDisplay;
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -67,7 +71,7 @@ export const PolicyPage: React.FC = () => {
               </p>
               <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#10110F]">
                 <li><strong>Eligible Conditions:</strong> Transit container breakage, broken pharmaceutical jar seal, resin leakage, or incorrect variant delivered.</li>
-                <li><strong>Reporting Window:</strong> You must submit the Return Form or notify our WhatsApp Concierge at {BRAND_CONTACT.phoneDisplay} within <strong>24 hours of delivery</strong> along with photo evidence of the packaging.</li>
+                <li><strong>Reporting Window:</strong> You must submit the Return Form or notify our WhatsApp Concierge at {activePhoneDisplay} within <strong>24 hours of delivery</strong> along with photo evidence of the packaging.</li>
                 <li><strong>Doorstep Reverse-Pickup:</strong> Upon review, our Delhi dispatch team will arrange a complimentary Delhivery doorstep reverse-pickup within 24 to 48 hours.</li>
               </ul>
 
@@ -78,7 +82,7 @@ export const PolicyPage: React.FC = () => {
 
               <h3 className="font-serif font-bold text-lg text-[#10110F]">4. Concierge Assistance</h3>
               <p>
-                For immediate assistance regarding order cancellations or returns, contact our Delhi dispatch desk directly on WhatsApp at <strong>{BRAND_CONTACT.phoneDisplay}</strong> (available 7 days a week).
+                For immediate assistance regarding order cancellations or returns, contact our Delhi dispatch desk directly on WhatsApp at <strong>{activePhoneDisplay}</strong> (available 7 days a week).
               </p>
             </div>
           ),
@@ -176,12 +180,12 @@ export const PolicyPage: React.FC = () => {
             </span>
             {location.pathname === '/refund-policy' ? (
               <a
-                href={getGeneralConciergeWhatsAppUrl()}
+                href={contact.ctaWhatsappLink || getGeneralConciergeWhatsAppUrl(contact.whatsappNumber || contact.phoneRaw)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#183D27] font-bold hover:underline flex items-center gap-1.5"
               >
-                <span>Initiate Return with Delhi Concierge on WhatsApp ({BRAND_CONTACT.phoneDisplay})</span>
+                <span>Initiate Return with Delhi Concierge on WhatsApp ({activePhoneDisplay})</span>
               </a>
             ) : (
               <Link

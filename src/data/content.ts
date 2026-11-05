@@ -4,13 +4,40 @@ export const BRAND_CONTACT = {
   phone: '+91 99584 74229',
   phoneRaw: '919958474229',
   phoneDisplay: '99584 74229',
+  whatsappNumber: '919958474229',
   email: 'concierge@titanshilajit.com',
   instagram: '@titan_shilajit',
   instagramUrl: 'https://instagram.com/titan_shilajit',
+  facebookUrl: 'https://facebook.com/titanshilajit',
   location: 'Delhi, India',
+  address: 'Shiv Ram Traders, Delhi, India - 110006',
   hours: 'Monday – Saturday: 9:00 AM – 8:00 PM IST',
   shippingTime: 'Dispatched within 24 hours across India (2–4 business days delivery)'
 };
+
+/**
+ * Returns dynamic contact values configured in Admin with fallback to default BRAND_CONTACT
+ */
+export function getStoredBrandContact() {
+  try {
+    const raw = localStorage.getItem('titan_store_content_v5');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.contact) {
+        return {
+          ...BRAND_CONTACT,
+          ...parsed.contact,
+          phoneRaw: parsed.contact.phoneRaw || parsed.contact.whatsappNumber || BRAND_CONTACT.phoneRaw,
+          phoneDisplay: parsed.contact.phoneDisplay || parsed.contact.phone || BRAND_CONTACT.phoneDisplay,
+          address: parsed.contact.address || parsed.contact.location || BRAND_CONTACT.address,
+          instagramUrl: parsed.contact.instagramUrl || BRAND_CONTACT.instagramUrl,
+          facebookUrl: parsed.contact.facebookUrl || BRAND_CONTACT.facebookUrl,
+        };
+      }
+    }
+  } catch {}
+  return BRAND_CONTACT;
+}
 
 export const TRUST_STRIP_ITEMS = [
   {

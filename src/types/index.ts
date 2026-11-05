@@ -145,6 +145,23 @@ export interface BrandLogoConfig {
   showSymbol?: boolean;
 }
 
+export interface ContactConfig {
+  phone: string;
+  phoneDisplay: string;
+  phoneRaw: string;
+  whatsappNumber: string;
+  whatsappDisplay?: string;
+  whatsappDefaultMessage?: string;
+  email: string;
+  address: string;
+  location: string;
+  instagram: string;
+  instagramUrl: string;
+  facebookUrl: string;
+  hours?: string;
+  ctaWhatsappLink?: string;
+}
+
 export interface HeroSlideImage {
   id: string;
   imageUrl: string;

@@ -2,10 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { MessageCircle, ArrowUp } from 'lucide-react';
 import { getGeneralConciergeWhatsAppUrl } from '../utils/whatsapp';
+import { useStoreContent } from '../context/StoreContentContext';
+import { getStoredBrandContact } from '../data/content';
 
 export const FloatingWhatsApp: React.FC = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const location = useLocation();
+  const { content } = useStoreContent();
+  const contact = content.contact || getStoredBrandContact();
+
+  const activeWhatsAppUrl = contact.ctaWhatsappLink || getGeneralConciergeWhatsAppUrl(contact.whatsappNumber || contact.phoneRaw);
 
   // Only allow floating WhatsApp on the Help & FAQ page and Return / Refund Policy page
   const isHelpOrReturnPage =
@@ -46,7 +52,7 @@ export const FloatingWhatsApp: React.FC = () => {
       {isHelpOrReturnPage && (
         <a
           id="floating-whatsapp-trigger"
-          href={getGeneralConciergeWhatsAppUrl()}
+          href={activeWhatsAppUrl}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Chat directly on WhatsApp with Titan Shilajit helpdesk"
