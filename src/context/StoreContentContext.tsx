@@ -590,8 +590,13 @@ function sanitizeProductsImages(items: Product[]): Product[] {
       }
     }
 
-    // The primary cover image is strictly cleanImgs[0] or p.image normalized
-    const primaryImg = cleanImgs[0] || (p.image ? normalizeImageUrl(p.image) : '');
+    // The primary cover image is strictly p.homepageImages?.coverImage, p.image, or cleanImgs[0]
+    const hpCover = p.homepageImages?.coverImage ? normalizeImageUrl(p.homepageImages.coverImage) : '';
+    const explicitCover = p.image ? normalizeImageUrl(p.image) : '';
+    const primaryImg = hpCover || explicitCover || cleanImgs[0] || '';
+    if (primaryImg && cleanImgs[0] !== primaryImg) {
+      cleanImgs = [primaryImg, ...cleanImgs.filter((img) => img !== primaryImg)];
+    }
 
     const cleanPacks = (p.packs || []).map((pk) => {
       let pkImg = pk.image || '';
@@ -1816,9 +1821,19 @@ function addDeletedProductId(id: string) {
     };
 
     // 1. Update product object in state and persist to products store
-    const productOk = await updateProduct(productId, {
+    const productUpdates: Partial<Product> = {
       homepageImages: mergedImages,
-    });
+    };
+    if (mergedImages.coverImage) {
+      productUpdates.image = mergedImages.coverImage;
+      const curImages = target.images || [];
+      productUpdates.images = [
+        mergedImages.coverImage,
+        ...curImages.filter((img) => img !== mergedImages.coverImage),
+      ];
+    }
+
+    const productOk = await updateProduct(productId, productUpdates);
 
     // 2. Also keep a mirrored map in content.homepageProducts for dual-redundant backup
     const newOverrides: Record<string, HomepageProductImageConfig> = {

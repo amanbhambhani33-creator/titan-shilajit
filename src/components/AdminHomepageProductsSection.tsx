@@ -161,6 +161,7 @@ export const AdminHomepageProductsSection: React.FC<AdminHomepageProductsSection
 
     if (ok) {
       setJustSaved(true);
+      setEditingProduct((prev) => (prev ? { ...prev, homepageImages: config, image: config.coverImage || prev.image } : null));
       setTimeout(() => setJustSaved(false), 3000);
       if (onSuccessToast) {
         onSuccessToast(`Homepage pictures for "${editingProduct.name}" saved and live-synced!`);

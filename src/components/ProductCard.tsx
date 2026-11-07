@@ -46,24 +46,30 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   // Dynamic image, price, mrp, and quantity based on active pack
   const cleanProductImages = (product.images || []).map((img) => normalizeImageUrl(img)).filter(Boolean);
   const packImg = currentPack.image ? normalizeImageUrl(currentPack.image) : '';
-  // Fix image sync: If product.images[0] or product.image is set, prioritize it unless a higher pack has a distinct custom image
-  const hasCustomPackImage = selectedPackIndex > 0 && packImg && packImg !== cleanProductImages[0];
-  const defaultDisplayImage = (hasCustomPackImage ? packImg : '') || cleanProductImages[0] || normalizeImageUrl(product.image) || packImg || DEFAULT_PRODUCT_FALLBACK;
-
-  // Dedicated Homepage Product Pictures Resolution (strictly for homepage showcase)
   const hpConfig = product.homepageImages;
-  let homepageDisplayImage = '';
-  if (isHomeScreen && hpConfig) {
-    if ((currentPack.id === 'trial' || selectedPackIndex === 0) && hpConfig.trialImage) {
-      homepageDisplayImage = normalizeImageUrl(hpConfig.trialImage);
-    } else if ((currentPack.id === 'popular' || currentPack.isPopular || selectedPackIndex === 1) && hpConfig.popularImage) {
-      homepageDisplayImage = normalizeImageUrl(hpConfig.popularImage);
-    } else if (hpConfig.coverImage) {
-      homepageDisplayImage = normalizeImageUrl(hpConfig.coverImage);
-    }
+
+  // The active Cover Picture for this product (configured in Admin Homepage Product OR Admin Products & Stock)
+  const activeCoverPicture =
+    (hpConfig?.coverImage && normalizeImageUrl(hpConfig.coverImage)) ||
+    (product.image && normalizeImageUrl(product.image)) ||
+    cleanProductImages[0] ||
+    '';
+
+  // On Homepage, ALWAYS prioritize the Cover Picture so custom cover photos immediately display
+  let displayImage = '';
+  if (isHomeScreen) {
+    displayImage = activeCoverPicture || packImg || DEFAULT_PRODUCT_FALLBACK;
+  } else {
+    const hasCustomPackImage = selectedPackIndex > 0 && packImg && packImg !== cleanProductImages[0];
+    displayImage = (hasCustomPackImage ? packImg : '') || activeCoverPicture || DEFAULT_PRODUCT_FALLBACK;
   }
 
-  const displayImage = homepageDisplayImage || defaultDisplayImage;
+  // Secondary preview photo on hover (trial image if configured)
+  const secondaryHoverImage =
+    isHomeScreen && hpConfig?.trialImage && normalizeImageUrl(hpConfig.trialImage) !== displayImage
+      ? normalizeImageUrl(hpConfig.trialImage)
+      : '';
+
   const displayPrice = currentPack?.price ?? product.price;
   const displayMrp = currentPack?.mrp ?? product.mrp;
   const displayQuantityText = currentPack.quantityText;
@@ -95,18 +101,28 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           className="relative aspect-square overflow-hidden bg-[#F7F3E8] border border-[#10110F]/10 rounded-xs mb-4 flex items-center justify-center p-2 sm:p-3"
         >
           {displayImage ? (
-            <Link to={`/product/${product.slug}`} className="block w-full h-full cursor-pointer">
+            <Link to={`/product/${product.slug}`} className="block w-full h-full cursor-pointer relative">
               <img
                 key={displayImage}
                 src={displayImage}
                 alt={`${product.name} - ${currentPack.name}`}
                 referrerPolicy="no-referrer"
-                className={`w-full h-full object-contain object-center group-hover:scale-105 transition-all duration-500 ${
-                  isOutOfStock ? 'opacity-50 grayscale' : 'opacity-100'
-                }`}
+                className={`w-full h-full object-contain object-center transition-all duration-500 ${
+                  secondaryHoverImage ? 'group-hover:opacity-0' : 'group-hover:scale-105'
+                } ${isOutOfStock ? 'opacity-50 grayscale' : 'opacity-100'}`}
                 loading="lazy"
                 onError={(e) => handleImageError(e, DEFAULT_PRODUCT_FALLBACK)}
               />
+              {secondaryHoverImage && (
+                <img
+                  src={secondaryHoverImage}
+                  alt={`${product.name} alternate view`}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-contain object-center absolute inset-0 opacity-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 pointer-events-none"
+                  loading="lazy"
+                  onError={(e) => handleImageError(e, DEFAULT_PRODUCT_FALLBACK)}
+                />
+              )}
             </Link>
           ) : (
             <Link to={`/product/${product.slug}`} className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#183D27] via-[#10110F] to-[#183D27]/80 text-[#D4B66A] cursor-pointer">
