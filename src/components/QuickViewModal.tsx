@@ -62,12 +62,26 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product: 
 
   const cleanProductImages = (product.images || []).map((img) => normalizeImageUrl(img)).filter(Boolean);
   const packImg = currentPack.image ? normalizeImageUrl(currentPack.image) : '';
+  const hp = product.homepageImages;
+  const hpImages = [
+    hp?.coverImage,
+    hp?.trialImage,
+    hp?.popularImage,
+    ...(hp?.galleryImages || []),
+  ].filter(Boolean).map((img) => normalizeImageUrl(img as string));
+
+  const availableImages = Array.from(new Set([
+    ...hpImages,
+    ...cleanProductImages,
+    normalizeImageUrl(product.image),
+    packImg,
+  ])).filter(Boolean);
 
   // Fix image sync: If user picked thumbnail show it, otherwise prioritize product's clean images
   const displayImage =
-    cleanProductImages[selectedImageIndex] ||
-    normalizeImageUrl(product.image) ||
+    availableImages[selectedImageIndex] ||
     cleanProductImages[0] ||
+    normalizeImageUrl(product.image) ||
     packImg ||
     DEFAULT_PRODUCT_FALLBACK;
   const displayPrice = currentPack ? currentPack.price : product.price;
@@ -175,9 +189,9 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product: 
             </div>
 
             {/* Thumbnail selector */}
-            {cleanProductImages.length > 1 && (
+            {availableImages.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                {cleanProductImages.map((img, idx) => (
+                {availableImages.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedImageIndex(idx)}

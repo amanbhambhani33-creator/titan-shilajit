@@ -81,6 +81,15 @@ export interface Product {
   }[];
   qualityNotes: string[];
   safetyNotes: string;
+  homepageImages?: HomepageProductImageConfig;
+}
+
+export interface HomepageProductImageConfig {
+  coverImage?: string;       // Primary cover pic on homepage
+  trialImage?: string;       // Trial / hover / secondary pic
+  popularImage?: string;     // Popular picture value / most popular showcase photo
+  galleryImages?: string[];  // Additional homepage image URLs
+  customBadge?: string;      // Custom homepage badge tag
 }
 
 export interface ProductGuidance {

@@ -43,6 +43,7 @@ import {
   Globe,
   Bot,
   PhoneCall,
+  LayoutGrid,
 } from 'lucide-react';
 import { useStoreContent, HeroBannerConfig, LaunchBannerConfig, BrandStoryConfig } from '../context/StoreContentContext';
 import { useAuth } from '../context/AuthContext';
@@ -63,6 +64,7 @@ import { AdminFontSection } from '../components/AdminFontSection';
 import { AdminFaqSection } from '../components/AdminFaqSection';
 import { AdminSeoMasterSection } from '../components/AdminSeoMasterSection';
 import { AdminContactSection } from '../components/AdminContactSection';
+import { AdminHomepageProductsSection } from '../components/AdminHomepageProductsSection';
 import { normalizeImageUrl } from '../utils/imageUrl';
 
 export const AdminDeskPage: React.FC = () => {
@@ -117,7 +119,7 @@ export const AdminDeskPage: React.FC = () => {
     refreshStoreData,
   } = useStoreContent();
 
-  const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'contact' | 'quality' | 'developer' | 'rbac' | 'settings' | 'orders' | 'reviews' | 'coupons' | 'hostinger' | 'faq' | 'seo' | 'fonts'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'homepage-products' | 'banners' | 'contact' | 'quality' | 'developer' | 'rbac' | 'settings' | 'orders' | 'reviews' | 'coupons' | 'hostinger' | 'faq' | 'seo' | 'fonts'>('products');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
   const navigate = useNavigate();
@@ -763,6 +765,11 @@ export const AdminDeskPage: React.FC = () => {
               badge: lowStockCount > 0 ? `${lowStockCount} Low Stock` : undefined,
               icon: Package,
             },
+            {
+              id: 'homepage-products',
+              label: 'Homepage Product',
+              icon: LayoutGrid,
+            },
             { id: 'banners', label: 'Brand Logo & Banners', icon: ImageIcon },
             {
               id: 'contact',
@@ -1178,6 +1185,13 @@ export const AdminDeskPage: React.FC = () => {
               })}
             </div>
           </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB: HOMEPAGE PRODUCT PICTURES & SHOWCASE CONTROLLER */}
+        {/* ========================================================================= */}
+        {activeTab === 'homepage-products' && (
+          <AdminHomepageProductsSection onSuccessToast={showToast} />
         )}
 
         {/* ========================================================================= */}

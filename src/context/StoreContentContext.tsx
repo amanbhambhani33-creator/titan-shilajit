@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage, OrderRecord, Review, BrandLogoConfig, FaqItem, ThemeFontConfig, ContactConfig } from '../types';
+import { Product, BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage, OrderRecord, Review, BrandLogoConfig, FaqItem, ThemeFontConfig, ContactConfig, HomepageProductImageConfig } from '../types';
 import { PRODUCTS as DEFAULT_PRODUCTS } from '../data/products';
 import { REVIEWS as DEFAULT_REVIEWS } from '../data/reviews';
 import { TRUST_STRIP_ITEMS, BRAND_CONTACT, getStoredBrandContact } from '../data/content';
 import { db, doc, getDoc, setDoc, safeSetDoc, isFirestoreQuotaExhausted, onSnapshot, collection, getDocs, query, where } from '../lib/firebase';
 import { normalizeImageUrl } from '../utils/imageUrl';
 
-export type { BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage, BrandLogoConfig, FaqItem, ThemeFontConfig, ContactConfig };
+export type { BenefitCard, QualityTrustCard, QualityTrustConfig, HeroSlideImage, BrandLogoConfig, FaqItem, ThemeFontConfig, ContactConfig, HomepageProductImageConfig };
 
 export interface HeroBannerConfig {
   kicker: string;
@@ -92,6 +92,7 @@ export interface PageContentConfig {
   contact: ContactConfig;
   faqs?: FaqItem[];
   themeFont?: ThemeFontConfig;
+  homepageProducts?: Record<string, HomepageProductImageConfig>;
 }
 
 export const DEFAULT_PRODUCT_BENEFITS: BenefitCard[] = [
@@ -499,6 +500,8 @@ interface StoreContentContextType {
   updateQualityTrust: (updates: Partial<QualityTrustConfig>) => Promise<boolean>;
   updateQualityTrustCard: (cardId: string, updates: Partial<QualityTrustCard>) => Promise<boolean>;
   updatePageContent: <K extends keyof PageContentConfig>(section: K, updates: Partial<PageContentConfig[K]>) => void;
+  // Homepage Product Custom Pictures Controller
+  updateHomepageProductImages: (productId: string, config: HomepageProductImageConfig) => Promise<boolean>;
   // Contact & Social Links Management
   updateContact: (updates: Partial<ContactConfig>) => Promise<boolean>;
   // FAQs Management (AEO & Search)
@@ -1796,6 +1799,45 @@ function addDeletedProductId(id: string) {
     return await syncContentToFirestore(newContent);
   };
 
+  const updateHomepageProductImages = async (
+    productId: string,
+    config: HomepageProductImageConfig
+  ): Promise<boolean> => {
+    lastLocalSaveTimeRef.current = Date.now();
+    const target = products.find((p) => p.id === productId);
+    if (!target) return false;
+
+    const mergedImages: HomepageProductImageConfig = {
+      coverImage: config.coverImage !== undefined ? config.coverImage : (target.homepageImages?.coverImage || ''),
+      trialImage: config.trialImage !== undefined ? config.trialImage : (target.homepageImages?.trialImage || ''),
+      popularImage: config.popularImage !== undefined ? config.popularImage : (target.homepageImages?.popularImage || ''),
+      galleryImages: config.galleryImages !== undefined ? config.galleryImages : (target.homepageImages?.galleryImages || []),
+      customBadge: config.customBadge !== undefined ? config.customBadge : (target.homepageImages?.customBadge || ''),
+    };
+
+    // 1. Update product object in state and persist to products store
+    const productOk = await updateProduct(productId, {
+      homepageImages: mergedImages,
+    });
+
+    // 2. Also keep a mirrored map in content.homepageProducts for dual-redundant backup
+    const newOverrides: Record<string, HomepageProductImageConfig> = {
+      ...(content.homepageProducts || {}),
+      [productId]: mergedImages,
+    };
+    const newContent: PageContentConfig = {
+      ...content,
+      homepageProducts: newOverrides,
+    };
+    setContent(newContent);
+    try {
+      localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(newContent));
+    } catch {}
+    syncContentToFirestore(newContent);
+
+    return productOk;
+  };
+
   // Dynamic Font CSS Variables
   useEffect(() => {
     const fonts = content.themeFont || DEFAULT_THEME_FONT;
@@ -1908,6 +1950,7 @@ function addDeletedProductId(id: string) {
         updateQualityTrust,
         updateQualityTrustCard,
         updatePageContent,
+        updateHomepageProductImages,
         updateContact,
         faqs: content.faqs || DEFAULT_FAQS,
         updateFaqItem,
