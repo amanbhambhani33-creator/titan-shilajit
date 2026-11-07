@@ -1,10 +1,22 @@
 import { Product, ProductPack } from '../types';
+import { normalizeImageUrl } from './imageUrl';
 
 const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=800&q=85';
 
 export function getProductPacks(product: Product): ProductPack[] {
-  const cleanImages = (product.images || []).filter(Boolean);
-  const primaryImg = product.image || cleanImages[0] || DEFAULT_FALLBACK_IMAGE;
+  const hp = product.homepageImages;
+  const hpTrial = hp?.trialImage ? normalizeImageUrl(hp.trialImage) : '';
+  const hpPopular = hp?.popularImage ? normalizeImageUrl(hp.popularImage) : '';
+  const hpCover = hp?.coverImage ? normalizeImageUrl(hp.coverImage) : '';
+  const cleanImages = (product.images || []).filter(Boolean).map((img) => normalizeImageUrl(img));
+  const primaryImg = hpCover || (product.image ? normalizeImageUrl(product.image) : '') || cleanImages[0] || DEFAULT_FALLBACK_IMAGE;
+
+  const resolvePackImg = (pack: Partial<ProductPack> | undefined, idx: number, fallback: string): string => {
+    if (idx === 0 && hpTrial) return hpTrial;
+    if (idx === 1 && hpPopular) return hpPopular;
+    if (pack?.image) return normalizeImageUrl(pack.image);
+    return fallback;
+  };
 
   // If product already has configured packs (e.g. from Admin Desk or store catalog)
   if (product.packs && product.packs.length > 0) {
@@ -15,13 +27,15 @@ export function getProductPacks(product: Product): ProductPack[] {
       }
       return {
         ...p,
-        image: packImg || primaryImg,
+        image: resolvePackImg(p, idx, packImg ? normalizeImageUrl(packImg) : (cleanImages[idx] || primaryImg)),
       };
     });
   }
 
   // Pre-configured packs by slug with prices dynamically derived from product.price if modified
   const getPackImg = (idx: number) => {
+    if (idx === 0 && hpTrial) return hpTrial;
+    if (idx === 1 && hpPopular) return hpPopular;
     return cleanImages[idx] || primaryImg;
   };
 

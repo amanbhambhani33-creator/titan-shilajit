@@ -55,13 +55,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     cleanProductImages[0] ||
     '';
 
+  const [hasExplicitPackSelection, setHasExplicitPackSelection] = useState(false);
+
   // On Homepage, ALWAYS prioritize the Cover Picture so custom cover photos immediately display
   let displayImage = '';
   if (isHomeScreen) {
     displayImage = activeCoverPicture || packImg || DEFAULT_PRODUCT_FALLBACK;
+  } else if (hasExplicitPackSelection) {
+    displayImage = packImg || activeCoverPicture || DEFAULT_PRODUCT_FALLBACK;
   } else {
-    const hasCustomPackImage = selectedPackIndex > 0 && packImg && packImg !== cleanProductImages[0];
-    displayImage = (hasCustomPackImage ? packImg : '') || activeCoverPicture || DEFAULT_PRODUCT_FALLBACK;
+    displayImage = activeCoverPicture || packImg || DEFAULT_PRODUCT_FALLBACK;
   }
 
   // Secondary preview photo on hover (trial image if configured)
@@ -76,6 +79,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const handleSelectPack = (idx: number) => {
     setSelectedPackIndex(idx);
+    setHasExplicitPackSelection(true);
   };
 
   const handleAddToCart = () => {

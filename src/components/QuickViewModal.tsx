@@ -42,6 +42,8 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product: 
   const packs = getProductPacks(product);
   const [selectedPackIndex, setSelectedPackIndex] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isUserSelectedThumbnail, setIsUserSelectedThumbnail] = useState(false);
+  const [hasExplicitVariantClick, setHasExplicitVariantClick] = useState(false);
 
   const currentPack: ProductPack = packs[selectedPackIndex] || packs[0];
 
@@ -61,29 +63,47 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product: 
   }, [product.id, currentPack.id, getItemQuantity]);
 
   const cleanProductImages = (product.images || []).map((img) => normalizeImageUrl(img)).filter(Boolean);
-  const packImg = currentPack.image ? normalizeImageUrl(currentPack.image) : '';
   const hp = product.homepageImages;
-  const hpImages = [
-    hp?.coverImage,
-    hp?.trialImage,
-    hp?.popularImage,
-    ...(hp?.galleryImages || []),
-  ].filter(Boolean).map((img) => normalizeImageUrl(img as string));
+  const coverImg = hp?.coverImage ? normalizeImageUrl(hp.coverImage) : (product.image ? normalizeImageUrl(product.image) : (cleanProductImages[0] || ''));
+  const trialImg = hp?.trialImage ? normalizeImageUrl(hp.trialImage) : (packs[0]?.image ? normalizeImageUrl(packs[0].image) : (cleanProductImages[0] || ''));
+  const popularImg = hp?.popularImage ? normalizeImageUrl(hp.popularImage) : (packs[1]?.image ? normalizeImageUrl(packs[1].image) : (cleanProductImages[1] || ''));
+  const valueImg = packs[2]?.image ? normalizeImageUrl(packs[2].image) : (cleanProductImages[2] || '');
 
+  // Helper to get image corresponding to a pack index
+  const getPackVariantImage = (idx: number): string => {
+    if (idx === 0) return trialImg || (packs[0]?.image ? normalizeImageUrl(packs[0].image) : '') || coverImg;
+    if (idx === 1) return popularImg || (packs[1]?.image ? normalizeImageUrl(packs[1].image) : '') || coverImg;
+    if (idx === 2) return valueImg || (packs[2]?.image ? normalizeImageUrl(packs[2].image) : '') || coverImg;
+    const pk = packs[idx];
+    return (pk?.image ? normalizeImageUrl(pk.image) : '') || cleanProductImages[idx] || coverImg;
+  };
+
+  // Full deduplicated list of available gallery images with cover image first, then variants and gallery
   const availableImages = Array.from(new Set([
-    ...hpImages,
+    coverImg,
+    trialImg,
+    popularImg,
+    valueImg,
+    ...(hp?.galleryImages || []).map((img) => normalizeImageUrl(img)),
     ...cleanProductImages,
-    normalizeImageUrl(product.image),
-    packImg,
+    ...packs.map((p) => (p.image ? normalizeImageUrl(p.image) : '')),
   ])).filter(Boolean);
 
-  // Fix image sync: If user picked thumbnail show it, otherwise prioritize product's clean images
-  const displayImage =
-    availableImages[selectedImageIndex] ||
-    cleanProductImages[0] ||
-    normalizeImageUrl(product.image) ||
-    packImg ||
-    DEFAULT_PRODUCT_FALLBACK;
+  const activeVariantImg = getPackVariantImage(selectedPackIndex);
+
+  // Compute active display image:
+  // 1. If user clicked a thumbnail, show that thumbnail.
+  // 2. If user clicked a pack variant, show that variant's picture.
+  // 3. Otherwise on initial open, show cover image (or active variant image if cover is absent).
+  let displayImage = '';
+  if (isUserSelectedThumbnail && availableImages[selectedImageIndex]) {
+    displayImage = availableImages[selectedImageIndex];
+  } else if (hasExplicitVariantClick) {
+    displayImage = activeVariantImg || availableImages[selectedImageIndex] || DEFAULT_PRODUCT_FALLBACK;
+  } else {
+    displayImage = coverImg || activeVariantImg || availableImages[0] || DEFAULT_PRODUCT_FALLBACK;
+  }
+
   const displayPrice = currentPack ? currentPack.price : product.price;
   const displayMrp = currentPack ? currentPack.mrp : product.mrp;
 
@@ -109,7 +129,15 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product: 
 
   const handleSelectPack = (idx: number) => {
     setSelectedPackIndex(idx);
-    setSelectedImageIndex(0);
+    setHasExplicitVariantClick(true);
+    setIsUserSelectedThumbnail(false);
+    const targetVariantImg = getPackVariantImage(idx);
+    if (targetVariantImg) {
+      const matchedIdx = availableImages.findIndex((img) => img === targetVariantImg);
+      if (matchedIdx !== -1) {
+        setSelectedImageIndex(matchedIdx);
+      }
+    }
   };
 
   return (
@@ -191,25 +219,33 @@ const QuickViewModalContent: React.FC<QuickViewModalContentProps> = ({ product: 
             {/* Thumbnail selector */}
             {availableImages.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                {availableImages.map((img, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSelectedImageIndex(idx)}
-                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xs overflow-hidden border transition-all shrink-0 cursor-pointer ${
-                      selectedImageIndex === idx
-                        ? 'border-[#D4B66A] opacity-100 scale-105'
-                        : 'border-white/20 opacity-60 hover:opacity-100'
-                    }`}
-                  >
-                    <img
-                      src={img}
-                      alt="Thumbnail"
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover"
-                      onError={(e) => handleImageError(e, DEFAULT_PRODUCT_FALLBACK)}
-                    />
-                  </button>
-                ))}
+                {availableImages.map((img, idx) => {
+                  const isThumbActive = isUserSelectedThumbnail
+                    ? selectedImageIndex === idx
+                    : displayImage === img;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setSelectedImageIndex(idx);
+                        setIsUserSelectedThumbnail(true);
+                      }}
+                      className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xs overflow-hidden border transition-all shrink-0 cursor-pointer ${
+                        isThumbActive
+                          ? 'border-[#D4B66A] opacity-100 scale-105 ring-2 ring-[#D4B66A]/50'
+                          : 'border-white/20 opacity-60 hover:opacity-100'
+                      }`}
+                    >
+                      <img
+                        src={img}
+                        alt="Thumbnail"
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover"
+                        onError={(e) => handleImageError(e, DEFAULT_PRODUCT_FALLBACK)}
+                      />
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>

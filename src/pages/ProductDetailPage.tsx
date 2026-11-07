@@ -103,16 +103,45 @@ export const ProductDetailPage: React.FC = () => {
 
   // Selected thumbnail tracking
   const [isUserSelectedThumbnail, setIsUserSelectedThumbnail] = useState(false);
+  const [hasExplicitVariantClick, setHasExplicitVariantClick] = useState(false);
 
-  // Display image: prioritize pack photo, user selected thumbnail, cover image, or first gallery image
-  const cleanProductImages = (product.images || []).map((img) => normalizeImageUrl(img)).filter(Boolean);
-  const currentPackImg = currentPack?.image ? normalizeImageUrl(currentPack.image) : null;
+  const rawProductImages = (product.images || []).map((img) => normalizeImageUrl(img)).filter(Boolean);
+  const hp = product.homepageImages;
+  const coverImg = hp?.coverImage ? normalizeImageUrl(hp.coverImage) : (product.image ? normalizeImageUrl(product.image) : (rawProductImages[0] || ''));
+  const trialImg = hp?.trialImage ? normalizeImageUrl(hp.trialImage) : (packs[0]?.image ? normalizeImageUrl(packs[0].image) : (rawProductImages[0] || ''));
+  const popularImg = hp?.popularImage ? normalizeImageUrl(hp.popularImage) : (packs[1]?.image ? normalizeImageUrl(packs[1].image) : (rawProductImages[1] || ''));
+  const valueImg = packs[2]?.image ? normalizeImageUrl(packs[2].image) : (rawProductImages[2] || '');
 
-  // If user explicitly clicked a thumbnail, strictly show that thumbnail.
-  // Otherwise prioritize latest updated product image/gallery, falling back to pack image.
-  const displayImage = isUserSelectedThumbnail && cleanProductImages[selectedImageIndex]
-    ? cleanProductImages[selectedImageIndex]
-    : (normalizeImageUrl(product.image) || cleanProductImages[selectedImageIndex] || cleanProductImages[0] || currentPackImg || DEFAULT_PRODUCT_FALLBACK);
+  // Helper to get image corresponding to a pack index
+  const getPackVariantImage = (idx: number): string => {
+    if (idx === 0) return trialImg || (packs[0]?.image ? normalizeImageUrl(packs[0].image) : '') || coverImg;
+    if (idx === 1) return popularImg || (packs[1]?.image ? normalizeImageUrl(packs[1].image) : '') || coverImg;
+    if (idx === 2) return valueImg || (packs[2]?.image ? normalizeImageUrl(packs[2].image) : '') || coverImg;
+    const pk = packs[idx];
+    return (pk?.image ? normalizeImageUrl(pk.image) : '') || rawProductImages[idx] || coverImg;
+  };
+
+  // Full deduplicated list of available gallery images with cover image first, then variants and gallery
+  const cleanProductImages = Array.from(new Set([
+    coverImg,
+    trialImg,
+    popularImg,
+    valueImg,
+    ...(hp?.galleryImages || []).map((img) => normalizeImageUrl(img)),
+    ...rawProductImages,
+    ...packs.map((p) => (p.image ? normalizeImageUrl(p.image) : '')),
+  ])).filter(Boolean);
+
+  const activeVariantImg = getPackVariantImage(selectedPackIndex);
+
+  let displayImage = '';
+  if (isUserSelectedThumbnail && cleanProductImages[selectedImageIndex]) {
+    displayImage = cleanProductImages[selectedImageIndex];
+  } else if (hasExplicitVariantClick) {
+    displayImage = activeVariantImg || cleanProductImages[selectedImageIndex] || DEFAULT_PRODUCT_FALLBACK;
+  } else {
+    displayImage = coverImg || activeVariantImg || cleanProductImages[0] || DEFAULT_PRODUCT_FALLBACK;
+  }
 
   const displayPrice = currentPack ? currentPack.price : product.price;
   const displayMrp = currentPack ? currentPack.mrp : product.mrp;
@@ -125,7 +154,15 @@ export const ProductDetailPage: React.FC = () => {
 
   const handleSelectPack = (idx: number) => {
     setSelectedPackIndex(idx);
+    setHasExplicitVariantClick(true);
     setIsUserSelectedThumbnail(false);
+    const targetVariantImg = getPackVariantImage(idx);
+    if (targetVariantImg) {
+      const matchedIdx = cleanProductImages.findIndex((img) => img === targetVariantImg);
+      if (matchedIdx !== -1) {
+        setSelectedImageIndex(matchedIdx);
+      }
+    }
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {

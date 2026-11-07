@@ -598,10 +598,20 @@ function sanitizeProductsImages(items: Product[]): Product[] {
       cleanImgs = [primaryImg, ...cleanImgs.filter((img) => img !== primaryImg)];
     }
 
-    const cleanPacks = (p.packs || []).map((pk) => {
+    const hpTrial = p.homepageImages?.trialImage ? normalizeImageUrl(p.homepageImages.trialImage) : '';
+    const hpPopular = p.homepageImages?.popularImage ? normalizeImageUrl(p.homepageImages.popularImage) : '';
+
+    const cleanPacks = (p.packs || []).map((pk, idx) => {
       let pkImg = pk.image || '';
       if (typeof pkImg === 'string') {
         pkImg = normalizeImageUrl(pkImg);
+      }
+      const isTrial = pk.id === 'trial' || idx === 0;
+      const isPopular = pk.id === 'popular' || pk.isPopular || idx === 1;
+      if (isTrial && hpTrial) {
+        pkImg = hpTrial;
+      } else if (isPopular && hpPopular) {
+        pkImg = hpPopular;
       }
       return {
         ...pk,
@@ -1831,6 +1841,19 @@ function addDeletedProductId(id: string) {
         mergedImages.coverImage,
         ...curImages.filter((img) => img !== mergedImages.coverImage),
       ];
+    }
+    if (target.packs && target.packs.length > 0) {
+      productUpdates.packs = target.packs.map((pk, idx) => {
+        const isTrial = pk.id === 'trial' || idx === 0;
+        const isPopular = pk.id === 'popular' || pk.isPopular || idx === 1;
+        if (isTrial && mergedImages.trialImage) {
+          return { ...pk, image: mergedImages.trialImage };
+        }
+        if (isPopular && mergedImages.popularImage) {
+          return { ...pk, image: mergedImages.popularImage };
+        }
+        return pk;
+      });
     }
 
     const productOk = await updateProduct(productId, productUpdates);
