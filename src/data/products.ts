@@ -17,6 +17,17 @@ export const PRODUCTS: Product[] = [
     inStock: true,
     stockQty: 85,
     badgeTag: 'hot_selling',
+    image: '/uploads/titan-shilajit-resin-0.jpg',
+    homepageImages: {
+      coverImage: '/uploads/titan-shilajit-resin-0.jpg',
+      trialImage: '/uploads/titan-shilajit-resin-0.jpg',
+      popularImage: '/uploads/titan-shilajit-resin-1.jpg',
+      galleryImages: [
+        '/uploads/titan-shilajit-resin-0.jpg',
+        '/uploads/titan-shilajit-resin-1.jpg',
+        '/uploads/titan-shilajit-resin-2.jpg',
+      ],
+    },
     images: [
       '/uploads/titan-shilajit-resin-0.jpg',
       '/uploads/titan-shilajit-resin-1.jpg',
@@ -120,7 +131,20 @@ export const PRODUCTS: Product[] = [
     reviewCount: 215,
     inStock: true,
     stockQty: 42,
+    image: '/uploads/product-1791726244944-xybub.jpg',
+    homepageImages: {
+      coverImage: '/uploads/product-1791726244944-xybub.jpg',
+      trialImage: '/uploads/titan-honey-sticks-classic-0.jpg',
+      popularImage: '/uploads/titan-honey-sticks-classic-1.jpg',
+      galleryImages: [
+        '/uploads/product-1791726244944-xybub.jpg',
+        '/uploads/titan-honey-sticks-classic-0.jpg',
+        '/uploads/titan-honey-sticks-classic-1.jpg',
+        '/uploads/titan-honey-sticks-classic-2.jpg',
+      ],
+    },
     images: [
+      '/uploads/product-1791726244944-xybub.jpg',
       '/uploads/titan-honey-sticks-classic-0.jpg',
       '/uploads/titan-honey-sticks-classic-1.jpg',
       '/uploads/titan-honey-sticks-classic-2.jpg',
@@ -217,6 +241,15 @@ export const PRODUCTS: Product[] = [
     reviewCount: 184,
     inStock: true,
     stockQty: 18,
+    image: '/uploads/titan-honey-sticks-dark-chocolate-0.jpg',
+    homepageImages: {
+      coverImage: '/uploads/titan-honey-sticks-dark-chocolate-0.jpg',
+      trialImage: '/uploads/titan-honey-sticks-dark-chocolate-0.jpg',
+      popularImage: '/uploads/titan-honey-sticks-classic-1.jpg',
+      galleryImages: [
+        '/uploads/titan-honey-sticks-dark-chocolate-0.jpg',
+      ],
+    },
     images: [
       '/uploads/titan-honey-sticks-dark-chocolate-0.jpg',
     ],
@@ -314,6 +347,16 @@ export const PRODUCTS: Product[] = [
     inStock: true,
     stockQty: 34,
     badgeTag: 'new_launch',
+    image: '/uploads/titan-honey-sticks-strawberry-0.jpg',
+    homepageImages: {
+      coverImage: '/uploads/titan-honey-sticks-strawberry-0.jpg',
+      trialImage: '/uploads/titan-honey-sticks-strawberry-0.jpg',
+      popularImage: '/uploads/titan-honey-sticks-strawberry-1.jpg',
+      galleryImages: [
+        '/uploads/titan-honey-sticks-strawberry-0.jpg',
+        '/uploads/titan-honey-sticks-strawberry-1.jpg',
+      ],
+    },
     images: [
       '/uploads/titan-honey-sticks-strawberry-0.jpg',
       '/uploads/titan-honey-sticks-strawberry-1.jpg',
@@ -412,6 +455,16 @@ export const PRODUCTS: Product[] = [
     inStock: true,
     stockQty: 26,
     badgeTag: 'bestseller',
+    image: '/uploads/product-1791727204107-juykt.jpg',
+    homepageImages: {
+      coverImage: '/uploads/product-1791727204107-juykt.jpg',
+      trialImage: '/uploads/product-1791727204107-juykt.jpg',
+      popularImage: '/uploads/product-1791632586215-73g2v.jpg',
+      galleryImages: [
+        '/uploads/product-1791727204107-juykt.jpg',
+        '/uploads/product-1791632586215-73g2v.jpg',
+      ],
+    },
     images: [
       '/uploads/product-1791727204107-juykt.jpg',
       '/uploads/product-1791632586215-73g2v.jpg',
@@ -505,6 +558,17 @@ export const PRODUCTS: Product[] = [
     reviewCount: 112,
     inStock: true,
     stockQty: 15,
+    image: '/uploads/product-1791632586215-73g2v.jpg',
+    homepageImages: {
+      coverImage: '/uploads/product-1791632586215-73g2v.jpg',
+      trialImage: '/uploads/product-1791632586215-73g2v.jpg',
+      popularImage: '/uploads/product-1791726244944-xybub.jpg',
+      galleryImages: [
+        '/uploads/product-1791632586215-73g2v.jpg',
+        '/uploads/titan-honey-sticks-dark-chocolate-0.jpg',
+        '/uploads/product-1791726244944-xybub.jpg',
+      ],
+    },
     images: [
       '/uploads/product-1791632586215-73g2v.jpg',
       '/uploads/titan-honey-sticks-dark-chocolate-0.jpg',

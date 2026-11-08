@@ -54,6 +54,8 @@ import {
   pullAllHostingerData,
   importHostingerBackup,
   testHostingerMysqlConnection,
+  getNeverFallStatus,
+  restoreFromLastHealthyBackup,
 } from './server/hostingerDb';
 
 dotenv.config();
@@ -1220,6 +1222,25 @@ apiRouter.post('/hostinger/test-mysql', async (req, res) => {
   }
 });
 
+// Strict Never-Fall Protection Status & Disaster Recovery Endpoints
+apiRouter.get('/hostinger/never-fall-status', (req, res) => {
+  try {
+    const status = getNeverFallStatus();
+    return res.json({ success: true, ...status });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+apiRouter.post('/hostinger/never-fall-restore', (req, res) => {
+  try {
+    const result = restoreFromLastHealthyBackup();
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
 // DELHIVERY B2C LOGISTICS API ENDPOINTS
 
 // 1. B2C Pincode Serviceability Check
@@ -1463,21 +1484,33 @@ apiRouter.get('/store-content', async (req, res) => {
     const hostingerProducts = getHostingerProducts();
     const hostingerReviews = getHostingerReviews();
     const hostingerContent = getHostingerPageContent();
+    const cleanHostingerProducts = (hostingerProducts || []).filter((p: any) => p && p.id && p.id !== 'test-1');
 
-    let finalProducts = (products && products.length > 0) ? products : hostingerProducts;
-    if (hostingerProducts && hostingerProducts.length > 0 && products && products.length > 0) {
-      const hostingerMap = new Map(hostingerProducts.map((p: any) => [p.id, p]));
+    let finalProducts = (products && products.length > 0) ? products : cleanHostingerProducts;
+    if (cleanHostingerProducts.length > 0 && products && products.length > 0) {
+      const hostingerMap = new Map(cleanHostingerProducts.map((p: any) => [p.id, p]));
       finalProducts = finalProducts.map((p: any) => {
         const hp = hostingerMap.get(p.id);
         if (hp) {
-          return { ...p, ...hp };
+          return {
+            ...p,
+            ...hp,
+            homepageImages: hp.homepageImages || p.homepageImages,
+          };
         }
         return p;
       });
     }
 
     const finalReviews = (reviews && reviews.length > 0) ? reviews : hostingerReviews;
-    const finalContent = mainContent || hostingerContent;
+    const finalContent = {
+      ...(mainContent || {}),
+      ...(hostingerContent || {}),
+      homepageProducts: {
+        ...(mainContent?.homepageProducts || {}),
+        ...(hostingerContent?.homepageProducts || {}),
+      },
+    };
 
     return res.json({
       success: true,

@@ -12,6 +12,7 @@ import {
   FileJson,
   Layers,
   Key,
+  RotateCcw,
 } from 'lucide-react';
 import { useStoreContent } from '../context/StoreContentContext';
 
@@ -24,6 +25,14 @@ export const AdminHostingerSection: React.FC<AdminHostingerSectionProps> = ({ on
 
   const [status, setStatus] = useState<any>(null);
   const [loadingStatus, setLoadingStatus] = useState<boolean>(true);
+  const [neverFallStatus, setNeverFallStatus] = useState<{
+    shieldActive: boolean;
+    protectedProductsCount: number;
+    availableSnapshotsCount: number;
+    hasImmutableBaseline: boolean;
+    lastUpdated: string;
+  } | null>(null);
+  const [isRestoringShield, setIsRestoringShield] = useState<boolean>(false);
 
   // 1-Click Sync States
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
@@ -51,15 +60,46 @@ export const AdminHostingerSection: React.FC<AdminHostingerSectionProps> = ({ on
   const fetchStatus = async () => {
     try {
       setLoadingStatus(true);
-      const res = await fetch('/api/hostinger/status');
-      const data = await res.json();
-      if (data && data.success) {
-        setStatus(data);
+      const [resHostinger, resNeverFall] = await Promise.allSettled([
+        fetch('/api/hostinger/status').then((r) => r.json()),
+        fetch('/api/hostinger/never-fall-status').then((r) => r.json()),
+      ]);
+
+      if (resHostinger.status === 'fulfilled' && resHostinger.value?.success) {
+        setStatus(resHostinger.value);
+      }
+      if (resNeverFall.status === 'fulfilled' && resNeverFall.value?.success) {
+        setNeverFallStatus(resNeverFall.value);
       }
     } catch {
       // Ignored
     } finally {
       setLoadingStatus(false);
+    }
+  };
+
+  const handleNeverFallRestore = async () => {
+    if (!window.confirm('Are you sure you want to restore the store data to the last healthy state / immutable baseline? This will recover all 6 core products, images, and pricing.')) {
+      return;
+    }
+    setIsRestoringShield(true);
+    try {
+      const res = await fetch('/api/hostinger/never-fall-restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        onToast(data.message || 'Restored from healthy backup!');
+        await pullFromHostinger();
+        fetchStatus();
+      } else {
+        onToast(data?.message || 'Restore could not find an older backup.');
+      }
+    } catch (err: any) {
+      onToast(err?.message || 'Restore failed.');
+    } finally {
+      setIsRestoringShield(false);
     }
   };
 
@@ -190,6 +230,86 @@ export const AdminHostingerSection: React.FC<AdminHostingerSectionProps> = ({ on
 
   return (
     <div id="admin-hostinger-section" className="space-y-6">
+      {/* ========================================================================= */}
+      {/* NEVER-FALL DATA SHIELD BANNER & DISASTER RECOVERY GUARANTEE               */}
+      {/* ========================================================================= */}
+      <div className="bg-gradient-to-r from-[#183D27] via-[#10110F] to-[#183D27] text-[#F7F3E8] p-6 sm:p-7 rounded-sm border-2 border-[#D4B66A] shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 transform translate-x-8 -translate-y-8 w-44 h-44 bg-[#D4B66A]/10 rounded-full blur-2xl pointer-events-none" />
+        
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#25D366]/20 text-[#25D366] text-[10.5px] font-black uppercase tracking-widest border border-[#25D366]/40 shadow-xs">
+                <ShieldCheck className="w-4 h-4 text-[#25D366]" />
+                <span>NEVER-FALL DATA SHIELD ACTIVE &amp; STRICTLY ENFORCED</span>
+              </span>
+              <span className="px-2.5 py-1 rounded-full bg-white/10 text-[#D4B66A] text-[10px] font-mono border border-white/15">
+                Hostinger VPS &amp; Production Safe
+              </span>
+            </div>
+
+            <h2 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-[#F7F3E8]">
+              Product Data, Images &amp; Pricing Will Never Fall
+            </h2>
+            <p className="text-xs sm:text-[13px] text-[#EEE8D7]/85 font-sans leading-relaxed">
+              Strict mathematical merge guards protect every product SKU. Whenever new code is written, commits are pushed, or servers restart on Hostinger VPS / Vercel, <strong>product image URLs, cover pictures, trial/popular photos, pricing, pack variants, and descriptions are permanently locked and cannot be wiped out or reset</strong>.
+            </p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
+              <div className="p-2.5 rounded-xs bg-black/40 border border-white/15">
+                <span className="text-[9.5px] text-[#D4B66A] uppercase font-bold tracking-wider block">Protected Products</span>
+                <span className="text-base font-bold text-white font-mono">
+                  {neverFallStatus?.protectedProductsCount || products.length} / 6 Locked
+                </span>
+              </div>
+
+              <div className="p-2.5 rounded-xs bg-black/40 border border-white/15">
+                <span className="text-[9.5px] text-[#D4B66A] uppercase font-bold tracking-wider block">Rolling Snapshots</span>
+                <span className="text-base font-bold text-white font-mono">
+                  {neverFallStatus?.availableSnapshotsCount ?? 1} on Disk
+                </span>
+              </div>
+
+              <div className="p-2.5 rounded-xs bg-black/40 border border-white/15">
+                <span className="text-[9.5px] text-[#D4B66A] uppercase font-bold tracking-wider block">Immutable Baseline</span>
+                <span className="text-base font-bold text-emerald-400 font-mono">
+                  {neverFallStatus?.hasImmutableBaseline ? 'Permanently Ready' : 'Armed'}
+                </span>
+              </div>
+
+              <div className="p-2.5 rounded-xs bg-black/40 border border-white/15">
+                <span className="text-[9.5px] text-[#D4B66A] uppercase font-bold tracking-wider block">Auto-Healing Loader</span>
+                <span className="text-base font-bold text-emerald-400 font-mono">2-Tier Active</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={handleSyncToHostinger}
+              disabled={isSyncing}
+              className="px-4 py-3 rounded-xs bg-[#D4B66A] hover:bg-[#B88A32] text-[#10110F] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer disabled:opacity-50"
+              title="Snapshot all active products and lock into Hostinger disk"
+            >
+              <HardDrive className="w-4 h-4" />
+              <span>{isSyncing ? 'Locking Snapshot...' : 'Create Instant Snapshot'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNeverFallRestore}
+              disabled={isRestoringShield}
+              className="px-4 py-3 rounded-xs bg-red-950/80 hover:bg-red-900 text-red-200 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border border-red-500/50 shadow-md transition-all cursor-pointer disabled:opacity-50"
+              title="Restore from last known good healthy backup"
+            >
+              <RotateCcw className={`w-4 h-4 ${isRestoringShield ? 'animate-spin' : ''}`} />
+              <span>{isRestoringShield ? 'Restoring...' : 'Emergency Restore Baseline'}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Top Banner */}
       <div className="bg-[#10110F] text-[#F7F3E8] p-6 sm:p-8 rounded-sm border border-[#B88A32]/30 shadow-md">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">

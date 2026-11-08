@@ -464,6 +464,69 @@ const DEFAULT_PAGE_CONTENT: PageContentConfig = {
   contact: DEFAULT_CONTACT,
   faqs: DEFAULT_FAQS,
   themeFont: DEFAULT_THEME_FONT,
+  homepageProducts: {
+    'titan-honey-sticks-classic': {
+      coverImage: '/uploads/product-1791726244944-xybub.jpg',
+      trialImage: '/uploads/titan-honey-sticks-classic-0.jpg',
+      popularImage: '/uploads/titan-honey-sticks-classic-1.jpg',
+      galleryImages: [
+        '/uploads/product-1791726244944-xybub.jpg',
+        '/uploads/titan-honey-sticks-classic-0.jpg',
+        '/uploads/titan-honey-sticks-classic-1.jpg',
+        '/uploads/titan-honey-sticks-classic-2.jpg',
+      ],
+      customBadge: '',
+    },
+    'titan-shilajit-resin': {
+      coverImage: '/uploads/titan-shilajit-resin-0.jpg',
+      trialImage: '/uploads/titan-shilajit-resin-0.jpg',
+      popularImage: '/uploads/titan-shilajit-resin-1.jpg',
+      galleryImages: [
+        '/uploads/titan-shilajit-resin-0.jpg',
+        '/uploads/titan-shilajit-resin-1.jpg',
+        '/uploads/titan-shilajit-resin-2.jpg',
+      ],
+      customBadge: '',
+    },
+    'titan-honey-sticks-dark-chocolate': {
+      coverImage: '/uploads/titan-honey-sticks-dark-chocolate-0.jpg',
+      trialImage: '/uploads/titan-honey-sticks-dark-chocolate-0.jpg',
+      popularImage: '/uploads/titan-honey-sticks-classic-1.jpg',
+      galleryImages: ['/uploads/titan-honey-sticks-dark-chocolate-0.jpg'],
+      customBadge: '',
+    },
+    'titan-honey-sticks-strawberry': {
+      coverImage: '/uploads/titan-honey-sticks-strawberry-0.jpg',
+      trialImage: '/uploads/titan-honey-sticks-strawberry-0.jpg',
+      popularImage: '/uploads/titan-honey-sticks-strawberry-1.jpg',
+      galleryImages: [
+        '/uploads/titan-honey-sticks-strawberry-0.jpg',
+        '/uploads/titan-honey-sticks-strawberry-1.jpg',
+      ],
+      customBadge: '',
+    },
+    'titan-vitality-ritual-box': {
+      coverImage: '/uploads/product-1791727204107-juykt.jpg',
+      trialImage: '/uploads/product-1791727204107-juykt.jpg',
+      popularImage: '/uploads/product-1791632586215-73g2v.jpg',
+      galleryImages: [
+        '/uploads/product-1791727204107-juykt.jpg',
+        '/uploads/product-1791632586215-73g2v.jpg',
+      ],
+      customBadge: '',
+    },
+    'titan-honey-sticks-trio': {
+      coverImage: '/uploads/product-1791632586215-73g2v.jpg',
+      trialImage: '/uploads/product-1791632586215-73g2v.jpg',
+      popularImage: '/uploads/product-1791726244944-xybub.jpg',
+      galleryImages: [
+        '/uploads/product-1791632586215-73g2v.jpg',
+        '/uploads/titan-honey-sticks-dark-chocolate-0.jpg',
+        '/uploads/product-1791726244944-xybub.jpg',
+      ],
+      customBadge: '',
+    },
+  },
 };
 
 interface StoreContentContextType {
@@ -620,13 +683,23 @@ function sanitizeProductsImages(items: Product[]): Product[] {
     });
 
     const def = DEFAULT_PRODUCTS.find((d) => d.id === p.id);
+    const safePrice = Number(p.price) > 0 ? Number(p.price) : (def?.price || 1499);
+    const safeMrp = Number(p.mrp) > 0 ? Number(p.mrp) : (def?.mrp || Math.round(safePrice * 1.35));
+    const safePacks = cleanPacks.length > 0 ? cleanPacks : (def?.packs || []);
+    const safeHp = p.homepageImages || def?.homepageImages;
 
     return {
+      ...def,
       ...p,
-      image: primaryImg,
-      images: cleanImgs,
-      packs: cleanPacks,
+      price: safePrice,
+      mrp: safeMrp,
+      image: primaryImg || def?.image || '',
+      images: cleanImgs.length > 0 ? cleanImgs : (def?.images || []),
+      packs: safePacks,
+      homepageImages: safeHp,
       usage: def?.usage || p.usage,
+      description: p.description || def?.description || '',
+      shortDescription: p.shortDescription || def?.shortDescription || '',
     };
   });
 }
