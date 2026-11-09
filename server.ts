@@ -1463,33 +1463,21 @@ apiRouter.get('/store-content', async (req, res) => {
     const hostingerProducts = getHostingerProducts();
     const hostingerReviews = getHostingerReviews();
     const hostingerContent = getHostingerPageContent();
-    const cleanHostingerProducts = (hostingerProducts || []).filter((p: any) => p && p.id && p.id !== 'test-1');
 
-    let finalProducts = (products && products.length > 0) ? products : cleanHostingerProducts;
-    if (cleanHostingerProducts.length > 0 && products && products.length > 0) {
-      const hostingerMap = new Map(cleanHostingerProducts.map((p: any) => [p.id, p]));
+    let finalProducts = (products && products.length > 0) ? products : hostingerProducts;
+    if (hostingerProducts && hostingerProducts.length > 0 && products && products.length > 0) {
+      const hostingerMap = new Map(hostingerProducts.map((p: any) => [p.id, p]));
       finalProducts = finalProducts.map((p: any) => {
         const hp = hostingerMap.get(p.id);
         if (hp) {
-          return {
-            ...p,
-            ...hp,
-            homepageImages: hp.homepageImages || p.homepageImages,
-          };
+          return { ...p, ...hp };
         }
         return p;
       });
     }
 
     const finalReviews = (reviews && reviews.length > 0) ? reviews : hostingerReviews;
-    const finalContent = {
-      ...(mainContent || {}),
-      ...(hostingerContent || {}),
-      homepageProducts: {
-        ...(mainContent?.homepageProducts || {}),
-        ...(hostingerContent?.homepageProducts || {}),
-      },
-    };
+    const finalContent = mainContent || hostingerContent;
 
     return res.json({
       success: true,
