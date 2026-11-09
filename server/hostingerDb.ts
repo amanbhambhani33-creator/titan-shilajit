@@ -37,180 +37,34 @@ export interface HostingerStoreSchema {
 
 const DATA_DIR = path.resolve(process.cwd(), 'data');
 const DATA_FILE = path.join(DATA_DIR, 'hostinger_store.json');
-const BACKUP_DIR = path.join(DATA_DIR, 'backups');
-const BASELINE_FILE = path.join(DATA_DIR, 'hostinger_store_immutable_baseline.json');
 
 // Ensure data directory exists
 function ensureDataDir() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
-  if (!fs.existsSync(BACKUP_DIR)) {
-    fs.mkdirSync(BACKUP_DIR, { recursive: true });
-  }
 }
 
 // In-memory cache for ultra-fast response (<1ms)
 let inMemoryStore: HostingerStoreSchema | null = null;
 
-/**
- * Strict Never-Fall Product Merger:
- * Guarantees that no matter what code changes or partial payloads are passed,
- * a product's price, MRP, images, packs, descriptions, and homepageImages can NEVER be wiped or corrupted.
- */
-export function neverFallMergeProduct(existing: any, incoming: any): any {
-  if (!existing && !incoming) return null;
-  if (!existing) return incoming;
-  if (!incoming) return existing;
-
-  // 1. Strict Price & MRP Protection (Can never fall to 0 or null)
-  const price = (Number(incoming.price) > 0) ? Number(incoming.price) : (Number(existing.price) > 0 ? Number(existing.price) : 1499);
-  const mrp = (Number(incoming.mrp) > 0) ? Number(incoming.mrp) : (Number(existing.mrp) > 0 ? Number(existing.mrp) : Math.round(price * 1.35));
-
-  // 2. Strict Image & Gallery Protection (Can never fall to empty array or empty string)
-  const rawIncomingImgs = Array.isArray(incoming.images) ? incoming.images.filter(Boolean) : [];
-  const rawExistingImgs = Array.isArray(existing.images) ? existing.images.filter(Boolean) : [];
-  const finalImages = rawIncomingImgs.length > 0 ? rawIncomingImgs : (rawExistingImgs.length > 0 ? rawExistingImgs : (existing.image ? [existing.image] : []));
-  const finalCoverImage = incoming.image || existing.image || finalImages[0] || '';
-
-  // 3. Strict Pack Configuration Protection (Packs can never drop)
-  const rawIncomingPacks = Array.isArray(incoming.packs) && incoming.packs.length > 0 ? incoming.packs : null;
-  const rawExistingPacks = Array.isArray(existing.packs) && existing.packs.length > 0 ? existing.packs : null;
-  
-  let finalPacks = rawExistingPacks || [];
-  if (rawIncomingPacks) {
-    finalPacks = rawIncomingPacks.map((inPk: any, pIdx: number) => {
-      const exPk = rawExistingPacks ? (rawExistingPacks[pIdx] || rawExistingPacks.find((p: any) => p.id === inPk.id)) : null;
-      if (!exPk) return inPk;
-      return {
-        ...exPk,
-        ...inPk,
-        price: Number(inPk.price) > 0 ? Number(inPk.price) : exPk.price,
-        mrp: Number(inPk.mrp) > 0 ? Number(inPk.mrp) : exPk.mrp,
-        image: inPk.image || exPk.image || finalCoverImage,
-        quantityText: inPk.quantityText || exPk.quantityText,
-      };
-    });
-  }
-
-  // 4. Strict Homepage Images Protection (Never wiped)
-  const exHp = existing.homepageImages || {};
-  const inHp = incoming.homepageImages || {};
-  const mergedHp = {
-    coverImage: inHp.coverImage || exHp.coverImage || finalCoverImage,
-    trialImage: inHp.trialImage || exHp.trialImage || (finalPacks[0]?.image) || '',
-    popularImage: inHp.popularImage || exHp.popularImage || (finalPacks[1]?.image) || '',
-    galleryImages: (Array.isArray(inHp.galleryImages) && inHp.galleryImages.length > 0)
-      ? inHp.galleryImages
-      : (Array.isArray(exHp.galleryImages) && exHp.galleryImages.length > 0 ? exHp.galleryImages : finalImages),
-    customBadge: inHp.customBadge !== undefined ? inHp.customBadge : (exHp.customBadge || ''),
-  };
-
-  return {
-    ...existing,
-    ...incoming,
-    id: existing.id || incoming.id,
-    name: incoming.name || existing.name,
-    slug: existing.slug || incoming.slug,
-    category: existing.category || incoming.category,
-    price,
-    mrp,
-    image: finalCoverImage,
-    images: finalImages,
-    packs: finalPacks,
-    homepageImages: mergedHp,
-    description: incoming.description || existing.description,
-    shortDescription: incoming.shortDescription || existing.shortDescription,
-    tagline: incoming.tagline || existing.tagline,
-    rating: Number(incoming.rating) > 0 ? Number(incoming.rating) : existing.rating,
-    reviewCount: Number(incoming.reviewCount) >= 0 ? Number(incoming.reviewCount) : existing.reviewCount,
-    inStock: incoming.inStock !== undefined ? incoming.inStock : existing.inStock,
-    stockQty: incoming.stockQty !== undefined ? incoming.stockQty : existing.stockQty,
-  };
-}
-
-// Automatically create rolling snapshot backups in data/backups/
-function createRollingSnapshot(store: HostingerStoreSchema): void {
-  try {
-    ensureDataDir();
-    const ts = new Date().toISOString().replace(/[:.]/g, '-');
-    const snapFile = path.join(BACKUP_DIR, `snapshot_${ts}.json`);
-    fs.writeFileSync(snapFile, JSON.stringify(store, null, 2), 'utf-8');
-
-    // Keep the latest 20 rolling snapshots
-    const files = fs.readdirSync(BACKUP_DIR).filter((f) => f.startsWith('snapshot_')).sort();
-    if (files.length > 20) {
-      for (let i = 0; i < files.length - 20; i++) {
-        try { fs.unlinkSync(path.join(BACKUP_DIR, files[i])); } catch {}
-      }
-    }
-  } catch (e) {
-    console.warn('[Hostinger Snapshot] Non-blocking backup warning:', e);
-  }
-}
-
-// Initialize and load store with Auto-Healing from baseline or snapshots
+// Initialize and load store
 function loadStore(): HostingerStoreSchema {
-  if (inMemoryStore && Array.isArray(inMemoryStore.products) && inMemoryStore.products.length >= 2) {
-    return inMemoryStore;
-  }
+  if (inMemoryStore) return inMemoryStore;
 
   ensureDataDir();
 
-  // Try reading primary data file
   if (fs.existsSync(DATA_FILE)) {
     try {
       const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-      const parsed = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed.products) && parsed.products.length >= 2) {
-        inMemoryStore = parsed;
-        if (!fs.existsSync(BASELINE_FILE)) {
-          try {
-            fs.writeFileSync(BASELINE_FILE, JSON.stringify(parsed, null, 2), 'utf-8');
-          } catch {}
-        }
-        createRollingSnapshot(parsed);
-        return inMemoryStore!;
-      }
+      inMemoryStore = JSON.parse(raw);
+      return inMemoryStore!;
     } catch (err) {
-      console.warn('Notice parsing Hostinger data file:', err);
+      console.warn('Notice parsing Hostinger data file, creating fresh store backup:', err);
     }
   }
 
-  // Auto-heal 1: Recover from permanent baseline file if available
-  if (fs.existsSync(BASELINE_FILE)) {
-    try {
-      const rawBase = fs.readFileSync(BASELINE_FILE, 'utf-8');
-      const parsedBase = JSON.parse(rawBase);
-      if (parsedBase && Array.isArray(parsedBase.products) && parsedBase.products.length >= 2) {
-        console.log('[Hostinger Shield] Auto-healed store from immutable baseline!');
-        inMemoryStore = parsedBase;
-        saveStore(parsedBase);
-        return inMemoryStore!;
-      }
-    } catch {}
-  }
-
-  // Auto-heal 2: Recover from latest healthy rolling snapshot
-  try {
-    if (fs.existsSync(BACKUP_DIR)) {
-      const snaps = fs.readdirSync(BACKUP_DIR).filter((f) => f.startsWith('snapshot_')).sort().reverse();
-      for (const snap of snaps) {
-        try {
-          const rawSnap = fs.readFileSync(path.join(BACKUP_DIR, snap), 'utf-8');
-          const parsedSnap = JSON.parse(rawSnap);
-          if (parsedSnap && Array.isArray(parsedSnap.products) && parsedSnap.products.length >= 2) {
-            console.log(`[Hostinger Shield] Auto-healed store from snapshot: ${snap}`);
-            inMemoryStore = parsedSnap;
-            saveStore(parsedSnap);
-            return inMemoryStore!;
-          }
-        } catch {}
-      }
-    }
-  } catch {}
-
-  // Initial fresh structure as last resort
+  // Initial fresh structure
   inMemoryStore = {
     version: 1,
     updatedAt: new Date().toISOString(),
@@ -226,7 +80,7 @@ function loadStore(): HostingerStoreSchema {
   return inMemoryStore;
 }
 
-// Persist store to disk safely with atomic write and rolling snapshot
+// Persist store to disk safely
 function saveStore(store: HostingerStoreSchema): void {
   ensureDataDir();
   store.updatedAt = new Date().toISOString();
@@ -236,16 +90,6 @@ function saveStore(store: HostingerStoreSchema): void {
   try {
     fs.writeFileSync(tempFile, JSON.stringify(store, null, 2), 'utf-8');
     fs.renameSync(tempFile, DATA_FILE);
-
-    // Save automatic rolling snapshot
-    createRollingSnapshot(store);
-
-    // If store has healthy products, update baseline file
-    if (Array.isArray(store.products) && store.products.length >= 2) {
-      try {
-        fs.writeFileSync(BASELINE_FILE, JSON.stringify(store, null, 2), 'utf-8');
-      } catch {}
-    }
   } catch (err) {
     try {
       fs.writeFileSync(DATA_FILE, JSON.stringify(store, null, 2), 'utf-8');
@@ -287,43 +131,17 @@ export function saveHostingerOrder(order: any): any {
 }
 
 // =========================================================================
-// PRODUCTS (NEVER-FALL PROTECTED)
+// PRODUCTS
 // =========================================================================
 
 export function getHostingerProducts(): any[] {
   const store = loadStore();
-  return (store.products || []).filter((p: any) => p && p.id && p.id !== 'test-1');
+  return store.products || [];
 }
 
-export function saveHostingerProducts(incomingProducts: any[]): void {
-  if (!Array.isArray(incomingProducts) || incomingProducts.length === 0) {
-    console.warn('[Hostinger Never-Fall Shield] Blocked attempt to overwrite products with empty array.');
-    return;
-  }
-
+export function saveHostingerProducts(products: any[]): void {
   const store = loadStore();
-  const existingProducts = (store.products || []).filter((p: any) => p && p.id && p.id !== 'test-1');
-
-  // Filter out any dummy items
-  const cleanIncoming = incomingProducts.filter((p: any) => p && p.id && p.id !== 'test-1');
-  if (cleanIncoming.length === 0) {
-    console.warn('[Hostinger Never-Fall Shield] Blocked attempt to write only dummy test products.');
-    return;
-  }
-
-  const mergedProducts = cleanIncoming.map((inProd) => {
-    const existing = existingProducts.find((p) => p.id === inProd.id);
-    return neverFallMergeProduct(existing, inProd);
-  });
-
-  // Preserve existing items not explicitly included
-  for (const exProd of existingProducts) {
-    if (!mergedProducts.some((p) => p.id === exProd.id)) {
-      mergedProducts.push(exProd);
-    }
-  }
-
-  store.products = mergedProducts;
+  store.products = products;
   saveStore(store);
 }
 
@@ -343,7 +161,7 @@ export function saveHostingerReviews(reviews: any[]): void {
 }
 
 // =========================================================================
-// PAGE CONTENT & BRAND LOGO (NEVER-FALL PROTECTED)
+// PAGE CONTENT & BRAND LOGO
 // =========================================================================
 
 export function getHostingerPageContent(): any {
@@ -352,21 +170,8 @@ export function getHostingerPageContent(): any {
 }
 
 export function saveHostingerPageContent(content: any): void {
-  if (!content || typeof content !== 'object') return;
   const store = loadStore();
-
-  const prevContent = store.pageContent || {};
-  const mergedContent = {
-    ...prevContent,
-    ...content,
-    // Deep preserve homepage products so images never drop
-    homepageProducts: {
-      ...(prevContent.homepageProducts || {}),
-      ...(content.homepageProducts || {}),
-    },
-  };
-
-  store.pageContent = mergedContent;
+  store.pageContent = content;
   saveStore(store);
 }
 
@@ -384,7 +189,7 @@ export function getNextHostingerInvoiceNumber(): string {
 }
 
 // =========================================================================
-// SYNC ALL FROM CLIENT (Never-Fall Guarded Migration)
+// SYNC ALL FROM CLIENT (1-Click Migration from Firebase to Hostinger)
 // =========================================================================
 
 export function syncAllFromClient(payload: {
@@ -410,22 +215,8 @@ export function syncAllFromClient(payload: {
 
   let importedProducts = 0;
   if (Array.isArray(payload.products) && payload.products.length > 0) {
-    const cleanIn = payload.products.filter((p: any) => p && p.id && p.id !== 'test-1');
-    if (cleanIn.length > 0) {
-      const existingProducts = (store.products || []).filter((p: any) => p && p.id && p.id !== 'test-1');
-      const merged = cleanIn.map((inProd) => {
-        const existing = existingProducts.find((p) => p.id === inProd.id);
-        return neverFallMergeProduct(existing, inProd);
-      });
-      // Keep any pre-existing products
-      for (const ex of existingProducts) {
-        if (!merged.some((p) => p.id === ex.id)) {
-          merged.push(ex);
-        }
-      }
-      store.products = merged;
-      importedProducts = merged.length;
-    }
+    store.products = payload.products;
+    importedProducts = payload.products.length;
   }
 
   let importedReviews = 0;
@@ -435,14 +226,7 @@ export function syncAllFromClient(payload: {
   }
 
   if (payload.content) {
-    store.pageContent = {
-      ...(store.pageContent || {}),
-      ...payload.content,
-      homepageProducts: {
-        ...(store.pageContent?.homepageProducts || {}),
-        ...(payload.content?.homepageProducts || {}),
-      },
-    };
+    store.pageContent = payload.content;
   }
 
   saveStore(store);
@@ -452,81 +236,6 @@ export function syncAllFromClient(payload: {
     importedOrders,
     importedProducts,
     importedReviews,
-  };
-}
-
-// =========================================================================
-// NEVER-FALL STATUS & DISK RESTORATION API
-// =========================================================================
-
-export function getNeverFallStatus(): {
-  shieldActive: boolean;
-  protectedProductsCount: number;
-  availableSnapshotsCount: number;
-  hasImmutableBaseline: boolean;
-  lastUpdated: string;
-} {
-  const store = loadStore();
-  let snapshotCount = 0;
-  try {
-    if (fs.existsSync(BACKUP_DIR)) {
-      snapshotCount = fs.readdirSync(BACKUP_DIR).filter((f) => f.startsWith('snapshot_')).length;
-    }
-  } catch {}
-
-  return {
-    shieldActive: true,
-    protectedProductsCount: (store.products || []).filter((p: any) => p && p.id && p.id !== 'test-1').length,
-    availableSnapshotsCount: snapshotCount,
-    hasImmutableBaseline: fs.existsSync(BASELINE_FILE),
-    lastUpdated: store.updatedAt,
-  };
-}
-
-export function restoreFromLastHealthyBackup(): { success: boolean; message: string; recoveredProducts: number } {
-  ensureDataDir();
-
-  // Try baseline file first
-  if (fs.existsSync(BASELINE_FILE)) {
-    try {
-      const raw = fs.readFileSync(BASELINE_FILE, 'utf-8');
-      const parsed = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed.products) && parsed.products.length >= 2) {
-        inMemoryStore = parsed;
-        saveStore(parsed);
-        return {
-          success: true,
-          message: 'Restored from permanent immutable baseline!',
-          recoveredProducts: parsed.products.length,
-        };
-      }
-    } catch {}
-  }
-
-  // Try latest snapshot
-  if (fs.existsSync(BACKUP_DIR)) {
-    try {
-      const snaps = fs.readdirSync(BACKUP_DIR).filter((f) => f.startsWith('snapshot_')).sort().reverse();
-      for (const snap of snaps) {
-        const raw = fs.readFileSync(path.join(BACKUP_DIR, snap), 'utf-8');
-        const parsed = JSON.parse(raw);
-        if (parsed && Array.isArray(parsed.products) && parsed.products.length >= 2) {
-          inMemoryStore = parsed;
-          saveStore(parsed);
-          return {
-            success: true,
-            message: `Restored from rolling snapshot: ${snap}`,
-            recoveredProducts: parsed.products.length,
-          };
-        }
-      }
-    } catch {}
-  }
-
-  return {
-    success: false,
-    message: 'No external backup found; store is currently in active state.',
-    recoveredProducts: (loadStore().products || []).length,
   };
 }
 

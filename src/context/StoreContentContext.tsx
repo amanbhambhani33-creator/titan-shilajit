@@ -683,23 +683,13 @@ function sanitizeProductsImages(items: Product[]): Product[] {
     });
 
     const def = DEFAULT_PRODUCTS.find((d) => d.id === p.id);
-    const safePrice = Number(p.price) > 0 ? Number(p.price) : (def?.price || 1499);
-    const safeMrp = Number(p.mrp) > 0 ? Number(p.mrp) : (def?.mrp || Math.round(safePrice * 1.35));
-    const safePacks = cleanPacks.length > 0 ? cleanPacks : (def?.packs || []);
-    const safeHp = p.homepageImages || def?.homepageImages;
 
     return {
-      ...def,
       ...p,
-      price: safePrice,
-      mrp: safeMrp,
-      image: primaryImg || def?.image || '',
-      images: cleanImgs.length > 0 ? cleanImgs : (def?.images || []),
-      packs: safePacks,
-      homepageImages: safeHp,
+      image: primaryImg,
+      images: cleanImgs,
+      packs: cleanPacks,
       usage: def?.usage || p.usage,
-      description: p.description || def?.description || '',
-      shortDescription: p.shortDescription || def?.shortDescription || '',
     };
   });
 }

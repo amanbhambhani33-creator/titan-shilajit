@@ -54,8 +54,6 @@ import {
   pullAllHostingerData,
   importHostingerBackup,
   testHostingerMysqlConnection,
-  getNeverFallStatus,
-  restoreFromLastHealthyBackup,
 } from './server/hostingerDb';
 
 dotenv.config();
@@ -1216,25 +1214,6 @@ apiRouter.post('/hostinger/pull-from-remote', async (req, res) => {
 apiRouter.post('/hostinger/test-mysql', async (req, res) => {
   try {
     const result = await testHostingerMysqlConnection(req.body);
-    return res.json(result);
-  } catch (err: any) {
-    return res.status(500).json({ success: false, error: err?.message });
-  }
-});
-
-// Strict Never-Fall Protection Status & Disaster Recovery Endpoints
-apiRouter.get('/hostinger/never-fall-status', (req, res) => {
-  try {
-    const status = getNeverFallStatus();
-    return res.json({ success: true, ...status });
-  } catch (err: any) {
-    return res.status(500).json({ success: false, error: err?.message });
-  }
-});
-
-apiRouter.post('/hostinger/never-fall-restore', (req, res) => {
-  try {
-    const result = restoreFromLastHealthyBackup();
     return res.json(result);
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message });
